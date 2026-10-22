@@ -1,0 +1,28 @@
+{
+  "name": "@membral/cli",
+  "version": "0.2.1",
+  "description": "Your coding agent can answer from what your past sessions found. The Membral command line.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "bin": {
+    "membral": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "dependencies": {
+    "@membral/core": "*"
+  },
+  "devDependencies": {
+    "esbuild": "0.27.7",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "biome check ./src"
+  }
+}

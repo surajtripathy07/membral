@@ -1,0 +1,21 @@
+EXIT: 0
+--- STDOUT ---
+Membral — hook internals.
+
+These run automatically (installed by `membral setup`) or are for
+maintainer use — see `membral --help` for the nine everyday commands.
+
+  whoami                 Print who you're signed in as — status covers this
+  import-session         Upload one session transcript — hook-invoked only
+  session-end-hook       Upload the session named by SessionEnd hook input
+  preamble               Print the memory preamble for a SessionStart hook
+  prompt-hook            Print past work related to a prompt (UserPromptSubmit)
+  mcp-headers            Print the MCP auth header for Codex (http_headers_helper)
+  install-session-hook   Install or remove the Claude Code session and prompt hooks
+  sweep                  Upload sessions ended since the last sweep (scheduled)
+  dogfood                Weekly Membral-on-Membral digest and candidates
+
+Run `membral <command> --help` for a command's own flags.
+
+
+--- STDERR ---

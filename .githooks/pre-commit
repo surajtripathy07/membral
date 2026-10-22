@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit — round-3 review HIGH 17.
+#
+# scripts/check-scrub.sh has existed since membral-608 and calls itself a
+# "local pre-commit defense", but nothing actually invoked it: `.git/hooks/`
+# only ever held the `.sample` files git ships by default, no husky, no
+# lint-staged, no CI step. The guard was real but unwired — it only ran
+# when someone remembered to type `bash scripts/check-scrub.sh` by hand,
+# which is exactly how round-3 review HIGH 15 (a real production user UUID
+# committed to docs/DEPLOY.md) happened and survived: the guard would have
+# blocked that commit and simply never ran.
+#
+# `.git/hooks/` itself is NOT tracked by git, so it can't be "the fix" —
+# this file lives in the TRACKED `.githooks/` directory instead, activated
+# via `git config core.hooksPath .githooks` (scripts/dev-up.sh and
+# `npm run hooks:install` both run that for you). Until a contributor runs
+# one of those, this file simply doesn't execute — same "best-effort local
+# defense, not a hard gate for every clone" posture check-scrub.sh's own
+# header already states.
+#
+# No-ops (exit 0) when .claude/scrub-list.txt doesn't exist — a fresh
+# public clone or CI runner has no scrub list to check against, and
+# check-scrub.sh already encodes that same "absent -> exit 0" contract.
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SCRUB_LIST="${REPO_ROOT}/.claude/scrub-list.txt"
+
+# --- G4 4.2 / D3: handoff shrink guard ---
+# 2026-09-28: a parallel session's `/handoff` overwrote the refactor
+# programme's docs/HANDOFF.md from a shared checkout (see docs/HANDOFF.md's
+# "parallel session collision" note). Blocks a staged docs/HANDOFF.md change
+# that deletes more than half its committed lines while the last commit that
+# touched it is under 24h old — that combination is almost always an
+# overwrite, not an append. Runs unconditionally (independent of the scrub
+# list below). Bypass once with `HANDOFF_OVERWRITE=1 git commit ...`.
+HANDOFF_FILE="docs/HANDOFF.md"
+if git rev-parse --verify -q HEAD >/dev/null 2>&1 \
+  && git diff --cached --name-only | grep -qx "$HANDOFF_FILE" \
+  && git cat-file -e "HEAD:${HANDOFF_FILE}" 2>/dev/null; then
+  read -r hs_added hs_deleted _ <<<"$(git diff --cached --numstat -- "$HANDOFF_FILE")"
+  hs_head_lines="$(git show "HEAD:${HANDOFF_FILE}" | wc -l | tr -d ' ')"
+  if [ -n "${hs_deleted:-}" ] && [ "$hs_deleted" != "-" ] && [ "${hs_head_lines:-0}" -gt 0 ]; then
+    hs_pct=$(( hs_deleted * 100 / hs_head_lines ))
+    if [ "$hs_pct" -gt 50 ]; then
+      hs_last_ts="$(git log -1 --format=%ct -- "$HANDOFF_FILE")"
+      hs_age=$(( $(date +%s) - hs_last_ts ))
+      if [ "$hs_age" -lt 86400 ]; then
+        if [ "${HANDOFF_OVERWRITE:-}" = "1" ]; then
+          echo "pre-commit: WARNING HANDOFF_OVERWRITE=1 — allowing docs/HANDOFF.md to shrink ${hs_pct}% (last commit to it ${hs_age}s ago)" >&2
+        else
+          echo "pre-commit: docs/HANDOFF.md would shrink by ${hs_pct}% (${hs_deleted} of ${hs_head_lines} lines deleted), and the last commit that touched it was ${hs_age}s ago (< 24h) — looks like an overwrite of another session's handoff, not an append." >&2
+          echo "pre-commit: append a dated '## <Session>' section instead, or bypass once with HANDOFF_OVERWRITE=1 git commit ..." >&2
+          exit 1
+        fi
+      fi
+    fi
+  fi
+fi
+
+[ -f "$SCRUB_LIST" ] || exit 0
+
+exec "${REPO_ROOT}/scripts/check-scrub.sh"

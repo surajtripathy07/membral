@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Membral",
+  "version": "0.1.0",
+  "description": "Auto-sync conversations from ChatGPT and Claude.ai into one place",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "alarms",
+    "cookies",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://claude.ai/*",
+    "https://*.claude.ai/*",
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://membral.me/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Membral",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

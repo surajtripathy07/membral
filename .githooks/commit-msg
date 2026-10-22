@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# .githooks/commit-msg — round-3 review HIGH 17 (companion to
+# .githooks/pre-commit). pre-commit only scans the STAGED INDEX (file
+# content); a forbidden string typed straight into the commit message
+# itself (e.g. pasted from a lab transcript while writing a "why" line)
+# would sail past it. This hook scans the commit message text against the
+# same gitignored .claude/scrub-list.txt, using the same format
+# check-scrub.sh reads (blank/`#`-comment/`!`-legacy-prefix lines skipped,
+# everything else an active forbidden string).
+#
+# No-ops (exit 0) when .claude/scrub-list.txt doesn't exist — same
+# best-effort-local-defense contract as check-scrub.sh and pre-commit.
+set -euo pipefail
+
+# Attribution guard: the only attribution a commit carries is the
+# `model: <name> :bot:` line. Reject harness-injected trailers.
+if [ -n "${1:-}" ] && [ -f "$1" ] && grep -qiE '^co-authored-by:|^claude-session:|claude\.ai/code/session_' "$1"; then
+  echo "commit-msg: remove the Co-Authored-By / Claude-Session trailer; use the 'model: <name> :bot:' line only" >&2
+  exit 1
+fi
+
+# --- G4 4.2 / D3: commit subject length guard ---
+# Blocks a first non-blank, non-comment line (the subject) over 72
+# characters. Runs unconditionally, independent of the scrub-list guard
+# below, and checks the message file on every invocation (plain commits,
+# `--amend --no-edit`, merges) — no special-casing. Bypass once with
+# `COMMIT_SUBJECT_OK=1 git commit ...`.
+# Merge commits are exempt: git's default merge subject routinely exceeds 72 chars and isn't typed by the committer (MERGE_HEAD via rev-parse works in linked worktrees too; the "Merge " prefix check is belt-and-braces).
+if [ -n "${1:-}" ] && [ -f "$1" ] && ! git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
+  sl_subject=""
+  while IFS= read -r sl_line || [ -n "$sl_line" ]; do
+    case "$sl_line" in
+      ''|'#'*) continue ;;
+    esac
+    sl_subject="$sl_line"
+    break
+  done < "$1"
+  case "$sl_subject" in
+    "Merge "*) sl_subject="" ;;
+  esac
+  if [ -n "$sl_subject" ]; then
+    sl_len="$(printf '%s' "$sl_subject" | wc -c | tr -d ' ')"
+    if [ "$sl_len" -gt 72 ]; then
+      if [ "${COMMIT_SUBJECT_OK:-}" = "1" ]; then
+        echo "commit-msg: WARNING COMMIT_SUBJECT_OK=1 — allowing a ${sl_len}-char subject (> 72)" >&2
+      else
+        echo "commit-msg: subject is ${sl_len} characters (max 72): ${sl_subject}" >&2
+        echo "commit-msg: shorten it, or bypass once with COMMIT_SUBJECT_OK=1 git commit ..." >&2
+        exit 1
+      fi
+    fi
+  fi
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SCRUB_LIST="${REPO_ROOT}/.claude/scrub-list.txt"
+
+[ -f "$SCRUB_LIST" ] || exit 0
+
+MSG_FILE="${1:-}"
+if [ -z "$MSG_FILE" ] || [ ! -f "$MSG_FILE" ]; then
+  echo "scrub guard (commit-msg): no commit message file passed — skipping" >&2
+  exit 0
+fi
+
+status=0
+lineno=0
+while IFS= read -r line || [ -n "$line" ]; do
+  lineno=$((lineno + 1))
+  case "$line" in
+    ''|'#'*|'!'*) continue ;;
+  esac
+  if grep -qF -- "$line" "$MSG_FILE"; then
+    echo "scrub guard (commit-msg): forbidden string (scrub-list line ${lineno}) found in the commit message." >&2
+    status=1
+  fi
+done < "$SCRUB_LIST"
+
+if [ "$status" -ne 0 ]; then
+  echo "scrub guard: commit blocked. Edit the commit message to remove the flagged content (strings are identified by line number in .claude/scrub-list.txt; never paste them into the message itself)." >&2
+fi
+exit "$status"

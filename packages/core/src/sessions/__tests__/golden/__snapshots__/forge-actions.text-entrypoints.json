@@ -1,0 +1,27 @@
+{
+  "paste-issue-url": {
+    "ref": "acme/billing#16002",
+    "refKind": "issue",
+    "source": "paste",
+    "url": "https://codehub.example/acme/billing/-/issues/16002",
+    "verb": "referenced"
+  },
+  "paste-mr-url": {
+    "ref": "acme/billing!17049",
+    "refKind": "merge_request",
+    "source": "paste",
+    "url": "https://codehub.example/acme/billing/-/merge_requests/17049",
+    "verb": "referenced"
+  },
+  "slash-review-mr": {
+    "action": {
+      "ref": "acme/billing!17049",
+      "refKind": "merge_request",
+      "skill": "review-mr",
+      "source": "command",
+      "url": "https://codehub.example/acme/billing/-/merge_requests/17049",
+      "verb": "referenced"
+    },
+    "text": "/review-mr this is the MR we are reviewing https://codehub.example/acme/billing/-/merge_requests/17049"
+  }
+}

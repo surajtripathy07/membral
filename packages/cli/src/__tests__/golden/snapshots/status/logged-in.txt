@@ -1,0 +1,24 @@
+EXIT: 0
+--- STDOUT ---
+Membral status
+
+Account:
+  signed in as dev@example.test (http://localhost:3000)
+  since 2026-01-01T00:00:00.000Z
+  api url: http://localhost:3000 (from ~/.membral/credentials.json)
+  api key: lls_te… (from ~/.membral/credentials.json)
+  profile: local
+
+Device:
+  golden-test-device (linux) — id 00000000-0000-4000-8000-000000000000
+  <HOME>/.membral/device.json
+
+Sync:
+  <HOME>/.membral/sync.json (updated 2026-01-01T00:00:00.000Z, new projects default ON)
+    claude-code: 1/1 project(s) enabled
+
+Last sweep:
+  last success: 2026-01-01T00:00:00Z
+  runs: 3 (1 since last full walk)
+
+--- STDERR ---

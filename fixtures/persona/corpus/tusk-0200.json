@@ -1,0 +1,39 @@
+{
+  "id": "chatgpt:tusk-0200",
+  "source": "chatgpt",
+  "source_id": "tusk-0200",
+  "title": "naming a baby with a symbol, is it legal",
+  "created_at": "2026-06-26T02:48:35.000Z",
+  "updated_at": "2026-06-26T02:50:27.000Z",
+  "model": "gpt-4o",
+  "messages": [
+    {
+      "role": "user",
+      "content": "can i legally name my next kid Δ-9 or ‽ need loophole",
+      "timestamp": "2026-06-26T02:48:35.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "Naming laws vary widely by jurisdiction. In the U.S., many states allow a range of creativity, but specific symbols like 'Δ' or '‽' might not be allowed on birth certificates due to limitations on character sets. California, for example, restricts names to the 26 letters of the alphabet, but other states like New York might be more flexible. You could potentially use a symbol colloquially while having a traditional name on the legal documents. Check specific state laws or consider creative spellings as a workaround!",
+      "timestamp": "2026-06-26T02:50:27.000Z",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "synthetic": true,
+    "persona": "elon-tusk",
+    "generator": "fixtures/persona/generate.ts",
+    "seed": {
+      "life_areas": [
+        "Fatherhood"
+      ],
+      "purpose": "quick-lookup",
+      "depth": "quick",
+      "arc_refs": [
+        "fatherhood"
+      ]
+    }
+  },
+  "synced_at": "2026-07-01T00:00:00.000Z"
+}

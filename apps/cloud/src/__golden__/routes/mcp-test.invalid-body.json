@@ -1,0 +1,8 @@
+{
+  "status": 400,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"ok\":false,\"error\":\"Provide an lls_ API key to test.\"}"
+}

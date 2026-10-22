@@ -1,0 +1,54 @@
+[
+  {
+    "seq": 1,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props",
+      "modifiers": [
+        "order.started_at.asc",
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null",
+      "gte.started_at=\"2025-11-02T00:00:00.000Z\"",
+      "not.started_at.is=null"
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id",
+      "modifiers": [
+        "count.exact.head"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null"
+    ]
+  },
+  {
+    "seq": 3,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props",
+      "modifiers": [
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null",
+      "gte.started_at=\"2025-11-02T00:00:00.000Z\"",
+      "is.started_at=null"
+    ]
+  }
+]

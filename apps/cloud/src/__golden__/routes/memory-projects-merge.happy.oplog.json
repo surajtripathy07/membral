@@ -1,0 +1,14 @@
+[
+  {
+    "seq": 1,
+    "table": "project_aliases",
+    "op": "upsert",
+    "payload": {
+      "user_id": "00000000-0000-4000-8000-00000000c0de",
+      "canonical": "acme/webapp",
+      "alias": "acme/webapp-fork",
+      "source": "manual"
+    },
+    "onConflict": "user_id,alias"
+  }
+]

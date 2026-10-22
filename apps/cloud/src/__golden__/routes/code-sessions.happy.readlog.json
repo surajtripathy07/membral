@@ -1,0 +1,227 @@
+[
+  {
+    "seq": 1,
+    "table": "profiles",
+    "op": "select",
+    "payload": {
+      "columns": "id, api_key_scope_node_id, api_key_scope_code_project_id",
+      "modifiers": [
+        "single"
+      ]
+    },
+    "filters": [
+      "eq.api_key_hash=\"a8abdf10a4b03162bd408d337e60ab3ab2df8572b76115e8fff18079f0656e36\""
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, content_hash, code_project_id, props",
+      "modifiers": [
+        "maybeSingle"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.source=\"claude-code\"",
+      "eq.source_session_id=\"sess-gamma\""
+    ]
+  },
+  {
+    "seq": 3,
+    "table": "code_projects",
+    "op": "select",
+    "payload": {
+      "columns": "id",
+      "modifiers": [
+        "maybeSingle"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.repo_identity=\"codehub.example/acme/webapp\""
+    ]
+  },
+  {
+    "seq": 4,
+    "table": "code_projects",
+    "op": "select",
+    "payload": {
+      "columns": "repo_identity",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 5,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id",
+      "modifiers": [
+        "count.exact.head"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.code_project_id=\"5eed0000-0000-4000-8000-000000000001\"",
+      "is.parent_source_session_id=null"
+    ]
+  },
+  {
+    "seq": 6,
+    "table": "code_projects",
+    "op": "select",
+    "payload": {
+      "columns": "last_active_at, props",
+      "modifiers": [
+        "maybeSingle"
+      ]
+    },
+    "filters": [
+      "eq.id=\"5eed0000-0000-4000-8000-000000000001\""
+    ]
+  },
+  {
+    "seq": 7,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, source_session_id",
+      "modifiers": [
+        "maybeSingle"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.id=\"9e4e0000-0000-4000-8000-000000000001\""
+    ]
+  },
+  {
+    "seq": 8,
+    "table": "memory_recall_events",
+    "op": "select",
+    "payload": {
+      "columns": "id, tool, surface, recall_token, record_ids, served_at, code_session_id, harness_session_id",
+      "modifiers": [
+        "order.served_at.asc",
+        "limit.500"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "or(code_session_id.eq.9e4e0000-0000-4000-8000-000000000001,harness_session_id.eq.\"sess-gamma\")"
+    ]
+  },
+  {
+    "seq": 9,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "source_session_id",
+      "modifiers": [
+        "maybeSingle"
+      ]
+    },
+    "filters": [
+      "eq.id=\"9e4e0000-0000-4000-8000-000000000001\"",
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 10,
+    "table": "session_memories",
+    "op": "select",
+    "payload": {
+      "columns": "id, text, resolution_quote, retired_at",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.retire_reason=\"agent_resolved\"",
+      "eq.resolved_by_harness_session_id=\"sess-gamma\"",
+      "is.resolved_by_session_id=null"
+    ]
+  },
+  {
+    "seq": 11,
+    "table": "code_session_turns",
+    "op": "select",
+    "payload": {
+      "columns": "idx, ts, kind, tool_name, props",
+      "modifiers": [
+        "order.idx.asc",
+        "range.0.999"
+      ]
+    },
+    "filters": [
+      "eq.session_id=\"9e4e0000-0000-4000-8000-000000000001\"",
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.tool_name=[\"mcp__membral__memory_resolve\",\"memory_resolve\",\"membral_memory_resolve\"]"
+    ]
+  },
+  {
+    "seq": 12,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, user_id, code_project_id, git_branch, cwd, model, started_at, ended_at, title, summary, content_hash",
+      "modifiers": [
+        "order.id.asc",
+        "range.0.999"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null",
+      "in.id=[\"9e4e0000-0000-4000-8000-000000000001\"]"
+    ]
+  },
+  {
+    "seq": 13,
+    "table": "code_projects",
+    "op": "select",
+    "payload": {
+      "columns": "id, display_name, repo_identity",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.id=[\"5eed0000-0000-4000-8000-000000000001\"]"
+    ]
+  },
+  {
+    "seq": 14,
+    "table": "conversations",
+    "op": "select",
+    "payload": {
+      "columns": "id, source_id, title, messages, metadata",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.source=\"claude-code\"",
+      "in.source_id=[\"9e4e0000-0000-4000-8000-000000000001\"]"
+    ]
+  },
+  {
+    "seq": 15,
+    "table": "code_session_turns",
+    "op": "select",
+    "payload": {
+      "columns": "idx, role, kind, text, tool_name, file_path, ts",
+      "modifiers": [
+        "order.idx.asc",
+        "range.0.999"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.session_id=\"9e4e0000-0000-4000-8000-000000000001\""
+    ]
+  }
+]

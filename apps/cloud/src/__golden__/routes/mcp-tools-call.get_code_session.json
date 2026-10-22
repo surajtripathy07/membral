@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "cache-control": "no-cache",
+    "content-type": "text/event-stream"
+  },
+  "afterCalls": 1,
+  "body": "event: message\ndata: {\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"id\\\":\\\"5eed0000-0000-4000-8000-000000000002\\\",\\\"cwd\\\":\\\"/work/webapp\\\",\\\"model\\\":\\\"claude-sonnet\\\",\\\"title\\\":\\\"Add a login button (sess-alpha)\\\",\\\"turns\\\":[{\\\"ts\\\":\\\"2025-12-20T10:00:00+00:00\\\",\\\"idx\\\":0,\\\"kind\\\":\\\"prose\\\",\\\"role\\\":\\\"user\\\",\\\"text\\\":\\\"Add a login button (sess-alpha)\\\",\\\"file_path\\\":null,\\\"tool_name\\\":null},{\\\"ts\\\":\\\"2025-12-20T10:01:00+00:00\\\",\\\"idx\\\":1,\\\"kind\\\":\\\"tool_use\\\",\\\"role\\\":\\\"assistant\\\",\\\"text\\\":null,\\\"file_path\\\":\\\"/work/webapp/src/App.tsx\\\",\\\"tool_name\\\":\\\"Edit\\\"},{\\\"ts\\\":\\\"2025-12-20T10:04:00+00:00\\\",\\\"idx\\\":2,\\\"kind\\\":\\\"prose\\\",\\\"role\\\":\\\"assistant\\\",\\\"text\\\":\\\"Done. Opened PR #7.\\\",\\\"file_path\\\":null,\\\"tool_name\\\":null}],\\\"source\\\":\\\"claude-code\\\",\\\"summary\\\":null,\\\"ended_at\\\":\\\"2025-12-20T10:05:00+00:00\\\",\\\"git_branch\\\":\\\"main\\\",\\\"started_at\\\":\\\"2025-12-20T10:00:00+00:00\\\",\\\"sub_agents\\\":[],\\\"tool_count\\\":1,\\\"turn_count\\\":3,\\\"files_touched\\\":[\\\"/work/webapp/src/App.tsx\\\"],\\\"code_project_id\\\":\\\"5eed0000-0000-4000-8000-000000000001\\\",\\\"user_turn_count\\\":1,\\\"duration_seconds\\\":300,\\\"sub_agents_total\\\":0,\\\"parent_session_id\\\":null,\\\"total_turns\\\":3,\\\"total_chars\\\":199,\\\"returned\\\":{\\\"start\\\":0,\\\"end\\\":3},\\\"next_start\\\":null}\"}],\"freshness\":null},\"jsonrpc\":\"2.0\",\"id\":3}\n\n"
+}

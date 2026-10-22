@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"ok\":true,\"id\":\"5eed0000-0000-4000-8000-000000000104\",\"reason\":\"resolved\",\"ids\":[\"5eed0000-0000-4000-8000-000000000104\"]}"
+}

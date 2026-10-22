@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"ok\":true,\"ref\":\"42\",\"kind\":\"issue\",\"reason\":\"not_delivery_item\",\"already\":true,\"dismissal_id\":\"9e4e0000-0000-4000-8000-000000000001\"}"
+}

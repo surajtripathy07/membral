@@ -1,0 +1,35 @@
+{
+  "id": "chatgpt:tusk-0149",
+  "source": "chatgpt",
+  "source_id": "tusk-0149",
+  "title": "write a limerick about a very tired CEO",
+  "created_at": "2026-03-20T17:41:29.000Z",
+  "updated_at": "2026-03-20T17:43:33.000Z",
+  "model": "gpt-4o",
+  "messages": [
+    {
+      "role": "user",
+      "content": "write me a limerick about a very tired CEO no reason just bored",
+      "timestamp": "2026-03-20T17:41:29.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "There once was a CEO, quite spent,\nWhose energy reserves were all but rent.\nHe dreamed of a nap,\nIn a comfy beanbag's lap,\nBut kept running on caffeine's cruel intent.",
+      "timestamp": "2026-03-20T17:43:33.000Z",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "synthetic": true,
+    "persona": "elon-tusk",
+    "generator": "fixtures/persona/generate.ts",
+    "seed": {
+      "life_areas": [],
+      "purpose": "writing-help",
+      "depth": "quick",
+      "arc_refs": []
+    }
+  },
+  "synced_at": "2026-07-01T00:00:00.000Z"
+}

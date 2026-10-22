@@ -1,0 +1,52 @@
+[
+  {
+    "seq": 1,
+    "table": "session_memories",
+    "op": "update",
+    "payload": {
+      "retired_at": "2026-01-01T00:00:00.000Z",
+      "retire_reason": "user_resolved"
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.id=[\"5eed0000-0000-4000-8000-000000000104\"]",
+      "is.retired_at=null"
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "session_memories",
+    "op": "update",
+    "payload": {
+      "retired_at": null,
+      "retire_reason": null,
+      "resolution_quote": null,
+      "resolution_turn_idx": null,
+      "resolved_by_session_id": null,
+      "resolved_by_harness_session_id": null
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.id=[\"5eed0000-0000-4000-8000-000000000104\"]",
+      "in.retire_reason=[\"user_resolved\",\"user_ignored\",\"user_resolved:carried\",\"user_ignored:carried\",\"agent_resolved\",\"agent_resolved:carried\"]"
+    ]
+  },
+  {
+    "seq": 3,
+    "table": "session_memories",
+    "op": "update",
+    "payload": {
+      "retired_at": null,
+      "retire_reason": null,
+      "resolution_quote": null,
+      "resolution_turn_idx": null,
+      "resolved_by_session_id": null,
+      "resolved_by_harness_session_id": null
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.recurs_of=[\"5eed0000-0000-4000-8000-000000000104\"]",
+      "in.retire_reason=[\"user_resolved\",\"user_ignored\",\"user_resolved:carried\",\"user_ignored:carried\",\"agent_resolved\",\"agent_resolved:carried\"]"
+    ]
+  }
+]

@@ -1,0 +1,64 @@
+[
+  {
+    "seq": 1,
+    "table": "sync_heartbeats",
+    "op": "select",
+    "payload": {
+      "columns": "source, last_run_at, last_item_at",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "conversations",
+    "op": "select",
+    "payload": {
+      "columns": "updated_at",
+      "modifiers": [
+        "count.exact",
+        "order.updated_at.desc.nullslast",
+        "limit.1"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.source=\"claude\""
+    ]
+  },
+  {
+    "seq": 3,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "source, started_at, code_project_id",
+      "modifiers": [
+        "order.id.asc",
+        "range.0.999"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null"
+    ]
+  },
+  {
+    "seq": 4,
+    "table": "conversations",
+    "op": "select",
+    "payload": {
+      "columns": "updated_at",
+      "modifiers": [
+        "count.exact",
+        "order.updated_at.desc.nullslast",
+        "limit.1"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.source=\"chatgpt\""
+    ]
+  }
+]

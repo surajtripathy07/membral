@@ -1,0 +1,8 @@
+{
+  "status": 500,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Search failed\",\"detail\":\"Search failed: boundary: search rpc failed\"}"
+}

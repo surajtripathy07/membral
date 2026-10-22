@@ -1,0 +1,13 @@
+{
+  "status": 400,
+  "headers": {
+    "access-control-allow-headers": "Authorization, Content-Type",
+    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-origin": "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "access-control-max-age": "86400",
+    "content-type": "application/json",
+    "vary": "Origin"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Request body includes 501 conversations — the per-request limit is 500. Split the batch into smaller requests and retry.\"}"
+}

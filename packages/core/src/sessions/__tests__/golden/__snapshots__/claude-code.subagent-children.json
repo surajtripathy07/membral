@@ -1,0 +1,78 @@
+[
+  {
+    "actionsVersion": 2,
+    "contentHash": "25a7abaf04ce68b1dda66fa7871eba0fa5ddcf247f2cad5f91974256abc0129d",
+    "endedAt": "2026-02-01T00:00:13.000Z",
+    "filesTouched": [
+      "/home/dev/acme-webapp/src/tests/health.test.ts"
+    ],
+    "model": "codehub-model-2",
+    "models": [
+      "codehub-model-2"
+    ],
+    "parentSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "repo": {
+      "branch": "main",
+      "path": "/home/dev/acme-webapp"
+    },
+    "source": "claude-code",
+    "sourceSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa:agent-55555555-5555-4555-8555-555555555555",
+    "startedAt": "2026-02-01T00:00:12.500Z",
+    "subAgent": {
+      "agentId": "55555555-5555-4555-8555-555555555555",
+      "agentType": "general-purpose",
+      "description": "Investigate the flaky checkout test root cause",
+      "isFork": false,
+      "model": "codehub-model-2",
+      "spawnDepth": 1,
+      "toolUseId": "toolu_agent1",
+      "usage": {
+        "cacheCreationInputTokens": 60,
+        "cacheReadInputTokens": 13000,
+        "inputTokens": 450,
+        "outputTokens": 180
+      }
+    },
+    "toolCounts": {
+      "Read": 1
+    },
+    "turns": [
+      {
+        "idx": 0,
+        "kind": "prose",
+        "role": "user",
+        "text": "Investigate the flaky checkout test root cause",
+        "ts": "2026-02-01T00:00:12.500Z"
+      },
+      {
+        "idx": 1,
+        "kind": "prose",
+        "role": "assistant",
+        "text": "Looking at the test timing.",
+        "ts": "2026-02-01T00:00:12.600Z"
+      },
+      {
+        "filePath": "/home/dev/acme-webapp/src/tests/health.test.ts",
+        "idx": 2,
+        "kind": "tool_use",
+        "role": "assistant",
+        "toolName": "Read",
+        "toolUseId": "subtoolu_read1",
+        "ts": "2026-02-01T00:00:12.700Z"
+      },
+      {
+        "idx": 3,
+        "kind": "prose",
+        "role": "assistant",
+        "text": "Root cause found: a race in the setup hook.",
+        "ts": "2026-02-01T00:00:13.000Z"
+      }
+    ],
+    "usage": {
+      "cacheCreationInputTokens": 60,
+      "cacheReadInputTokens": 13000,
+      "inputTokens": 450,
+      "outputTokens": 180
+    }
+  }
+]

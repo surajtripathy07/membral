@@ -1,0 +1,15 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral import <file.json> [--api-url <url>] [--api-key <key>]
+
+Import a ChatGPT or Claude.ai export file — a conversations.json export
+(detected automatically), uploaded in batches of 100 with a progress line.
+A .zip export isn't unzipped automatically; extract conversations.json
+first (the command prints the exact steps if it sees one).
+
+Flags
+  --api-url <url>   Overrides the default API URL
+  --api-key <key>   Overrides the saved/env credentials for this run
+
+--- STDERR ---

@@ -1,0 +1,38 @@
+[
+  {
+    "seq": 1,
+    "table": "rate_limit_check",
+    "op": "rpc",
+    "payload": {
+      "p_key": "deviceAuthStart:ip:203.0.113.7",
+      "p_limit": 30,
+      "p_window_seconds": 60
+    }
+  },
+  {
+    "seq": 2,
+    "table": "device_auth_requests",
+    "op": "update",
+    "payload": {
+      "status": "expired",
+      "pending_api_key": null
+    },
+    "filters": [
+      "eq.status=\"approved\"",
+      "lt.approved_at=\"2025-12-31T23:55:00.000Z\""
+    ]
+  },
+  {
+    "seq": 3,
+    "table": "device_auth_requests",
+    "op": "insert",
+    "payload": {
+      "device_code_hash": "f8472f6ce875c1842d0efe3793684f4ece4fa84cfaa9f0644ad7a000f1fb2067",
+      "user_code": "4567-89AB",
+      "device_id": "5eed0000-0000-4000-8000-000000000400",
+      "device_name": "golden-laptop",
+      "device_platform": "darwin",
+      "expires_at": "2026-01-01T00:10:00.000Z"
+    }
+  }
+]

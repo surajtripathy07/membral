@@ -1,0 +1,21 @@
+EXIT: 0
+--- STDOUT ---
+Membral status
+
+Account:
+  using an API key from the MEMBRAL_API_KEY environment variable — not from `membral login`
+  api url: http://localhost:3000 (from ~/.membral/credentials.json)
+  api key: lls_en… (from the MEMBRAL_API_KEY environment variable)
+  profile: local
+
+Device:
+  golden-test-device (linux) — id 00000000-0000-4000-8000-000000000000
+  <HOME>/.membral/device.json
+
+Sync:
+  not configured (<HOME>/.membral/sync.json not found — every project syncs)
+
+Last sweep:
+  no successful sweep yet (<HOME>/.membral/sweep-state.json)
+
+--- STDERR ---

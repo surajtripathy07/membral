@@ -1,0 +1,9 @@
+{
+  "status": 400,
+  "headers": {
+    "content-type": "application/json",
+    "x-request-id": "00000000-0000-4000-a000-000000000001"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Empty upload\"}"
+}

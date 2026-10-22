@@ -1,0 +1,42 @@
+{
+  "estimated": true,
+  "open": [],
+  "recent": [
+    {
+      "closure": null,
+      "cost_est_total": 0,
+      "estimated": true,
+      "ladder": {
+        "build_verb": null,
+        "discussed": true,
+        "review_verb": null,
+        "triaged": false
+      },
+      "last_seen_at": "2026-06-13T06:59:59.451Z",
+      "open": false,
+      "ref": "github.com/example-org/example-repo#1",
+      "refKind": "merge_request",
+      "sessions": [
+        {
+          "at": "2026-06-13T06:59:59.451Z",
+          "build_verb": null,
+          "cost_est": 0,
+          "ended_at": "2026-06-13T07:00:14.337Z",
+          "id": "fa4e0000-0000-4000-8000-000000000002",
+          "proof_session_id": "fa4e0000-0000-4000-8000-000000000002",
+          "review_verb": null,
+          "role": "worked_on",
+          "session_cost_usd": 0.276585,
+          "share": 0,
+          "started_at": "2026-06-13T06:54:38.320Z",
+          "tier": "discussed",
+          "turn_idx": 1
+        }
+      ],
+      "title": "github.com/example-org/example-repo#1",
+      "url": "https://github.com/example-org/example-repo/pull/1"
+    }
+  ],
+  "recurring_blockers": [],
+  "window_days": 30
+}

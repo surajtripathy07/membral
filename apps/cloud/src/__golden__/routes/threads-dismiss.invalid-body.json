@@ -1,0 +1,8 @@
+{
+  "status": 400,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"ref (non-empty string), kind ('issue' | 'merge_request') and reason ('resolved_elsewhere' | 'not_delivery_item') are required\"}"
+}

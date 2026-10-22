@@ -1,0 +1,5 @@
+{
+  "message": "Session root not found or unreadable: /golden/fixture-root/does-not-exist",
+  "name": "SessionRootUnreadableError",
+  "root": "/golden/fixture-root/does-not-exist"
+}

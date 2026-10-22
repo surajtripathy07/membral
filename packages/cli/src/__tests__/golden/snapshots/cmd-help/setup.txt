@@ -1,0 +1,51 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral setup [--api-url <url>] [--api-key <key>] [--yes] [--exclude 1,3]
+                [--device-name <name>] [--dry-run] [--copilot] [--copilot-cli] [--agy]
+
+Set up this machine — sign in, choose what syncs, run the first import.
+
+  1. Sign in through the browser (skipped if already signed in or --api-key
+     is given).
+  2. Confirm this machine's device name — prompts unless --device-name,
+     MEMBRAL_DEVICE_NAME, or --yes is given.
+  3. Scan for coding harnesses (Claude Code, Codex, opencode, Copilot CLI,
+     Antigravity) on this
+     machine.
+  4. Choose what syncs — in a terminal, a checklist of the scanned
+     projects (checked unless sync.json already excludes them; space
+     toggles, a toggles all, enter confirms, arrows or j/k move). With piped stdin, a "[Y/n] or numbers to
+     exclude" line instead. Skipped with --yes (sync everything) or
+     --exclude (comma-separated numbers from the printed table).
+     Written to ~/.membral/sync.json.
+  5. Run the first import.
+  6. Configure MCP for any detected AI tools.
+
+Flags
+  --api-url <url>       Overrides the default API URL
+  --api-key <key>       Skips interactive sign-in
+  --yes                 Accept every default without prompting
+  --exclude <1,3,...>   Numbers from the scan table to exclude from sync
+  --device-name <name>  Name this machine (also MEMBRAL_DEVICE_NAME)
+  --dry-run             Preview every step, write nothing
+  --no-sweep            Don't schedule the backstop sweep (launchd/systemd/cron)
+  --no-prompt-recall    Don't send prompts for related past work (removes the
+                        Claude Code UserPromptSubmit hook; remembered)
+  --prompt-recall       Turn prompt recall back on
+  --copilot             Also commit Copilot config into this repo for teammates
+                        (.vscode/mcp.json, .github/copilot-instructions.md)
+  --copilot-cli         Install the Copilot CLI hooks + MCP even if Copilot is not detected
+  --agy                 Install the Antigravity hooks + MCP even if Antigravity is not detected
+
+Also installs the Claude Code hooks, the opencode capture plugin
+(~/.config/opencode/plugin/membral.js) and MCP for Claude Code/opencode. When the
+Copilot CLI or VS Code is installed, it sets up Copilot for every repo: the
+~/.copilot hooks + MCP and ~/.copilot/instructions/membral.instructions.md.
+When Codex is installed, it writes [mcp_servers.membral] to
+~/.codex/config.toml, a SessionStart preamble hook to ~/.codex/hooks.json
+and a Membral block in ~/.codex/AGENTS.md (all under $CODEX_HOME if set).
+
+Idempotent — running it again mostly just prints current status.
+
+--- STDERR ---

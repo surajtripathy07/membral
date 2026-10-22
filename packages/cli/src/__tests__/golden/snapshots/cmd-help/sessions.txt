@@ -1,0 +1,38 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral sessions [--root <dir>] [--since <ISO date>] [--all]
+                   [--dry-run] [--source claude-code] [--force] [--full] [--api-url <url>]
+                   [--api-key <key>]
+
+Upload this machine's coding-agent session transcripts — walks
+~/.claude/projects/**/*.jsonl (default root) and pushes them in batches.
+Honors ~/.membral/sync.json: a project marked enabled:false there is
+skipped, same as the always-on agent's sweep and the SessionEnd hook.
+
+Only the last 30 days are uploaded by default (older sessions yield no
+memories and cost storage); pass --all or --since <date> for older history.
+
+Resumes automatically: before uploading, asks the server which sessions it
+already has unchanged (same turn count and end time) and skips them, so a
+run interrupted by a crash or Ctrl-C, or run again on a new machine, only
+sends what the server is missing.
+
+Flags
+  --root <dir>      Overrides the source's default root (requires --source)
+  --since <date>    Only sessions active since this ISO date (overrides the
+                     30-day default window)
+  --all             Upload all history, not just the last 30 days
+  --dry-run         Preview without uploading
+  --source <name>   claude-code, opencode, copilot-cli, codex or agy (default: all)
+  --force           Re-parse and re-upload every session in scope, even
+                     unchanged ones (implies --full; server overwrites and
+                     re-queues memory extraction)
+  --full            Skip the already-uploaded check and re-send every
+                     session in scope, even ones already uploaded
+                     (unlike --force, does not force a server-side
+                     re-parse of sessions it already has unchanged)
+  --api-url <url>   Overrides the default API URL
+  --api-key <key>   Overrides the saved/env credentials for this run
+
+--- STDERR ---

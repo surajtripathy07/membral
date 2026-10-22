@@ -1,0 +1,13 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral prompt-hook [--api-url <url>] [--api-key <key>]
+
+Not for interactive use — this is the command setup wires into Claude
+Code's UserPromptSubmit hook. Reads the hook's JSON off stdin, sends the
+prompt to your Membral server, and prints up to three past records about
+what the prompt names as UserPromptSubmit additionalContext. Skips slash
+commands and prompts under four words. Never exits non-zero, never takes
+more than about 2 seconds, never prints anything on any failure.
+
+--- STDERR ---

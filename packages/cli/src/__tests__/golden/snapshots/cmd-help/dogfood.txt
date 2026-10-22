@@ -1,0 +1,22 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral dogfood digest [--post] [--issue <n>] [--repo owner/name]
+  membral dogfood candidates --out <path> [--days <n>]
+
+"Membral on Membral": how recall did on your own sessions.
+
+digest prints this week's markdown digest (served, used, contradicted,
+empty searches, prompt-hook budget hits, feedback counts and the latest ten
+feedback quotes with session links). --post adds it as a comment on the
+rolling issue with `gh issue comment` (gh must be on PATH).
+
+candidates appends served records your sessions contradicted (id, text,
+quote, session link, contradicted-at) to a JSON array file, deduped by id.
+It refuses a path that looks like a frozen bench or hold-out set.
+
+The sweep runs both at most once per ISO week when ~/.membral/config.json
+sets "dogfood": {"issue": <n>, "repo": "owner/name"} and/or
+"dogfood": {"candidatesPath": "<path>"}. Off when unset.
+
+--- STDERR ---

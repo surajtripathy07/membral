@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["sin1"],
+  "installCommand": "cd ../.. && npm install",
+  "buildCommand": "cd ../.. && npx turbo build --filter=@membral/cloud",
+  "functions": {
+    "src/app/api/import/route.ts": { "maxDuration": 300 },
+    "src/app/api/import/upload/route.ts": { "maxDuration": 300 },
+    "src/app/api/sync/**/route.ts": { "maxDuration": 300 },
+    "src/app/api/code-sessions/**/route.ts": { "maxDuration": 120 },
+    "src/app/api/memory/extract-next/route.ts": { "maxDuration": 300 },
+    "src/app/api/internal/cron/memory-extraction/route.ts": { "maxDuration": 300 },
+    "src/app/api/account/**/route.ts": { "maxDuration": 300 }
+  },
+  "crons": [
+    { "path": "/api/internal/cron/memory-extraction", "schedule": "30 3 * * *" }
+  ]
+}

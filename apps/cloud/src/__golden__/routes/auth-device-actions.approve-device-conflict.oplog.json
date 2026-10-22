@@ -1,0 +1,12 @@
+[
+  {
+    "seq": 1,
+    "table": "rate_limit_check",
+    "op": "rpc",
+    "payload": {
+      "p_key": "keys:user:00000000-0000-4000-8000-00000000c0de",
+      "p_limit": 10,
+      "p_window_seconds": 60
+    }
+  }
+]

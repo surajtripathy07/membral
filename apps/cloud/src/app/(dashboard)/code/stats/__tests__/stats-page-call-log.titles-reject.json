@@ -1,0 +1,126 @@
+[
+  [
+    "createClient",
+    []
+  ],
+  [
+    "supabase.auth.getUser",
+    []
+  ],
+  [
+    "selectAllSessionsByKeyset",
+    [
+      "window"
+    ]
+  ],
+  [
+    "aggregateAgentStats",
+    [
+      [
+        {
+          "id": "sess-1",
+          "started_at": "2026-09-01T00:00:00.000Z",
+          "turn_count": 5,
+          "user_turn_count": 3,
+          "props": {}
+        }
+      ],
+      {
+        "tz": "UTC",
+        "startDate": "2026-08-29",
+        "endDate": "2026-09-28"
+      }
+    ]
+  ],
+  [
+    "selectAllSessionsByKeyset",
+    [
+      "prior"
+    ]
+  ],
+  [
+    "aggregateAgentStats",
+    [
+      [],
+      {
+        "tz": "UTC",
+        "startDate": "2026-07-30",
+        "endDate": "2026-08-29"
+      }
+    ]
+  ],
+  [
+    "getRecentSessionsForStats",
+    [
+      "user-1",
+      "2026-08-29T05:55:05.736Z",
+      15
+    ]
+  ],
+  [
+    "getSessionTurnsForOutcomes",
+    [
+      "user-1",
+      [
+        "sess-1",
+        "sess-2"
+      ]
+    ]
+  ],
+  [
+    "selectAllByIdKeyset",
+    [
+      "code_session_issues"
+    ]
+  ],
+  [
+    "parseCommitEvents",
+    [
+      []
+    ]
+  ],
+  [
+    "groupCommitEventsBySession",
+    [
+      [],
+      []
+    ]
+  ],
+  [
+    "getSessionTitles",
+    [
+      "user-1",
+      [
+        "sess-1",
+        "sess-2"
+      ]
+    ]
+  ],
+  [
+    "aggregateAgentStats",
+    [
+      [
+        {
+          "id": "sess-1",
+          "started_at": "2026-09-01T00:00:00.000Z",
+          "turn_count": 5,
+          "user_turn_count": 3,
+          "props": {}
+        }
+      ],
+      {
+        "tz": "UTC",
+        "startDate": "2026-08-29",
+        "endDate": "2026-09-28"
+      }
+    ]
+  ],
+  [
+    "emptySessionOutcome",
+    []
+  ],
+  [
+    "emptySessionOutcome",
+    []
+  ]
+]

@@ -1,0 +1,9 @@
+{
+  "status": 429,
+  "headers": {
+    "content-type": "application/json",
+    "retry-after": "42"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Rate limit exceeded\",\"retry_after\":42}"
+}

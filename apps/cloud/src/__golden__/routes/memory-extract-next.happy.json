@@ -1,0 +1,8 @@
+{
+  "status": 202,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 1,
+  "body": "{\"accepted\":true}"
+}

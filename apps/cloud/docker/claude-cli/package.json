@@ -1,0 +1,8 @@
+{
+  "name": "membral-claude-cli",
+  "private": true,
+  "description": "Pins the Claude Code CLI that the local-only claude-code provider downloads from npm on first start. Not bundled in the image.",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.288"
+  }
+}

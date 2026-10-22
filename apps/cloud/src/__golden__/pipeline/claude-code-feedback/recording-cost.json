@@ -1,0 +1,7 @@
+{
+  "model": "claude-code/sonnet",
+  "calls": 4,
+  "tokens_in": 14869,
+  "tokens_out": 365,
+  "usd": 0
+}

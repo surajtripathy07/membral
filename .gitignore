@@ -1,0 +1,150 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.turbo/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+# issue #126 verification finding 9: a negation here USED to un-ignore
+# apps/cloud/supabase/.env — the exact canonical path Supabase's own docs
+# tell you to put SECRETS in for config.toml's env(...) substitutions (see
+# `openai_api_key = "env(OPENAI_API_KEY)"` etc. in config.toml). Today's
+# content there is non-secret (two localhost URLs), but leaving that path
+# permanently un-ignored means the next person who follows Supabase's docs
+# and adds a real secret to it commits that secret with no warning. Fixed
+# (issue #12's original need — committed local-dev defaults for
+# config.toml's env(SUPABASE_SITE_URL)/env(SUPABASE_ADDITIONAL_REDIRECT_URL))
+# by committing apps/cloud/supabase/.env.example instead (see its header) and
+# leaving supabase/.env itself covered by the blanket `.env` rule above, same
+# as every other real secrets file in this repo.
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# scripts/ci-local.sh receipts (D-060), one per commit
+.ci-local/
+
+# Playwright (npm run smoke — smoke/**)
+smoke/playwright-report/
+smoke/test-results/
+smoke/blob-report/
+
+# Supabase
+supabase/.temp/
+
+# SQLite
+*.sqlite3
+*.sqlite3-journal
+
+# Private working files
+private/
+handoff*
+# The one tracked, overwritten-not-accumulated handoff file (see CLAUDE.md).
+!docs/HANDOFF.md
+
+# Local audit / design working docs — contain quarantined L1 personal data (INV-9). Never track.
+AUDIT.md
+SCAFFOLDING-DESIGN.md
+
+# Beads (task tracking)
+.beads/
+
+# Internal working files (planning, agent scaffolding)
+.claude/*
+.opencode/
+.omo/
+PRD.md
+LOCAL_DEV.md
+
+# Local screenshot / debug helpers
+screenshot.mjs
+screenshot-auth.mjs
+screenshot-search.mjs
+debug.mjs
+tools/
+
+# Logs
+*.log
+logs/
+
+# Build info caches
+*.tsbuildinfo
+
+# Extension build artifacts
+packages/extension/dist/
+
+# MCP local data
+~/.membral/
+
+# Local data exports
+data/
+
+# Spike-k89 throwaway run logs (contain corpus-level signal; never commit)
+apps/cloud/scripts/spike-k89/output/
+
+# Eval harness run output (docs/eval/): raw tool responses + filled-in scores are
+# personal-corpus data. Only docs/eval/{README,TEMPLATE-questions,rubric,run-log}
+# are public; everything under eval-runs/ stays local. Never commit.
+eval-runs/
+
+# L1 scrub (membral-608): design screenshots that visually render the founder's
+# real graph (employer/manager/coworker names, real corpus count). Text-based
+# design files were redacted in place; these are pixels — quarantined instead.
+design/uploads/Screenshot 2026-06-16 at 5.12.09 PM.png
+design/screens/01-map.png
+design/screens/03-pulse.png
+design/screens/03-v.png
+design/screens/connected2.png
+
+# Design Lab scratch (redundant bundle + thumbnail; extracted HTML/screens are committed)
+design/*.zip
+design/.thumbnail
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+
+# Prompt-iteration lab (apps/cloud/scripts/kg/prompt-lab): transcripts/ holds real
+# founder-corpus conversation exports (personal data, never commit); prompt.txt is
+# the maintainer's scratch working copy of CLAIMS_PROMPT_BLOCK, regenerated via
+# `--export` — the production source of truth stays claims.ts. README.md and run.ts
+# themselves ARE committed.
+apps/cloud/scripts/kg/prompt-lab/transcripts/
+apps/cloud/scripts/kg/prompt-lab/prompt.txt
+.vercel
+
+# Extension zip + manifest.json (round-3 review LOW 32: this comment used
+# to say "built from packages/extension/dist" — package-extension.mjs
+# actually builds into an isolated temp dir and never reads that path, see
+# its own header) built at `next build` time (issue #127, apps/cloud/
+# scripts/package-extension.mjs) — build artifacts, never hand-edited or
+# reviewed as source. manifest.json (round-3 review HIGH 11) records
+# whether the zip is available for apps/cloud/src/app/setup/page.tsx to
+# read at build time.
+apps/cloud/public/downloads/*.zip
+apps/cloud/public/downloads/manifest.json
+
+# CLI install tarball (goal P5, packages/cli/scripts/pack.mjs) — built at
+# `next build` time by apps/cloud's `prebuild` script and served at
+# /membral-cli.tgz for `npm i -g https://membral.me/membral-cli.tgz`. A
+# build artifact, never hand-edited; the default staging output of running
+# pack.mjs directly is gitignored too.
+apps/cloud/public/membral-cli.tgz
+packages/cli/dist-pack/

@@ -1,0 +1,346 @@
+{
+  "chained-add-commit-push": {
+    "actions": [
+      {
+        "dir": "/home/dev/acme-webapp",
+        "source": "cli",
+        "verb": "navigated"
+      },
+      {
+        "branch": "feature/billing",
+        "dir": "/home/dev/acme-webapp",
+        "refKind": "commit",
+        "sha": "9f8e7d6",
+        "source": "cli",
+        "subject": "wire billing endpoint",
+        "verb": "committed"
+      },
+      {
+        "branch": "feature/billing",
+        "dir": "/home/dev/acme-webapp",
+        "ref": "feature/billing",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "pushed"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "branch": "feature/billing",
+        "dir": "/home/dev/acme-webapp",
+        "ref": "feature/billing",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "pushed"
+      },
+      "actions": [
+        {
+          "dir": "/home/dev/acme-webapp",
+          "source": "cli",
+          "verb": "navigated"
+        },
+        {
+          "branch": "feature/billing",
+          "dir": "/home/dev/acme-webapp",
+          "refKind": "commit",
+          "sha": "9f8e7d6",
+          "source": "cli",
+          "subject": "wire billing endpoint",
+          "verb": "committed"
+        },
+        {
+          "branch": "feature/billing",
+          "dir": "/home/dev/acme-webapp",
+          "ref": "feature/billing",
+          "refKind": "branch",
+          "source": "cli",
+          "verb": "pushed"
+        }
+      ]
+    }
+  },
+  "failed-commit-hook": {
+    "actions": [],
+    "primaryOnTurn": {}
+  },
+  "gh-pr-create": {
+    "actions": [
+      {
+        "ref": "codehub.example/acme/billing!4711",
+        "refKind": "merge_request",
+        "source": "cli",
+        "url": "https://codehub.example/acme/billing/pull/4711",
+        "verb": "opened_mr"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "ref": "codehub.example/acme/billing!4711",
+        "refKind": "merge_request",
+        "source": "cli",
+        "url": "https://codehub.example/acme/billing/pull/4711",
+        "verb": "opened_mr"
+      }
+    }
+  },
+  "gh-pr-view": {
+    "actions": [
+      {
+        "dir": "/home/dev/acme-webapp",
+        "ref": "!4711",
+        "refKind": "merge_request",
+        "source": "cli",
+        "state": "merged",
+        "title": "Fix rounding",
+        "verb": "viewed"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "dir": "/home/dev/acme-webapp",
+        "ref": "!4711",
+        "refKind": "merge_request",
+        "source": "cli",
+        "state": "merged",
+        "title": "Fix rounding",
+        "verb": "viewed"
+      }
+    }
+  },
+  "git-checkout": {
+    "actions": [
+      {
+        "branch": "fix/rounding",
+        "branchConfirmed": true,
+        "dir": "/home/dev/acme-webapp",
+        "ref": "fix/rounding",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "navigated"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "branch": "fix/rounding",
+        "branchConfirmed": true,
+        "dir": "/home/dev/acme-webapp",
+        "ref": "fix/rounding",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "navigated"
+      }
+    }
+  },
+  "git-checkout-plain-branch": {
+    "actions": [
+      {
+        "branch": "fix/rounding",
+        "branchConfirmed": true,
+        "dir": "/home/dev/acme-webapp",
+        "ref": "fix/rounding",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "navigated"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "branch": "fix/rounding",
+        "branchConfirmed": true,
+        "dir": "/home/dev/acme-webapp",
+        "ref": "fix/rounding",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "navigated"
+      }
+    }
+  },
+  "git-checkout-plain-path": {
+    "actions": [
+      {
+        "branch": "src/ledger.ts",
+        "dir": "/home/dev/acme-webapp",
+        "ref": "src/ledger.ts",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "navigated"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "branch": "src/ledger.ts",
+        "dir": "/home/dev/acme-webapp",
+        "ref": "src/ledger.ts",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "navigated"
+      }
+    }
+  },
+  "git-commit": {
+    "actions": [
+      {
+        "branch": "15178-5-idempotent-debits",
+        "dir": "/home/dev/acme-webapp",
+        "refKind": "commit",
+        "sha": "d7e5977",
+        "source": "cli",
+        "subject": "make debit posting idempotent",
+        "verb": "committed"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "branch": "15178-5-idempotent-debits",
+        "dir": "/home/dev/acme-webapp",
+        "refKind": "commit",
+        "sha": "d7e5977",
+        "source": "cli",
+        "subject": "make debit posting idempotent",
+        "verb": "committed"
+      }
+    }
+  },
+  "git-push": {
+    "actions": [
+      {
+        "branch": "15178-5-idempotent-debits",
+        "dir": "/home/dev/acme-webapp",
+        "ref": "15178-5-idempotent-debits",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "pushed"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "branch": "15178-5-idempotent-debits",
+        "dir": "/home/dev/acme-webapp",
+        "ref": "15178-5-idempotent-debits",
+        "refKind": "branch",
+        "source": "cli",
+        "verb": "pushed"
+      }
+    }
+  },
+  "glab-mr-create-other-repo": {
+    "actions": [
+      {
+        "branch": "15178-5-idempotent-debits",
+        "ref": "codehub.example/acme/billing!17050",
+        "refKind": "merge_request",
+        "source": "cli",
+        "url": "https://codehub.example/acme/billing/-/merge_requests/17050",
+        "verb": "opened_mr"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "branch": "15178-5-idempotent-debits",
+        "ref": "codehub.example/acme/billing!17050",
+        "refKind": "merge_request",
+        "source": "cli",
+        "url": "https://codehub.example/acme/billing/-/merge_requests/17050",
+        "verb": "opened_mr"
+      }
+    }
+  },
+  "mcp-get-issue": {
+    "actions": [
+      {
+        "ref": "acme/billing#16002",
+        "refKind": "issue",
+        "source": "mcp",
+        "state": "closed",
+        "verb": "viewed"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "ref": "acme/billing#16002",
+        "refKind": "issue",
+        "source": "mcp",
+        "state": "closed",
+        "verb": "viewed"
+      }
+    }
+  },
+  "mcp-get-merge-request": {
+    "actions": [
+      {
+        "ref": "acme/billing!17049",
+        "refKind": "merge_request",
+        "source": "mcp",
+        "state": "opened",
+        "title": "Review debits",
+        "verb": "viewed"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "ref": "acme/billing!17049",
+        "refKind": "merge_request",
+        "source": "mcp",
+        "state": "opened",
+        "title": "Review debits",
+        "verb": "viewed"
+      }
+    }
+  },
+  "mcp-get-merge-request-other-iid": {
+    "actions": [
+      {
+        "ref": "acme/billing!17049",
+        "refKind": "merge_request",
+        "source": "mcp",
+        "verb": "viewed"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "ref": "acme/billing!17049",
+        "refKind": "merge_request",
+        "source": "mcp",
+        "verb": "viewed"
+      }
+    }
+  },
+  "mcp-list-issues-two-items": {
+    "actions": [
+      {
+        "ref": "acme/billing#16002",
+        "refKind": "issue",
+        "source": "mcp",
+        "verb": "viewed"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "ref": "acme/billing#16002",
+        "refKind": "issue",
+        "source": "mcp",
+        "verb": "viewed"
+      }
+    }
+  },
+  "npm-test": {
+    "actions": [
+      {
+        "dir": "/home/dev/acme-webapp",
+        "source": "cli",
+        "verb": "tested"
+      }
+    ],
+    "primaryOnTurn": {
+      "action": {
+        "dir": "/home/dev/acme-webapp",
+        "source": "cli",
+        "verb": "tested"
+      }
+    }
+  },
+  "rm-unrelated": {
+    "actions": [],
+    "primaryOnTurn": {}
+  }
+}

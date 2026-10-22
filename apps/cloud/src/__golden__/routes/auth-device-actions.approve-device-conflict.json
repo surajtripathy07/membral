@@ -1,0 +1,8 @@
+{
+  "status": 409,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Device is already registered to another account\"}"
+}

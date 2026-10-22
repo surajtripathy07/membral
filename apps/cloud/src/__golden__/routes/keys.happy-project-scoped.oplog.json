@@ -1,0 +1,27 @@
+[
+  {
+    "seq": 1,
+    "table": "rate_limit_check",
+    "op": "rpc",
+    "payload": {
+      "p_key": "keys:user:00000000-0000-4000-8000-00000000c0de",
+      "p_limit": 10,
+      "p_window_seconds": 60
+    }
+  },
+  {
+    "seq": 2,
+    "table": "profiles",
+    "op": "update",
+    "payload": {
+      "api_key_hash": "c4fa954d54361d43b67d6315f03345b3b9637bc80f697483b0b4708b45b266bc",
+      "api_key_prefix": "lls_MFV6",
+      "api_key_scope_node_id": null,
+      "api_key_scope_code_project_id": "5eed0000-0000-4000-8000-000000000001",
+      "updated_at": "2026-01-01T00:00:00.000Z"
+    },
+    "filters": [
+      "eq.id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  }
+]

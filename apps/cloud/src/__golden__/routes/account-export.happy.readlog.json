@@ -1,0 +1,32 @@
+[
+  {
+    "seq": 1,
+    "table": "profiles",
+    "op": "select",
+    "payload": {
+      "columns": "id, email, display_name, tier, conversation_limit, created_at",
+      "modifiers": [
+        "single"
+      ]
+    },
+    "filters": [
+      "eq.id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "conversations",
+    "op": "select",
+    "payload": {
+      "columns": "id, source, source_id, title, model, messages, metadata, created_at, updated_at",
+      "modifiers": [
+        "order.created_at.asc",
+        "order.id.asc",
+        "range.0.199"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  }
+]

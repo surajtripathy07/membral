@@ -1,0 +1,8 @@
+{
+  "status": 404,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"no session of yours acted on that ref\"}"
+}

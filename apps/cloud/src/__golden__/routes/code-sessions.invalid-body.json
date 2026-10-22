@@ -1,0 +1,8 @@
+{
+  "status": 400,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Invalid request body — expected { sessions: RawCodeSession[] } (max 20 per batch)\",\"detail\":[{\"path\":\"sessions.0.sourceSessionId\",\"message\":\"Invalid input: expected string, received undefined\"},{\"path\":\"sessions.0.contentHash\",\"message\":\"Invalid input: expected string, received undefined\"},{\"path\":\"sessions.0.repo\",\"message\":\"Invalid input: expected object, received undefined\"},{\"path\":\"sessions.0.startedAt\",\"message\":\"Invalid input: expected string, received undefined\"},{\"path\":\"sessions.0.endedAt\",\"message\":\"Invalid input: expected string, received undefined\"},{\"path\":\"sessions.0.turns\",\"message\":\"Invalid input: expected array, received undefined\"},{\"path\":\"sessions.0.filesTouched\",\"message\":\"Invalid input: expected array, received undefined\"},{\"path\":\"sessions.0.toolCounts\",\"message\":\"Invalid input: expected record, received undefined\"}]}"
+}

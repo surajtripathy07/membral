@@ -1,0 +1,14 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral session-end-hook [--source copilot-cli|agy] [--api-url <url>] [--api-key <key>]
+
+Not for interactive use — this is the command install-session-hook wires
+into Claude Code's SessionEnd hook. Reads the hook's JSON off stdin and
+uploads the session it names. Never exits non-zero, never blocks.
+
+Flags
+  --source copilot-cli   Read Copilot CLI's sessionEnd input (setup --copilot-cli)
+  --source agy           Read Antigravity's Stop input (setup --agy)
+
+--- STDERR ---

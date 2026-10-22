@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"lines\":[\"Membral: acme/webapp · branch main · last session 38h ago (harness-injected context, not a user message)\",\"Membral holds what past sessions did, decided and found, including hours ago. Search it before re-deriving: why X was decided, which MRs/issues a session opened or worked on, results, dead ends, what a parallel session did today (mcp__membral__memory_search).\",\"Membral is not live state: never take an MR/issue's open/merged status, CI, conflicts, review threads or deploys from it. It gives the link; check live with gh/glab/git. Pass project=\\\"acme/webapp\\\".\",\"Recent work in this repo, last 7 days:\",\"- !42 — as of 2025-12-30 (38h ago), session 5eed0000-0000-4000-8000-0000000000d5: Opened MR !42 → https://codehub.example/acme/webapp/-/merge_requests/42\",\"- #41 Checkout totals off by one — as of 2025-12-30 (38h ago), session 5eed0000-0000-4000-8000-0000000000d5 → https://codehub.example/acme/webapp/-/issues/41\",\"recall_token: v1.eyJ1IjoiMDAwMDAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDBjMGRlIiwicCI6IjVlZWQwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMSIsInQiOiIyMDI2LTAxLTAxVDAwOjAwOjAwLjAwMFoifQ.V4fCr0s5OtlUFpdLTCeQf1doVKSkUGZmIvtWXPXbR24\"],\"recall_token\":\"v1.eyJ1IjoiMDAwMDAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDBjMGRlIiwicCI6IjVlZWQwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMSIsInQiOiIyMDI2LTAxLTAxVDAwOjAwOjAwLjAwMFoifQ.V4fCr0s5OtlUFpdLTCeQf1doVKSkUGZmIvtWXPXbR24\",\"open_blockers\":[]}"
+}

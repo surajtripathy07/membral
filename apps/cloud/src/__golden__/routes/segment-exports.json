@@ -1,0 +1,329 @@
+[
+  {
+    "file": "account/delete/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "account/export/route.ts",
+    "method": "import",
+    "segment": {
+      "maxDuration": 300
+    },
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "agent-stats/issues/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "agent-stats/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "auth/device/approve/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "auth/device/deny/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "auth/device/poll/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "auth/device/start/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "auth/device/status/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "code-sessions/known/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "code-sessions/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "code-sessions/stats/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "conversations/manifest/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET",
+      "OPTIONS"
+    ]
+  },
+  {
+    "file": "health/route.ts",
+    "method": "import",
+    "segment": {
+      "dynamic": "force-dynamic"
+    },
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "import/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "import/upload/route.ts",
+    "method": "import",
+    "segment": {
+      "runtime": "nodejs",
+      "maxDuration": 300
+    },
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "internal/cron/memory-extraction/route.ts",
+    "method": "import",
+    "segment": {
+      "maxDuration": 300
+    },
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "internal/local/provision/route.ts",
+    "method": "import",
+    "segment": {
+      "dynamic": "force-dynamic"
+    },
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "keys/devices/[id]/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "DELETE"
+    ]
+  },
+  {
+    "file": "keys/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST",
+      "DELETE"
+    ]
+  },
+  {
+    "file": "mcp/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET",
+      "POST",
+      "DELETE"
+    ]
+  },
+  {
+    "file": "mcp/test/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "memories/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "file": "memory/branch-state/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "file": "memory/dogfood/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "memory/extract-next/route.ts",
+    "method": "import",
+    "segment": {
+      "maxDuration": 300
+    },
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "memory/extraction/kick/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "memory/preamble/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "memory/projects/merge/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "file": "memory/prompt-recall/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "memory/questionnaire/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "memory/served-used/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "pulse/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "search/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "sync-state/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET"
+    ]
+  },
+  {
+    "file": "sync/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST",
+      "OPTIONS"
+    ]
+  },
+  {
+    "file": "threads/blockers/dismiss/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "GET",
+      "POST",
+      "DELETE"
+    ]
+  },
+  {
+    "file": "threads/dismiss/route.ts",
+    "method": "import",
+    "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  }
+]

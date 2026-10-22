@@ -1,0 +1,8 @@
+{
+  "status": 415,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"content-type must be application/json\"}"
+}

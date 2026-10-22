@@ -1,0 +1,4075 @@
+{
+  "demo_persona": "elon-tusk (synthetic — see fixtures/persona/README.md)",
+  "user_email": "tusk-demo@membral.demo",
+  "user_id": "38af1bb3-3c9c-497b-b36a-42d4647e4264",
+  "generated_at": "2026-07-10T07:03:23.609Z",
+  "stats": {
+    "nodes": 339,
+    "edges": 528,
+    "nodesByType": {
+      "Conversation": 200,
+      "Item": 47,
+      "Tool": 34,
+      "Organization": 16,
+      "Person": 29,
+      "Artifact": 9,
+      "LifeArea": 4
+    },
+    "edgesByType": {
+      "uses_tool": 55,
+      "contains": 48,
+      "mentions_person": 132,
+      "discusses": 104,
+      "collaborates_with": 100,
+      "contributes_to": 71,
+      "modifies": 18
+    },
+    "orphans": 25
+  },
+  "life_areas": [
+    {
+      "label": "Space and Engineering",
+      "type": "LifeArea",
+      "kind": null,
+      "status": "active",
+      "items": [
+        {
+          "label": "Tunneling Projects and Innovations",
+          "type": "Item",
+          "kind": "project",
+          "status": "active",
+          "items": [
+            {
+              "label": "Tunnel boring machine speed and efficiency",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Tunnel boring machine speed and efficiency",
+                  "purpose": "exploring",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0016",
+                  "entities": [
+                    {
+                      "label": "tunnel boring machine",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "cutterhead",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                },
+                {
+                  "label": "Tunnel boring machine groundwater solutions",
+                  "purpose": "other",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0148",
+                  "entities": [
+                    {
+                      "label": "tunnel boring machine",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Tunneling Innovations and Strategies",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [
+                {
+                  "label": "Pitching an underground tunnel project",
+                  "type": "Item",
+                  "kind": null,
+                  "status": "active",
+                  "items": [],
+                  "conversations": [
+                    {
+                      "label": "Innovative urban mobility solutions",
+                      "purpose": "brainstorming",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0039",
+                      "entities": [
+                        {
+                          "label": "The Dull Company",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Pitching an underground tunnel project",
+                      "purpose": "brainstorming",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0008",
+                      "entities": [
+                        {
+                          "label": "The Dull Company",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "conversations": [
+                {
+                  "label": "Loop transit vs subway efficiency",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0104",
+                  "entities": [
+                    {
+                      "label": "Gary Puddle",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "5-year vision for tunneling on Earth and Mars",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0193",
+                  "entities": [
+                    {
+                      "label": "The Dull Company",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Vanguard Dynamics",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Tunneling permits and approval processes",
+                  "purpose": "exploring",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0026",
+                  "entities": []
+                },
+                {
+                  "label": "Cost-effective tunnel lining solutions",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0091",
+                  "entities": []
+                },
+                {
+                  "label": "Funding tunnels through flamethrower sales",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0063",
+                  "entities": [
+                    {
+                      "label": "not-a-flamethrowers",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "flamethrowers",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": []
+        },
+        {
+          "label": "Rocket Launch and Space Missions",
+          "type": "Item",
+          "kind": "project",
+          "status": "active",
+          "items": [
+            {
+              "label": "Mars Mission Planning and Development",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [
+                {
+                  "label": "Naming the first city on Mars",
+                  "type": "Item",
+                  "kind": null,
+                  "status": "active",
+                  "items": [],
+                  "conversations": [
+                    {
+                      "label": "Naming the first uncrewed Mars mission",
+                      "purpose": "brainstorming",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0196",
+                      "entities": []
+                    },
+                    {
+                      "label": "Naming the first city on Mars",
+                      "purpose": "brainstorming",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0135",
+                      "entities": [
+                        {
+                          "label": "Ares One",
+                          "type": "Artifact",
+                          "rel_type": "modifies"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "label": "Mars Mission Planning Conversations",
+                  "type": "Item",
+                  "kind": "area",
+                  "status": "active",
+                  "items": [],
+                  "conversations": [
+                    {
+                      "label": "Crafting a speech for Mars mission",
+                      "purpose": "creative",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0176",
+                      "entities": [
+                        {
+                          "label": "Leviathan",
+                          "type": "Artifact",
+                          "rel_type": "modifies"
+                        },
+                        {
+                          "label": "SpaceY",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Planning the Mars cargo mission launch",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0160",
+                      "entities": [
+                        {
+                          "label": "Optimist",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        },
+                        {
+                          "label": "Cyberwedge",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        },
+                        {
+                          "label": "Leviathan",
+                          "type": "Artifact",
+                          "rel_type": "modifies"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Delta-v calculations for Mars mission",
+                      "purpose": "brainstorming",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0001",
+                      "entities": [
+                        {
+                          "label": "Dr. Voss",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Mars timeline and leadership strategies",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0155",
+                      "entities": [
+                        {
+                          "label": "SpaceY",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "Leviathan",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "Priya Chen",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Mars communication latency and messaging solutions",
+                      "purpose": "brainstorming",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0113",
+                      "entities": [
+                        {
+                          "label": "Groak",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        },
+                        {
+                          "label": "Zapp",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Pivoting company focus to Mars colonization",
+                      "purpose": "brainstorming",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0117",
+                      "entities": [
+                        {
+                          "label": "Elon Tusk",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "The Dull Company",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Mars mission timeline and public messaging",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0075",
+                      "entities": [
+                        {
+                          "label": "the Claw",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        },
+                        {
+                          "label": "Leviathan",
+                          "type": "Artifact",
+                          "rel_type": "modifies"
+                        },
+                        {
+                          "label": "Chad Vanguard",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Mars timeline update post creation",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0190",
+                      "entities": [
+                        {
+                          "label": "SpaceY",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "Chad Vanguard",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "Dahlia Frost",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "conversations": [
+                {
+                  "label": "Making Cyberwedge suitable for Mars",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0188",
+                  "entities": [
+                    {
+                      "label": "Leviathan",
+                      "type": "Artifact",
+                      "rel_type": "modifies"
+                    },
+                    {
+                      "label": "Northwind Rockets",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Tusla",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Cyberwedge",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                },
+                {
+                  "label": "Poll about app's future direction",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0173",
+                  "entities": []
+                },
+                {
+                  "label": "Criteria for Mars crew selection",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0129",
+                  "entities": [
+                    {
+                      "label": "Priya",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Bear Grylls",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Escape velocity comparison of Mars and Earth",
+                  "purpose": "learning",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0014",
+                  "entities": []
+                },
+                {
+                  "label": "Offline-first feed for Mars colony",
+                  "purpose": "building",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0195",
+                  "entities": [
+                    {
+                      "label": "Marisol Vega",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Celebrating orbital success and team acknowledgment",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Celebrating orbital success and team acknowledgment",
+                  "purpose": "building",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0154",
+                  "entities": [
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Leviathan",
+                      "type": "Artifact",
+                      "rel_type": "modifies"
+                    }
+                  ]
+                },
+                {
+                  "label": "Ambitious rocket launch roadmap",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0106",
+                  "entities": [
+                    {
+                      "label": "Dahlia Frost",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Marlow Quint",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Co-parenting schedule adjustment for event",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Co-parenting schedule adjustment for event",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0038",
+                  "entities": [
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Elon Tusk",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Co-parenting schedule planning",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0015",
+                  "entities": [
+                    {
+                      "label": "Mimi Tusk",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Mars Colonization Essentials",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [
+                {
+                  "label": "Oxygen generation for Mars habitats",
+                  "type": "Item",
+                  "kind": null,
+                  "status": "active",
+                  "items": [],
+                  "conversations": [
+                    {
+                      "label": "Water availability for Mars colonization",
+                      "purpose": "exploring",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0167",
+                      "entities": []
+                    },
+                    {
+                      "label": "Sabatier process for Mars colonization",
+                      "purpose": "learning",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0130",
+                      "entities": []
+                    },
+                    {
+                      "label": "Oxygen generation for Mars habitats",
+                      "purpose": "exploring",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0101",
+                      "entities": [
+                        {
+                          "label": "solid amine CO2 scrubber",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "conversations": [
+                {
+                  "label": "Minimum viable Mars city components",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0150",
+                  "entities": []
+                },
+                {
+                  "label": "Growing food on Mars",
+                  "purpose": "exploring",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0161",
+                  "entities": [
+                    {
+                      "label": "MechaMind",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                },
+                {
+                  "label": "Mars habitat design: tunnels vs domes",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0100",
+                  "entities": [
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "The Dull Company",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Genetically viable Mars colony population",
+                  "purpose": "learning",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0060",
+                  "entities": []
+                }
+              ]
+            },
+            {
+              "label": "Responding to a subtweet with humor",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Crafting a witty engineering reply",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0068",
+                  "entities": [
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Responding to a subtweet with humor",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0185",
+                  "entities": [
+                    {
+                      "label": "Chad Vanguard",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Launch rivalry and meme brainstorming",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Comparison of rocket launches",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0139",
+                  "entities": [
+                    {
+                      "label": "Dahlia Frost",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Vanguard Dynamics",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Chad Vanguard",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Launch rivalry and meme brainstorming",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0140",
+                  "entities": [
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Chad",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Governance structure for a Mars colony",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Creating a Mars colony personality for Groak",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0194",
+                  "entities": []
+                },
+                {
+                  "label": "Designing a Mars colony flag and motto",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0175",
+                  "entities": [
+                    {
+                      "label": "Zapp",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Governance structure for a Mars colony",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0036",
+                  "entities": [
+                    {
+                      "label": "user",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Rocket Launch Education and Safety",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [
+                {
+                  "label": "Teaching rocketry to a child",
+                  "type": "Item",
+                  "kind": null,
+                  "status": "active",
+                  "items": [],
+                  "conversations": [
+                    {
+                      "label": "Logistics and safety for rocket launch with kids",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0163",
+                      "entities": [
+                        {
+                          "label": "Leviathan",
+                          "type": "Artifact",
+                          "rel_type": "modifies"
+                        },
+                        {
+                          "label": "SpaceY",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Teaching rocketry to a child",
+                      "purpose": "learning",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0077",
+                      "entities": []
+                    }
+                  ]
+                }
+              ],
+              "conversations": [
+                {
+                  "label": "Rocket engine design tradeoffs for Mars landing",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0094",
+                  "entities": []
+                },
+                {
+                  "label": "Catapult as an orbital launch method",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0169",
+                  "entities": [
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "label": "Cost modeling for Mars flight affordability",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0186",
+              "entities": [
+                {
+                  "label": "Leviathan",
+                  "type": "Artifact",
+                  "rel_type": "modifies"
+                },
+                {
+                  "label": "Gary",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Science fair project ideas",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0132",
+              "entities": [
+                {
+                  "label": "SpaceY",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Radiation shielding options for Mars colony",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0013",
+              "entities": []
+            },
+            {
+              "label": "Reentry heating and plasma communication blackouts",
+              "purpose": "learning",
+              "rel_type": "discusses",
+              "source_id": "tusk-0122",
+              "entities": [
+                {
+                  "label": "Dr. Renata Voss",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Pre-launch anxiety and personal reflections",
+              "purpose": "venting",
+              "rel_type": "discusses",
+              "source_id": "tusk-0053",
+              "entities": [
+                {
+                  "label": "Mimi",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Dr. Renata Voss",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Tusk",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Leviathan",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Cryo propellant boil-off estimation",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0028",
+              "entities": []
+            },
+            {
+              "label": "Optimistic terraforming timeline for Mars",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0153",
+              "entities": []
+            },
+            {
+              "label": "Announcement of Marisol's departure",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0030",
+              "entities": [
+                {
+                  "label": "Marisol Vega",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Björn Kessler",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Weather hold probabilities for launch",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0170",
+              "entities": [
+                {
+                  "label": "Leviathan",
+                  "type": "Artifact",
+                  "rel_type": "modifies"
+                }
+              ]
+            },
+            {
+              "label": "Benefits of stainless steel for rockets",
+              "purpose": "learning",
+              "rel_type": "discusses",
+              "source_id": "tusk-0166",
+              "entities": [
+                {
+                  "label": "Chad Vanguard",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Launch pad noise regulations and solutions",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0120",
+              "entities": [
+                {
+                  "label": "Dr. Renata Voss",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Benchmarking Groak against competitors",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0127",
+              "entities": [
+                {
+                  "label": "Groak",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Vanguard Dynamics",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Mission statement for AGI development",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0099",
+              "entities": [
+                {
+                  "label": "Dahlia Frost",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Rebuilding spacecraft after failure",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0079",
+              "entities": [
+                {
+                  "label": "Vanguard Dynamics",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Renata Voss",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "conversations": []
+    },
+    {
+      "label": "Health and Well-being",
+      "type": "LifeArea",
+      "kind": null,
+      "status": "active",
+      "items": [
+        {
+          "label": "Health and Sleep Management",
+          "type": "Item",
+          "kind": "area",
+          "status": "active",
+          "items": [
+            {
+              "label": "Sleep and Recovery Strategies",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [
+                {
+                  "label": "Effects of sleep deprivation before a hospital visit",
+                  "type": "Item",
+                  "kind": null,
+                  "status": "active",
+                  "items": [],
+                  "conversations": [
+                    {
+                      "label": "Effects of sleep deprivation before a hospital visit",
+                      "purpose": "exploring",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0146",
+                      "entities": []
+                    },
+                    {
+                      "label": "Sleep and stress before a launch",
+                      "purpose": "venting",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0061",
+                      "entities": [
+                        {
+                          "label": "SpaceY",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "Marlow Quint",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "Dr. Renata Voss",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "Priya Chen",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "conversations": [
+                {
+                  "label": "Coping with anxiety after a setback",
+                  "purpose": "venting",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0076",
+                  "entities": [
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Marlow Quint",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Napping solutions for factory work",
+                  "purpose": "exploring",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0152",
+                  "entities": [
+                    {
+                      "label": "portable foldable cot",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "beanbag",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "traction bench",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "lumbar support pillows",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "The Dull Company",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "foam mattress topper",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                },
+                {
+                  "label": "Minimum sleep and cognitive function",
+                  "purpose": "learning",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0006",
+                  "entities": []
+                },
+                {
+                  "label": "Balancing work and family commitments",
+                  "purpose": "venting",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0049",
+                  "entities": [
+                    {
+                      "label": "Δ-9",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Burnout and the importance of rest",
+                  "purpose": "venting",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0032",
+                  "entities": [
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Tusla",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Björn Kessler",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Biohacking sleep reduction strategies",
+                  "purpose": "exploring",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0037",
+                  "entities": [
+                    {
+                      "label": "Omega-3 Fatty Acids",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Vitamin D",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Lion’s Mane",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Ashwagandha",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Magnesium",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Rhodiola",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                },
+                {
+                  "label": "Debate on overtraining and recovery",
+                  "purpose": "venting",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0178",
+                  "entities": [
+                    {
+                      "label": "Rex Mountain",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Managing chronic back pain and recovery",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0102",
+                  "entities": [
+                    {
+                      "label": "Rex Mountain",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Chad Vanguard",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "label": "Interactions between caffeine and sleep gummies",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0047",
+              "entities": []
+            },
+            {
+              "label": "Intermittent fasting protocols and effectiveness",
+              "purpose": "learning",
+              "rel_type": "discusses",
+              "source_id": "tusk-0115",
+              "entities": []
+            },
+            {
+              "label": "Stress and resting heart rate management",
+              "purpose": "learning",
+              "rel_type": "discusses",
+              "source_id": "tusk-0089",
+              "entities": []
+            },
+            {
+              "label": "Effectiveness of blue light glasses",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0048",
+              "entities": []
+            }
+          ]
+        }
+      ],
+      "conversations": []
+    },
+    {
+      "label": "Work",
+      "type": "LifeArea",
+      "kind": null,
+      "status": "active",
+      "items": [
+        {
+          "label": "AI model development and ethics",
+          "type": "Item",
+          "kind": "area",
+          "status": "active",
+          "items": [
+            {
+              "label": "Groak AI Model Discussions",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Defining truthfulness for AI Groak",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0034",
+                  "entities": [
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Claude",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Evaluating AI intelligence through benchmarks",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0136",
+                  "entities": [
+                    {
+                      "label": "Vanguard Dynamics",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Chad",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "MMLU",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "SuperGLUE",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                },
+                {
+                  "label": "Safety and ethics of AI development",
+                  "purpose": "exploring",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0189",
+                  "entities": [
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "MechaMind",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Autonomous posting by Groak",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0144",
+                  "entities": [
+                    {
+                      "label": "Zapp",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "MechaMind",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Tusla",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "AI behavior and personality development",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0112",
+                  "entities": [
+                    {
+                      "label": "Marisol Vega",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Zapp",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Fine-tuning AI model Groak",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0073",
+                  "entities": [
+                    {
+                      "label": "MechaMind",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "label": "Reducing inference costs through quantization",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0074",
+              "entities": [
+                {
+                  "label": "Ƶ",
+                  "type": "Artifact",
+                  "rel_type": "modifies"
+                },
+                {
+                  "label": "Groak",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Polling on algorithm decision-making",
+              "purpose": "decision-making",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0004",
+              "entities": [
+                {
+                  "label": "Marisol Vega",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Acquiring and processing AI training data",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0119",
+              "entities": [
+                {
+                  "label": "Zapp's firehose",
+                  "type": "Tool",
+                  "rel_type": "uses_tool"
+                }
+              ]
+            },
+            {
+              "label": "GPUs required for training AI models",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0199",
+              "entities": [
+                {
+                  "label": "Gary Puddle",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "spreadsheet",
+                  "type": "Artifact",
+                  "rel_type": "modifies"
+                }
+              ]
+            },
+            {
+              "label": "Cooling solutions for overheating GPUs",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0035",
+              "entities": []
+            },
+            {
+              "label": "Naming an AI lab and chatbot",
+              "purpose": "building",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0183",
+              "entities": [
+                {
+                  "label": "Groak",
+                  "type": "Tool",
+                  "rel_type": "uses_tool"
+                }
+              ]
+            },
+            {
+              "label": "Ethics of using user data for AI training",
+              "purpose": "decision-making",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0128",
+              "entities": [
+                {
+                  "label": "Zapp",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Groak",
+                  "type": "Tool",
+                  "rel_type": "uses_tool"
+                },
+                {
+                  "label": "Chip Halberd",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Understanding transformers and their implications",
+              "purpose": "learning",
+              "rel_type": "discusses",
+              "source_id": "tusk-0012",
+              "entities": [
+                {
+                  "label": "MechaMind",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Dr. Renata Voss",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Vanguard Dynamics",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Leviathan engine discussions",
+          "type": "Item",
+          "kind": "project",
+          "status": "active",
+          "items": [
+            {
+              "label": "Deciding on engine count for the Leviathan",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Deciding on engine count for the Leviathan",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0009",
+                  "entities": [
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Chip",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Cost-effective engine testing strategies",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0080",
+                  "entities": [
+                    {
+                      "label": "Gary Puddle",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Computational Fluid Dynamics (CFD)",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "label": "Inconel melting point and engine exhaust temperature",
+              "purpose": "learning",
+              "rel_type": "discusses",
+              "source_id": "tusk-0093",
+              "entities": [
+                {
+                  "label": "Inconel",
+                  "type": "Artifact",
+                  "rel_type": "modifies"
+                },
+                {
+                  "label": "Leviathan engine",
+                  "type": "Artifact",
+                  "rel_type": "modifies"
+                }
+              ]
+            },
+            {
+              "label": "Engine thrust estimation",
+              "purpose": "learning",
+              "rel_type": "discusses",
+              "source_id": "tusk-0182",
+              "entities": []
+            }
+          ]
+        },
+        {
+          "label": "Zapp app development and launch",
+          "type": "Item",
+          "kind": "project",
+          "status": "active",
+          "items": [
+            {
+              "label": "Launch copy for Zapp Payments",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Licenses and regulations for payment systems",
+                  "purpose": "learning",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0054",
+                  "entities": [
+                    {
+                      "label": "Financial Crimes Enforcement Network",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Launch copy for Zapp Payments",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0107",
+                  "entities": [
+                    {
+                      "label": "Zapp Payments",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Articulating a vision for Zapp, the everything app",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0010",
+                  "entities": [
+                    {
+                      "label": "Zapp",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Dahlia",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "label": "Renaming an app to a single glyph",
+              "purpose": "decision-making",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0198",
+              "entities": [
+                {
+                  "label": "Dahlia Frost",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Zapp",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Engagement and Innovation Strategies",
+          "type": "Item",
+          "kind": "project",
+          "status": "active",
+          "items": [
+            {
+              "label": "Celebrating a record quarter achievement",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Celebrating a record quarter achievement",
+                  "purpose": "venting",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0142",
+                  "entities": [
+                    {
+                      "label": "Zapp",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Team appreciation for record quarter achievement",
+                  "purpose": "building",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0174",
+                  "entities": [
+                    {
+                      "label": "Tusla",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "AI performance and personal accountability",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "AI performance and personal accountability",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0059",
+                  "entities": [
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "MechaMind",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Chad Vanguard",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Dealing with launch scrub and personal pressure",
+                  "purpose": "venting",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0052",
+                  "entities": [
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Booster Catch Optimization",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Booster catch attempt checklist discussion",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0171",
+                  "entities": []
+                },
+                {
+                  "label": "Celebrating a successful booster catch",
+                  "purpose": "creative",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0172",
+                  "entities": [
+                    {
+                      "label": "Claw",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                },
+                {
+                  "label": "Booster turnaround time reduction",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0181",
+                  "entities": [
+                    {
+                      "label": "Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Booster capture system tolerances and efficiency",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0138",
+                  "entities": [
+                    {
+                      "label": "Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Challenging a rival to a cage match",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Challenging a rival to a cage match",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0069",
+                  "entities": [
+                    {
+                      "label": "Rex Mountain",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Groak",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Chad Vanguard",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Viral cage match event planning",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0070",
+                  "entities": [
+                    {
+                      "label": "Rex Mountain",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Chad Vanguard",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Robotaxi and Humanoid Robot Demos",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [
+                {
+                  "label": "Planning a robotaxi demonstration",
+                  "type": "Item",
+                  "kind": null,
+                  "status": "active",
+                  "items": [],
+                  "conversations": [
+                    {
+                      "label": "Planning a robotaxi demonstration",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0044",
+                      "entities": []
+                    },
+                    {
+                      "label": "robotaxi unveiling and Optimist features",
+                      "purpose": "brainstorming",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0056",
+                      "entities": []
+                    },
+                    {
+                      "label": "Demonstrating Optimist robot capabilities",
+                      "purpose": "decision-making",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0084",
+                      "entities": [
+                        {
+                          "label": "Optimist",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        },
+                        {
+                          "label": "Tusla",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "conversations": [
+                {
+                  "label": "Capabilities of humanoid robot Optimist",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0158",
+                  "entities": [
+                    {
+                      "label": "Optimist",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Björn Kessler",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "The Dull Company",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Cyberwedge",
+                      "type": "Artifact",
+                      "rel_type": "modifies"
+                    }
+                  ]
+                },
+                {
+                  "label": "Teleoperated robot demo failure",
+                  "purpose": "venting",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0085",
+                  "entities": [
+                    {
+                      "label": "Dahlia",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Marisol",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Cyberwedge panel alignment and tolerance analysis",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Cyberwedge panel alignment and tolerance analysis",
+                  "purpose": "other",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0005",
+                  "entities": [
+                    {
+                      "label": "Björn Kessler",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Safety concerns regarding Cyberwedge panels",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0033",
+                  "entities": [
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Dahlia Frost",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Chip Halberd",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Gary Puddle",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Balancing automation and human oversight in production",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Balancing automation and human oversight in production",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0023",
+                  "entities": [
+                    {
+                      "label": "Tusla",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Gary Puddle",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Björn Kessler",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Challenges in manufacturing and automation",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0151",
+                  "entities": [
+                    {
+                      "label": "Optimist humanoid robots",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Björn Kessler",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Managing advertiser concerns after poll backlash",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Managing advertiser concerns after poll backlash",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0040",
+                  "entities": [
+                    {
+                      "label": "Zapp",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Dahlia",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Backlash from a poll about company merger",
+                  "purpose": "venting",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0041",
+                  "entities": [
+                    {
+                      "label": "Ƶ",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    },
+                    {
+                      "label": "Zapp",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Rex Mountain",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "MechaMind",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Groak Integration and Launch Strategies",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [
+                {
+                  "label": "Groak Integration Strategies",
+                  "type": "Item",
+                  "kind": "area",
+                  "status": "active",
+                  "items": [],
+                  "conversations": [
+                    {
+                      "label": "Monitoring Groak's integration and engagement strategies",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0159",
+                      "entities": [
+                        {
+                          "label": "Marisol Vega",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "Groak",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Promoting Groak as a key feature",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0157",
+                      "entities": [
+                        {
+                          "label": "Dahlia",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "Ƶ",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "Groak",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Integrating Groak into Zapp timeline",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0055",
+                      "entities": [
+                        {
+                          "label": "Groak",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        },
+                        {
+                          "label": "Zapp",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Creating a safe and engaging system prompt",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0046",
+                      "entities": [
+                        {
+                          "label": "Groak",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Groak 2 announcement and expectations management",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0086",
+                      "entities": [
+                        {
+                          "label": "Dahlia Frost",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Drafting launch copy for Groak 2",
+                      "purpose": "building",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0111",
+                      "entities": [
+                        {
+                          "label": "Dahlia Frost",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "MechaMind",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "Groak 2",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Last-minute preparations for Groak launch",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0057",
+                      "entities": [
+                        {
+                          "label": "Dahlia Frost",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "Marisol Vega",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "Groak",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "NogginLink",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Crisis management for Groak's statement",
+                      "purpose": "planning",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0058",
+                      "entities": [
+                        {
+                          "label": "Dahlia Frost",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "MechaMind",
+                          "type": "Tool",
+                          "rel_type": "uses_tool"
+                        },
+                        {
+                          "label": "Zapp",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "Marisol Vega",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "conversations": [
+                {
+                  "label": "Handling a humorous comment on social media",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0123",
+                  "entities": [
+                    {
+                      "label": "Marisol Vega",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "label": "Balancing social media engagement and workload",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Balancing social media engagement and workload",
+                  "purpose": "venting",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0021",
+                  "entities": [
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Tusla",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Zapp",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Balancing engagement and truth-seeking on a platform",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0108",
+                  "entities": []
+                }
+              ]
+            },
+            {
+              "label": "Positive Framing of Failures",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [
+                {
+                  "label": "Reframing project failure as learning",
+                  "type": "Item",
+                  "kind": null,
+                  "status": "active",
+                  "items": [],
+                  "conversations": [
+                    {
+                      "label": "Framing a rocket launch failure positively",
+                      "purpose": "decision-making",
+                      "rel_type": "contributes_to",
+                      "source_id": "tusk-0065",
+                      "entities": [
+                        {
+                          "label": "SpaceY",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "Chad Vanguard",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        },
+                        {
+                          "label": "Leviathan",
+                          "type": "Artifact",
+                          "rel_type": "modifies"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Framing setbacks as successes",
+                      "purpose": "brainstorming",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0137",
+                      "entities": [
+                        {
+                          "label": "Zapp",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "SpaceY",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        },
+                        {
+                          "label": "Dahlia Frost",
+                          "type": "Person",
+                          "rel_type": "mentions_person"
+                        }
+                      ]
+                    },
+                    {
+                      "label": "Reframing project failure as learning",
+                      "purpose": "venting",
+                      "rel_type": "discusses",
+                      "source_id": "tusk-0066",
+                      "entities": [
+                        {
+                          "label": "SpaceY",
+                          "type": "Organization",
+                          "rel_type": "collaborates_with"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "conversations": [
+                {
+                  "label": "Launch signal loss and PR strategies",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0121",
+                  "entities": [
+                    {
+                      "label": "Chad Vanguard",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Dahlia Frost",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Recovery strategies after project launch",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0162",
+                  "entities": [
+                    {
+                      "label": "Chip Halberd",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Celebrating a successful rocket test",
+                  "purpose": "building",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0029",
+                  "entities": [
+                    {
+                      "label": "Vanguard",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Chad Vanguard",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "label": "Understanding crypto memes and humor",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0064",
+              "entities": []
+            },
+            {
+              "label": "Creative announcement for product recall",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0043",
+              "entities": []
+            },
+            {
+              "label": "Limerick about a tired CEO",
+              "purpose": "creative",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0149",
+              "entities": []
+            },
+            {
+              "label": "Context window size bragging rights",
+              "purpose": "venting",
+              "rel_type": "discusses",
+              "source_id": "tusk-0087",
+              "entities": [
+                {
+                  "label": "Vanguard Dynamics",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "MechaMind",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Chad",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Engineering solutions for winter range anxiety",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0097",
+              "entities": []
+            },
+            {
+              "label": "Reflections on app ownership and legacy",
+              "purpose": "venting",
+              "rel_type": "discusses",
+              "source_id": "tusk-0187",
+              "entities": [
+                {
+                  "label": "Marisol Vega",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Chad Vanguard",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Advertiser departures and platform sustainability",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0002",
+              "entities": [
+                {
+                  "label": "Gary Puddle",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Marisol Vega",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Sharing safety data with regulators",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0143",
+              "entities": [
+                {
+                  "label": "Tusla",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Optimist bot",
+                  "type": "Tool",
+                  "rel_type": "uses_tool"
+                },
+                {
+                  "label": "Cyberwedge",
+                  "type": "Tool",
+                  "rel_type": "uses_tool"
+                }
+              ]
+            },
+            {
+              "label": "Revising a post for legal compliance",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0003",
+              "entities": [
+                {
+                  "label": "Ƶ",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Strategies to boost engagement on Ƶ",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0022",
+              "entities": []
+            },
+            {
+              "label": "Drafting a year-in-review post for Zapp",
+              "purpose": "building",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0095",
+              "entities": [
+                {
+                  "label": "Zapp",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Tipping feature with flamethrowers",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0156",
+              "entities": [
+                {
+                  "label": "The Dull Company",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Tusla",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Gary Puddle",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Drafting a playful apology",
+              "purpose": "creative",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0020",
+              "entities": [
+                {
+                  "label": "Dahlia Frost",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Enhancing self-driving disengagement statistics",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0045",
+              "entities": [
+                {
+                  "label": "Tusla",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Content moderation appeals and scalability",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0134",
+              "entities": [
+                {
+                  "label": "Zapp",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Marisol Vega",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Exploring addiction to crisis and chaos",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0131",
+              "entities": [
+                {
+                  "label": "Tusla",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Priya Chen",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "SpaceY",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Making factory visits fun for kids",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0090",
+              "entities": [
+                {
+                  "label": "Optimist",
+                  "type": "Tool",
+                  "rel_type": "uses_tool"
+                },
+                {
+                  "label": "Gary Puddle",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "spreadsheet of doom",
+                  "type": "Artifact",
+                  "rel_type": "modifies"
+                },
+                {
+                  "label": "Björn",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            },
+            {
+              "label": "Reframing negative valuation for town hall",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0082",
+              "entities": [
+                {
+                  "label": "Dahlia Frost",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Gary Puddle",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Zapp",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Battery claims and event presentation strategies",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0125",
+              "entities": [
+                {
+                  "label": "Tusla",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Automotive production and efficiency",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0197",
+              "entities": [
+                {
+                  "label": "Björn Kessler",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Tusla",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Refactoring factory operations and philosophy",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0109",
+              "entities": [
+                {
+                  "label": "Vanguard Dynamics",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "Groak AI",
+                  "type": "Tool",
+                  "rel_type": "uses_tool"
+                },
+                {
+                  "label": "Tusla",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            },
+            {
+              "label": "Retention strategies for creator payout programs",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0124",
+              "entities": []
+            },
+            {
+              "label": "User engagement through reinstating banned accounts",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0031",
+              "entities": []
+            },
+            {
+              "label": "Announcement of tunneling project approval",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0164",
+              "entities": [
+                {
+                  "label": "The Dull Company",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Pricing and Cost Strategies",
+          "type": "Item",
+          "kind": "workstream",
+          "status": "active",
+          "items": [
+            {
+              "label": "Strategies for automakers in price wars",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Strategies for automakers in price wars",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0072",
+                  "entities": [
+                    {
+                      "label": "Ford",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "General Motors",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Tusla",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Cost-cutting strategies in production and marketing",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0071",
+                  "entities": [
+                    {
+                      "label": "Gary Puddle",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Tusla",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Cyberwedge",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Dahlia Frost",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Strategies to meet delivery targets",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0098",
+                  "entities": [
+                    {
+                      "label": "Bjorn",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Gary Puddle",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "label": "Supplier price hikes and response options",
+              "purpose": "decision-making",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0110",
+              "entities": []
+            },
+            {
+              "label": "Pricing strategy for verification checkmarks",
+              "purpose": "brainstorming",
+              "rel_type": "discusses",
+              "source_id": "tusk-0042",
+              "entities": []
+            }
+          ]
+        }
+      ],
+      "conversations": []
+    },
+    {
+      "label": "Personal Development and Family",
+      "type": "LifeArea",
+      "kind": null,
+      "status": "active",
+      "items": [
+        {
+          "label": "Future plans and responsibilities",
+          "type": "Item",
+          "kind": "goal",
+          "status": "active",
+          "items": [
+            {
+              "label": "Considering a move to Mars",
+              "type": "Item",
+              "kind": null,
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Balancing health and work for future plans",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0191",
+                  "entities": [
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Rex Mountain",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "The Dull Company's novelty flamethrowers",
+                      "type": "Tool",
+                      "rel_type": "uses_tool"
+                    }
+                  ]
+                },
+                {
+                  "label": "Considering a move to Mars",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0088",
+                  "entities": [
+                    {
+                      "label": "Elon Tusk",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Dr. Renata Voss",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Mimi Tusk",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Chip Halberd",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Responsibilities to future generations and family",
+                  "purpose": "exploring",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0145",
+                  "entities": [
+                    {
+                      "label": "Optimist module",
+                      "type": "Artifact",
+                      "rel_type": "modifies"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "label": "Balancing fatherhood and business responsibilities",
+              "purpose": "venting",
+              "rel_type": "discusses",
+              "source_id": "tusk-0007",
+              "entities": [
+                {
+                  "label": "Chad Vanguard",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                },
+                {
+                  "label": "Tusla",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                },
+                {
+                  "label": "SpaceY",
+                  "type": "Organization",
+                  "rel_type": "collaborates_with"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Parenting and Child Development",
+          "type": "Item",
+          "kind": "area",
+          "status": "active",
+          "items": [
+            {
+              "label": "Child Engagement Strategies",
+              "type": "Item",
+              "kind": "area",
+              "status": "active",
+              "items": [],
+              "conversations": [
+                {
+                  "label": "Explaining online criticism to a child",
+                  "purpose": "decision-making",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0116",
+                  "entities": [
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    },
+                    {
+                      "label": "Zapp",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Planning a holiday with kids offline",
+                  "purpose": "planning",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0103",
+                  "entities": [
+                    {
+                      "label": "Priya Chen",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                },
+                {
+                  "label": "Writing a letter to children for the future",
+                  "purpose": "creative",
+                  "rel_type": "contributes_to",
+                  "source_id": "tusk-0192",
+                  "entities": [
+                    {
+                      "label": "Cyberwedge",
+                      "type": "Artifact",
+                      "rel_type": "modifies"
+                    },
+                    {
+                      "label": "SpaceY",
+                      "type": "Organization",
+                      "rel_type": "collaborates_with"
+                    }
+                  ]
+                },
+                {
+                  "label": "Token economy for kids' allowance",
+                  "purpose": "brainstorming",
+                  "rel_type": "discusses",
+                  "source_id": "tusk-0179",
+                  "entities": [
+                    {
+                      "label": "Mimi",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Chip Halberd",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    },
+                    {
+                      "label": "Gary Puddle",
+                      "type": "Person",
+                      "rel_type": "mentions_person"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conversations": [
+            {
+              "label": "Announcing the arrival of a new baby",
+              "purpose": "planning",
+              "rel_type": "contributes_to",
+              "source_id": "tusk-0062",
+              "entities": []
+            },
+            {
+              "label": "Legality of naming a child with symbols",
+              "purpose": "exploring",
+              "rel_type": "discusses",
+              "source_id": "tusk-0200",
+              "entities": []
+            },
+            {
+              "label": "Explaining long division to a child",
+              "purpose": "learning",
+              "rel_type": "discusses",
+              "source_id": "tusk-0025",
+              "entities": []
+            },
+            {
+              "label": "Coping with a child's hospitalization",
+              "purpose": "venting",
+              "rel_type": "discusses",
+              "source_id": "tusk-0147",
+              "entities": [
+                {
+                  "label": "Priya Chen",
+                  "type": "Person",
+                  "rel_type": "mentions_person"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "conversations": []
+    }
+  ],
+  "orphans": [
+    {
+      "label": "Turbopump failure analysis and diagnosis",
+      "purpose": "debugging",
+      "source_id": "tusk-0105",
+      "entities": []
+    },
+    {
+      "label": "Tunnel ventilation for electric vehicles",
+      "purpose": "planning",
+      "source_id": "tusk-0050",
+      "entities": []
+    },
+    {
+      "label": "Flight termination systems and their complexities",
+      "purpose": "exploring",
+      "source_id": "tusk-0081",
+      "entities": []
+    },
+    {
+      "label": "Troubleshooting sensor code 214",
+      "purpose": "decision-making",
+      "source_id": "tusk-0019",
+      "entities": []
+    },
+    {
+      "label": "Feasibility of an everything app concept",
+      "purpose": "brainstorming",
+      "source_id": "tusk-0096",
+      "entities": []
+    },
+    {
+      "label": "Metallurgy of gigacasting and cracking",
+      "purpose": "learning",
+      "source_id": "tusk-0126",
+      "entities": []
+    },
+    {
+      "label": "Paint shop throughput and alternatives",
+      "purpose": "planning",
+      "source_id": "tusk-0024",
+      "entities": []
+    },
+    {
+      "label": "Explanation of why the sky is blue",
+      "purpose": "learning",
+      "source_id": "tusk-0092",
+      "entities": []
+    },
+    {
+      "label": "Optimal ice bath protocols and safety",
+      "purpose": "learning",
+      "source_id": "tusk-0184",
+      "entities": []
+    },
+    {
+      "label": "Acoustic combustion instability and solutions",
+      "purpose": "learning",
+      "source_id": "tusk-0165",
+      "entities": []
+    },
+    {
+      "label": "Choosing between standing and treadmill desks",
+      "purpose": "decision-making",
+      "source_id": "tusk-0177",
+      "entities": []
+    },
+    {
+      "label": "Identifying dog breed in a meme",
+      "purpose": "exploring",
+      "source_id": "tusk-0051",
+      "entities": []
+    },
+    {
+      "label": "sci-fi book recommendations",
+      "purpose": "exploring",
+      "source_id": "tusk-0118",
+      "entities": []
+    },
+    {
+      "label": "Telemetry channels for COPV failure detection",
+      "purpose": "learning",
+      "source_id": "tusk-0067",
+      "entities": []
+    },
+    {
+      "label": "Holiday poll ideas for company engagement",
+      "purpose": "brainstorming",
+      "source_id": "tusk-0083",
+      "entities": []
+    },
+    {
+      "label": "Importance of free speech in communication",
+      "purpose": "brainstorming",
+      "source_id": "tusk-0141",
+      "entities": []
+    },
+    {
+      "label": "Troubleshooting assembly robot error",
+      "purpose": "debugging",
+      "source_id": "tusk-0011",
+      "entities": []
+    },
+    {
+      "label": "Cats knocking objects off tables",
+      "purpose": "learning",
+      "source_id": "tusk-0180",
+      "entities": []
+    },
+    {
+      "label": "Is a hot dog a sandwich?",
+      "purpose": "exploring",
+      "source_id": "tusk-0017",
+      "entities": []
+    },
+    {
+      "label": "Folding a fitted sheet",
+      "purpose": "learning",
+      "source_id": "tusk-0133",
+      "entities": []
+    },
+    {
+      "label": "Heat shield tile adhesive solutions",
+      "purpose": "other",
+      "source_id": "tusk-0018",
+      "entities": []
+    },
+    {
+      "label": "Fitness program development and optimization",
+      "purpose": "planning",
+      "source_id": "tusk-0114",
+      "entities": []
+    },
+    {
+      "label": "Removing red wine stain from couch",
+      "purpose": "exploring",
+      "source_id": "tusk-0027",
+      "entities": []
+    },
+    {
+      "label": "Comparison of LFP and NMC battery chemistries",
+      "purpose": "exploring",
+      "source_id": "tusk-0168",
+      "entities": []
+    },
+    {
+      "label": "Best methods to reheat pizza",
+      "purpose": "exploring",
+      "source_id": "tusk-0078",
+      "entities": []
+    }
+  ],
+  "entities": [
+    {
+      "label": "SpaceY",
+      "type": "Organization",
+      "kind": "Company",
+      "mentions": 26
+    },
+    {
+      "label": "Tusla",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 17
+    },
+    {
+      "label": "Zapp",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 17
+    },
+    {
+      "label": "Groak",
+      "type": "Tool",
+      "kind": "AI",
+      "mentions": 16
+    },
+    {
+      "label": "Dahlia Frost",
+      "type": "Person",
+      "kind": null,
+      "mentions": 15
+    },
+    {
+      "label": "Dr. Renata Voss",
+      "type": "Person",
+      "kind": null,
+      "mentions": 15
+    },
+    {
+      "label": "Priya Chen",
+      "type": "Person",
+      "kind": null,
+      "mentions": 14
+    },
+    {
+      "label": "Chad Vanguard",
+      "type": "Person",
+      "kind": null,
+      "mentions": 13
+    },
+    {
+      "label": "Gary Puddle",
+      "type": "Person",
+      "kind": null,
+      "mentions": 12
+    },
+    {
+      "label": "Marisol Vega",
+      "type": "Person",
+      "kind": null,
+      "mentions": 11
+    },
+    {
+      "label": "The Dull Company",
+      "type": "Organization",
+      "kind": "Company",
+      "mentions": 9
+    },
+    {
+      "label": "MechaMind",
+      "type": "Organization",
+      "kind": "Company",
+      "mentions": 9
+    },
+    {
+      "label": "Leviathan",
+      "type": "Artifact",
+      "kind": "Spacecraft",
+      "mentions": 9
+    },
+    {
+      "label": "Vanguard Dynamics",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 8
+    },
+    {
+      "label": "Björn Kessler",
+      "type": "Person",
+      "kind": null,
+      "mentions": 7
+    },
+    {
+      "label": "Rex Mountain",
+      "type": "Person",
+      "kind": null,
+      "mentions": 6
+    },
+    {
+      "label": "Chip Halberd",
+      "type": "Person",
+      "kind": null,
+      "mentions": 5
+    },
+    {
+      "label": "Dahlia",
+      "type": "Person",
+      "kind": null,
+      "mentions": 4
+    },
+    {
+      "label": "Groak",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 4
+    },
+    {
+      "label": "Optimist",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 4
+    },
+    {
+      "label": "Renata Voss",
+      "type": "Person",
+      "kind": null,
+      "mentions": 3
+    },
+    {
+      "label": "Chad",
+      "type": "Person",
+      "kind": null,
+      "mentions": 3
+    },
+    {
+      "label": "Marlow Quint",
+      "type": "Person",
+      "kind": null,
+      "mentions": 3
+    },
+    {
+      "label": "Cyberwedge",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 3
+    },
+    {
+      "label": "Elon Tusk",
+      "type": "Person",
+      "kind": null,
+      "mentions": 3
+    },
+    {
+      "label": "Mimi",
+      "type": "Person",
+      "kind": null,
+      "mentions": 2
+    },
+    {
+      "label": "Mimi Tusk",
+      "type": "Person",
+      "kind": null,
+      "mentions": 2
+    },
+    {
+      "label": "Leviathan",
+      "type": "Person",
+      "kind": null,
+      "mentions": 2
+    },
+    {
+      "label": "Cyberwedge",
+      "type": "Artifact",
+      "kind": null,
+      "mentions": 2
+    },
+    {
+      "label": "Ƶ",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 2
+    },
+    {
+      "label": "tunnel boring machine",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 2
+    },
+    {
+      "label": "beanbag",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Cyberwedge",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Groak AI",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "cutterhead",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Optimist module",
+      "type": "Artifact",
+      "kind": "Module",
+      "mentions": 1
+    },
+    {
+      "label": "Zapp's firehose",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Claude",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "spreadsheet of doom",
+      "type": "Artifact",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Ford",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "The Dull Company's novelty flamethrowers",
+      "type": "Tool",
+      "kind": "Novelty Flamethrowers",
+      "mentions": 1
+    },
+    {
+      "label": "Ares One",
+      "type": "Artifact",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "SuperGLUE",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Omega-3 Fatty Acids",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Chad Vanguard",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Claw",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Bear Grylls",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Lion’s Mane",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Inconel",
+      "type": "Artifact",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "user",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Priya",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Björn",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Bjorn",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Northwind Rockets",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Marisol",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "MMLU",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Groak 2",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "General Motors",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Δ-9",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "NogginLink",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "traction bench",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "spreadsheet",
+      "type": "Artifact",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Leviathan engine",
+      "type": "Artifact",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Gary",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "not-a-flamethrowers",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "solid amine CO2 scrubber",
+      "type": "Tool",
+      "kind": "Chemical Scrubber",
+      "mentions": 1
+    },
+    {
+      "label": "Tusk",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Rhodiola",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "portable foldable cot",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Ashwagandha",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Ƶ",
+      "type": "Artifact",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "MechaMind",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Zapp",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Chip",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Computational Fluid Dynamics (CFD)",
+      "type": "Tool",
+      "kind": "Simulation Software",
+      "mentions": 1
+    },
+    {
+      "label": "Magnesium",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Optimist bot",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "lumbar support pillows",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Zapp Payments",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Vanguard",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "the Claw",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Ƶ",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "foam mattress topper",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Dr. Voss",
+      "type": "Person",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Financial Crimes Enforcement Network",
+      "type": "Organization",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "flamethrowers",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Optimist humanoid robots",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    },
+    {
+      "label": "Vitamin D",
+      "type": "Tool",
+      "kind": null,
+      "mentions": 1
+    }
+  ]
+}

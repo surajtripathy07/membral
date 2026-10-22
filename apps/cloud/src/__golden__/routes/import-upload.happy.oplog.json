@@ -1,0 +1,64 @@
+[
+  {
+    "seq": 1,
+    "table": "rate_limit_check",
+    "op": "rpc",
+    "payload": {
+      "p_key": "importUpload:user:00000000-0000-4000-8000-00000000c0de",
+      "p_limit": 30,
+      "p_window_seconds": 60
+    }
+  },
+  {
+    "seq": 2,
+    "table": "conversations",
+    "op": "upsert",
+    "payload": [
+      {
+        "user_id": "00000000-0000-4000-8000-00000000c0de",
+        "source": "claude",
+        "source_id": "claude-export-conv-1",
+        "title": "Planning chat",
+        "created_at": "2025-12-30T08:00:00.000Z",
+        "updated_at": "2025-12-30T08:05:00.000Z",
+        "model": null,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Hello",
+            "timestamp": "2025-12-30T08:00:00.000Z",
+            "metadata": {
+              "message_id": "m1"
+            }
+          },
+          {
+            "role": "assistant",
+            "content": "Hi there",
+            "timestamp": "2025-12-30T08:01:00.000Z",
+            "metadata": {
+              "message_id": "m2"
+            }
+          }
+        ],
+        "metadata": {},
+        "synced_at": "2026-01-01T00:00:00.000Z"
+      }
+    ],
+    "onConflict": "user_id,source,source_id"
+  },
+  {
+    "seq": 3,
+    "table": "sync_heartbeats",
+    "op": "upsert",
+    "payload": [
+      {
+        "user_id": "00000000-0000-4000-8000-00000000c0de",
+        "source": "claude",
+        "last_run_at": "2026-01-01T00:00:00.000Z",
+        "last_item_at": "2025-12-30T08:05:00.000Z",
+        "updated_at": "2026-01-01T00:00:00.000Z"
+      }
+    ],
+    "onConflict": "user_id,source"
+  }
+]

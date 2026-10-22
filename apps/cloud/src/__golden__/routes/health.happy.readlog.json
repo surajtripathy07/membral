@@ -1,0 +1,13 @@
+[
+  {
+    "seq": 1,
+    "table": "conversations",
+    "op": "select",
+    "payload": {
+      "columns": "id",
+      "modifiers": [
+        "count.exact.head"
+      ]
+    }
+  }
+]

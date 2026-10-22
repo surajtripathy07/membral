@@ -1,0 +1,29 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral local up [--port <n>] [--gateway-port <n>] [--image <ref>] [--email <addr>] [--yes] [--no-sweep]
+  membral local status [--show-password]
+  membral local down [--wipe [--yes]]
+  membral local logs [db|auth|rest|gateway|app] [-f]
+
+Run Membral entirely on this machine with Docker. `up` writes a compose
+stack to ~/.membral/local (Postgres, auth, data API, a gateway and the
+Membral app), applies migrations, creates your one local user and an API
+key, saves the "local" profile, makes it active, and points hooks and MCP
+at it. Running it again changes nothing. Ports bind 127.0.0.1 only.
+
+Nothing leaves the machine unless you add an LLM key to
+~/.membral/local/.env; without one, extraction is off.
+
+Flags
+  --port <n>          App port (default 3000)
+  --gateway-port <n>  Auth/data gateway port (default 54421)
+  --image <ref>       App image (also MEMBRAL_IMAGE)
+  --email <addr>      Local user's email (default you@membral.local)
+  --show-password     status: print the local user's password
+  --wipe              down: also delete the database volume and the downloaded
+                      Claude Code volume (asks first)
+  --yes               up: accept setup defaults; down --wipe: skip the question
+  --no-sweep          up: don't schedule the backstop sweep
+
+--- STDERR ---

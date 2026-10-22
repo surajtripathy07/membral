@@ -1,0 +1,28 @@
+[
+  {
+    "seq": 1,
+    "table": "thread_dismissals",
+    "op": "upsert",
+    "payload": {
+      "user_id": "00000000-0000-4000-8000-00000000c0de",
+      "ref": "42",
+      "kind": "issue",
+      "reason": "resolved_elsewhere",
+      "created_at": "2026-01-01T00:00:00.000Z"
+    },
+    "onConflict": "user_id,kind,ref"
+  },
+  {
+    "seq": 2,
+    "table": "thread_dismissals",
+    "op": "update",
+    "payload": {
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "reason": "not_delivery_item"
+    },
+    "filters": [
+      "eq.id=\"9e4e0000-0000-4000-8000-000000000001\"",
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  }
+]

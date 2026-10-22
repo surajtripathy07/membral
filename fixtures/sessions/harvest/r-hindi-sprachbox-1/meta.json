@@ -1,0 +1,8 @@
+{
+  "batch": "R",
+  "harness": "claude-code",
+  "turn_count": 103,
+  "size_bytes": 274914,
+  "has_subagent_sidecar": false,
+  "why_selected": ""
+}

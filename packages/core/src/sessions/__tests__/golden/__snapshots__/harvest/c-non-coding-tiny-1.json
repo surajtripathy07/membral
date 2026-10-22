@@ -1,0 +1,41 @@
+{
+  "actionsVersion": 2,
+  "contentHash": "ca209ebfc128c4475b0aaf3824a9b97c106beb35f32f6025c0ac90a24b5a49b2",
+  "endedAt": "2026-09-26T19:55:50.169Z",
+  "filesTouched": [],
+  "model": "claude-haiku-4-5-20251001",
+  "models": [
+    "claude-haiku-4-5-20251001"
+  ],
+  "repo": {
+    "branch": "HEAD",
+    "path": "/private/tmp/claude-501/-Users-CodeHub-dev-membral-personal/4522c735-7681-4a99-a334-bb2d1e54fbdc/scratchpad/e2e/scratch-cwd/e2e-chat-tiny"
+  },
+  "source": "claude-code",
+  "sourceSessionId": "c-non-coding-tiny-1",
+  "startedAt": "2026-09-26T19:55:49.005Z",
+  "toolCounts": {},
+  "turns": [
+    {
+      "idx": 0,
+      "kind": "prose",
+      "role": "user",
+      "text": "reply with the word ok",
+      "ts": "2026-09-26T19:55:49.021Z"
+    },
+    {
+      "idx": 1,
+      "kind": "prose",
+      "role": "assistant",
+      "text": "ok",
+      "ts": "2026-09-26T19:55:50.121Z"
+    }
+  ],
+  "usage": {
+    "cacheCreation1hInputTokens": 7094,
+    "cacheCreationInputTokens": 7094,
+    "cacheReadInputTokens": 13689,
+    "inputTokens": 10,
+    "outputTokens": 41
+  }
+}

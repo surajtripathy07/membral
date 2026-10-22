@@ -1,0 +1,120 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  // Issue #126 verification finding 8: Turborepo 2 defaults to strict env
+  // mode — a task only sees env vars listed here (or matching a wildcard
+  // here), plus the small system passthrough, plus whatever framework
+  // inference adds (Next.js auto-includes NEXT_PUBLIC_* already, so those
+  // are included below for explicitness only, not because they're required).
+  // Without this, every non-NEXT_PUBLIC var apps/cloud reads
+  // (SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, MEMBRAL_*, ...) is invisible
+  // to the `build`/`typecheck`/`test` tasks' own child process AND absent
+  // from the task's cache key — latent today (nothing currently reads a
+  // non-NEXT_PUBLIC var at build time — see issue #12/#126's build-phase
+  // check in instrumentation.ts), but a landmine on `vercel.json`'s
+  // `npx turbo build` command and any future build-time env read, and a
+  // correctness gap for turbo/Vercel remote caching (two different configs
+  // could share a cache key). Deliberately an EXPLICIT list, not
+  // `"envMode": "loose"` — apps/cloud/src/lib/rate-limit.ts's per-rule
+  // `RATE_LIMIT_<NAME>`/`RATE_LIMIT_<NAME>_WINDOW` overrides are built from a
+  // dynamic envKey string, so a static grep for `process.env.X` can never
+  // enumerate them exhaustively; the trailing-`*` wildcard entries below
+  // (a Turborepo-supported env-key pattern) cover that whole family, and the
+  // SPIKE_PG_* dev-only vars, in one line each instead of guessing at a
+  // fixed list that silently goes stale the next time a rule/var is added.
+  "globalEnv": [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_APP_URL",
+    "NEXT_PUBLIC_MCP_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "MEMBRAL_CONTEXT_ID_SECRET",
+    "MEMBRAL_FEATURE_ALLOWLIST",
+    "MEMBRAL_KG_ENABLED",
+    "MEMBRAL_KG_COST_CAP_USD",
+    "MEMBRAL_KG_MONTHLY_CEILING_USD",
+    "MEMBRAL_MODEL",
+    "MEMBRAL_MODEL_BASE_URL",
+    "MEMBRAL_EMBEDDING_MODEL",
+    "MEMBRAL_EMBED_MODEL",
+    "MEMBRAL_EMBEDDINGS_BASE_URL",
+    "MEMBRAL_CODE_LANE_PASS1B",
+    "MEMBRAL_SPIKE_DEV",
+    "OPENAI_API_KEY",
+    "OPENROUTER_API_KEY",
+    "SPIKE_PG_*",
+    "RATE_LIMIT_*",
+    "NODE_ENV"
+  ],
+  // Round-2 review LOW 14: MEMBRAL_SIGNUPS_DISABLED is read at REQUEST time
+  // (lib/env.ts's signupsDisabled() is deliberately uncached, so an operator
+  // toggle takes effect on the next request with no redeploy) — it has zero
+  // build-time effect. Listing it in globalEnv put it in the GLOBAL hash
+  // anyway, so flipping the kill-switch during an incident would invalidate
+  // every task's cache repo-wide for no reason. globalPassThroughEnv keeps
+  // it visible to tasks (and documented here) without it affecting any
+  // task's cache key.
+  "globalPassThroughEnv": ["MEMBRAL_SIGNUPS_DISABLED", "MEMBRAL_MCP_EXTENDED_TOOLS"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "@membral/cloud#build": {
+      // Round-2 review, BLOCKER 1 fix: scripts/package-extension.mjs now
+      // builds the extension ITSELF (with its own explicit env contract)
+      // rather than zipping whatever packages/extension/dist a prior build
+      // left behind — so cloud's build no longer needs @membral/extension
+      // built first (the dependency this override used to add on top of
+      // "^build"). Kept as its own task purely for the `outputs` override
+      // below (HIGH 2): public/downloads/membral-extension.zip is written
+      // by the `prebuild` npm script (apps/cloud/package.json), OUTSIDE
+      // .next/**/dist/**, so a cache HIT must still restore it — otherwise
+      // a deploy that reuses a cached build ships a live /setup page whose
+      // download link 404s.
+      // N4 (P10 re-review): public/membral-cli.tgz is written by the same
+      // `prebuild` script as the extension zip above, also OUTSIDE
+      // .next/**/dist/**, and was missing from `outputs` — a cache HIT
+      // restored the extension zip but not the tarball, so
+      // `npm i -g https://membral.me/membral-cli.tgz` 404s after a cached
+      // deploy. Cloud's own `dependsOn` stays "^build" (unchanged): once
+      // apps/cloud/package.json depends on "@membral/cli" (below), "^build"
+      // already includes @membral/cli#build, which is what makes CLI source
+      // changes bust this task's cache key — no separate `inputs` needed.
+      "dependsOn": ["^build"],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        "public/downloads/**",
+        "public/membral-cli.tgz"
+      ]
+    },
+    "test": {
+      // Step 0.7 (architecture refactor programme, V7): tests read fixture
+      // files as INPUTS — the repo-root fixtures/ (persona corpus, opencode
+      // sessions) sits outside every package, so without it here a fixture
+      // edit left each package's test cache key unchanged and turbo replayed
+      // a stale pass. $TURBO_DEFAULT$ keeps the normal package-file hashing;
+      // the package-local fixture dirs are already inside it and are listed
+      // only so the dependency is explicit.
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/fixtures/**", "src/**/fixtures/**"]
+    },
+    "@membral/cli#test": {
+      // Same fixture inputs as "test" above (a package override replaces,
+      // not merges, the generic task's keys).
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/fixtures/**", "src/**/fixtures/**"],
+      // packages/cli's help.test.ts spawns the BUILT dist/index.js (issue
+      // #138 / ADR 0050 §5.1) so it sees the real stdout a user gets, not a
+      // source-level approximation — but the bare "test" task above only
+      // builds dependencies (^build), not @membral/cli's own build, so
+      // dist/ could be absent or stale otherwise. Same shape as the
+      // "typecheck" override below.
+      "dependsOn": ["^build", "build"]
+    },
+    "lint": {},
+    "typecheck": {
+      "dependsOn": ["^build", "build"]
+    }
+  }
+}

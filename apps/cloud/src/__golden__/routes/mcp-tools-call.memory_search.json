@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "cache-control": "no-cache",
+    "content-type": "text/event-stream"
+  },
+  "afterCalls": 2,
+  "body": "event: message\ndata: {\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"freshness\\\":null,\\\"data\\\":{\\\"records\\\":[{\\\"id\\\":\\\"5eed0000-0000-4000-8000-000000000101\\\",\\\"kind\\\":\\\"decision\\\",\\\"source\\\":\\\"extractor\\\",\\\"quote\\\":\\\"Add a login button\\\",\\\"text\\\":\\\"Use a single login button in the header\\\",\\\"session_id\\\":\\\"5eed0000-0000-4000-8000-000000000002\\\",\\\"turn_idx\\\":0,\\\"turn_role\\\":\\\"user\\\",\\\"repo\\\":\\\"acme/webapp\\\",\\\"branch\\\":\\\"main\\\",\\\"when\\\":\\\"2025-12-20T10:05:00.000Z\\\",\\\"as_of\\\":\\\"2025-12-20\\\",\\\"durable\\\":false,\\\"verified\\\":false,\\\"confidence\\\":0.8}],\\\"degraded\\\":\\\"SEARCH DEGRADED: no embedding provider is configured (set OPENAI_API_KEY, OPENROUTER_API_KEY or MEMBRAL_EMBEDDINGS_BASE_URL) — keyword-only results; No query embedding, so the relevance floor is off: every keyword match is served\\\",\\\"stale_blockers_hidden\\\":1}}\"}],\"freshness\":null},\"jsonrpc\":\"2.0\",\"id\":3}\n\n"
+}

@@ -1,0 +1,5 @@
+{
+  "name": "membral",
+  "version": "0.2.0",
+  "description": "Your coding agent can answer from what your past sessions found. Antigravity plugin: uploads each session to Membral, adds a short memory preamble, and connects the Membral MCP server. The Claude Code plugin lives in .claude-plugin/ and hooks/."
+}

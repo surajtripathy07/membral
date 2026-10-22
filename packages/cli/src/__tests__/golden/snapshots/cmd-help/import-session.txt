@@ -1,0 +1,11 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral import-session --transcript <path> [--source claude-code]
+                         [--api-url <url>] [--api-key <key>]
+
+Upload one session transcript. Not for interactive use — this is what the
+SessionEnd hook (installed by install-session-hook) shells out to after
+every Claude Code session. Never exits non-zero and never blocks.
+
+--- STDERR ---

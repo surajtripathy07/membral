@@ -1,0 +1,140 @@
+[
+  {
+    "seq": 1,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props",
+      "modifiers": [
+        "order.started_at.asc",
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null",
+      "gte.started_at=\"2026-08-29T05:55:05.736Z\"",
+      "not.started_at.is=null"
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props",
+      "modifiers": [
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null",
+      "gte.started_at=\"2026-08-29T05:55:05.736Z\"",
+      "is.started_at=null"
+    ]
+  },
+  {
+    "seq": 3,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props",
+      "modifiers": [
+        "order.started_at.asc",
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null",
+      "gte.started_at=\"2026-07-30T05:55:05.736Z\"",
+      "lt.started_at=\"2026-08-29T05:55:05.736Z\"",
+      "not.started_at.is=null"
+    ]
+  },
+  {
+    "seq": 4,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props",
+      "modifiers": [
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null",
+      "gte.started_at=\"2026-07-30T05:55:05.736Z\"",
+      "lt.started_at=\"2026-08-29T05:55:05.736Z\"",
+      "is.started_at=null"
+    ]
+  },
+  {
+    "seq": 5,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, git_branch, code_project_id, code_projects(display_name, repo_identity)",
+      "modifiers": [
+        "order.started_at.desc.nullslast",
+        "limit.15"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null",
+      "gte.started_at=\"2026-08-29T05:55:05.736Z\""
+    ]
+  },
+  {
+    "seq": 6,
+    "table": "code_session_turns",
+    "op": "select",
+    "payload": {
+      "columns": "session_id, idx, role, kind, text, tool_name, ts, props",
+      "modifiers": [
+        "order.id.asc",
+        "range.0.999"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.session_id=[\"9e4e0000-0000-4000-8000-000000000001\"]"
+    ]
+  },
+  {
+    "seq": 7,
+    "table": "code_session_issues",
+    "op": "select",
+    "payload": {
+      "columns": "id, session_id, ref, number, kind, role",
+      "modifiers": [
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.session_id=[\"9e4e0000-0000-4000-8000-000000000001\"]"
+    ]
+  },
+  {
+    "seq": 8,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, short_title, title, summary, started_at, source, source_session_id, parent_source_session_id, sub_agent:props->subAgent",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.id=[\"9e4e0000-0000-4000-8000-000000000001\"]"
+    ]
+  }
+]

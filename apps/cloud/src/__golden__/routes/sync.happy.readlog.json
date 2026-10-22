@@ -1,0 +1,44 @@
+[
+  {
+    "seq": 1,
+    "table": "profiles",
+    "op": "select",
+    "payload": {
+      "columns": "tier, conversation_limit",
+      "modifiers": [
+        "single"
+      ]
+    },
+    "filters": [
+      "eq.id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "conversations",
+    "op": "select",
+    "payload": {
+      "columns": "id",
+      "modifiers": [
+        "count.exact.head"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 3,
+    "table": "conversations",
+    "op": "select",
+    "payload": {
+      "columns": "source_id",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.source=\"chatgpt\"",
+      "in.source_id=[\"chat-2\"]"
+    ]
+  }
+]

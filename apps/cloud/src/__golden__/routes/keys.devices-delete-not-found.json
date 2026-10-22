@@ -1,0 +1,8 @@
+{
+  "status": 404,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Key not found or already revoked\"}"
+}

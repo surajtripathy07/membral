@@ -1,0 +1,8 @@
+{
+  "status": 307,
+  "headers": {
+    "location": "http://localhost:3001/login?error=missing_code"
+  },
+  "afterCalls": 0,
+  "body": ""
+}

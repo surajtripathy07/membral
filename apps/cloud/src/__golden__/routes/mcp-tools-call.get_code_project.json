@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "cache-control": "no-cache",
+    "content-type": "text/event-stream"
+  },
+  "afterCalls": 1,
+  "body": "event: message\ndata: {\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"id\\\":\\\"5eed0000-0000-4000-8000-000000000001\\\",\\\"rollup\\\":null,\\\"source\\\":\\\"claude-code\\\",\\\"summary\\\":null,\\\"sessions\\\":[{\\\"id\\\":\\\"5eed0000-0000-4000-8000-000000000006\\\",\\\"model\\\":\\\"claude-sonnet\\\",\\\"title\\\":\\\"Add a login button (sess-beta)\\\",\\\"summary\\\":null,\\\"ended_at\\\":\\\"2025-12-22T10:05:00+00:00\\\",\\\"git_branch\\\":\\\"main\\\",\\\"started_at\\\":\\\"2025-12-22T10:00:00+00:00\\\",\\\"tool_count\\\":1,\\\"turn_count\\\":3,\\\"files_touched\\\":[\\\"/work/webapp/src/App.tsx\\\"],\\\"user_turn_count\\\":1,\\\"duration_seconds\\\":300},{\\\"id\\\":\\\"5eed0000-0000-4000-8000-000000000002\\\",\\\"model\\\":\\\"claude-sonnet\\\",\\\"title\\\":\\\"Add a login button (sess-alpha)\\\",\\\"summary\\\":null,\\\"ended_at\\\":\\\"2025-12-20T10:05:00+00:00\\\",\\\"git_branch\\\":\\\"main\\\",\\\"started_at\\\":\\\"2025-12-20T10:00:00+00:00\\\",\\\"tool_count\\\":1,\\\"turn_count\\\":3,\\\"files_touched\\\":[\\\"/work/webapp/src/App.tsx\\\"],\\\"user_turn_count\\\":1,\\\"duration_seconds\\\":300}],\\\"repo_path\\\":\\\"/work/webapp\\\",\\\"remote_url\\\":\\\"https://codehub.example/acme/webapp.git\\\",\\\"display_name\\\":\\\"acme/webapp\\\",\\\"repo_identity\\\":\\\"codehub.example/acme/webapp\\\",\\\"session_count\\\":2,\\\"last_active_at\\\":\\\"2025-12-22T10:05:00+00:00\\\"}\"}],\"freshness\":null},\"jsonrpc\":\"2.0\",\"id\":3}\n\n"
+}

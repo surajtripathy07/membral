@@ -1,0 +1,19 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral preamble --hook [--format copilot|text|agy] [--api-url <url>] [--api-key <key>]
+
+Not for interactive use — this is the command install-session-hook wires
+into Claude Code's SessionStart hook. Reads the hook's JSON off stdin,
+fetches the memory preamble for the session's repo/branch, and prints it as
+SessionStart additionalContext. Never exits non-zero, never blocks, never
+prints anything on any failure (no credentials, network error, bad
+response).
+
+Flags
+  --format copilot   Read Copilot CLI's sessionStart input and print
+                     {"additionalContext": ...} (setup --copilot-cli)
+  --format text      Print the plain preamble body (the opencode plugin)
+  --format agy       Read Antigravity's PreInvocation input and print injectSteps
+
+--- STDERR ---

@@ -1,0 +1,7 @@
+{"type":"session.start","id":"9e2b7d14-e01","parentId":null,"timestamp":"2026-09-30T14:00:00.000Z","data":{"sessionId":"9e2b7d14-5a3c-4f80-b6d2-0c1e4a7f3b02","version":1,"producer":"copilot-agent","copilotVersion":"1.0.91","startTime":"2026-09-30T14:00:00.000Z","context":{"cwd":"/home/dev/codehub/ledger"}}}
+{"type":"session.model_change","id":"9e2b7d14-e02","parentId":"9e2b7d14-e01","timestamp":"2026-09-30T14:00:01.000Z","data":{"newModel":"gpt-5-mini"}}
+{"type":"user.message","id":"9e2b7d14-e03","parentId":"9e2b7d14-e02","timestamp":"2026-09-30T14:00:04.000Z","data":{"content":"What changed on this branch since main?","transformedContent":"<current_datetime>x</current_datetime>\n\nWhat changed on this branch since main?","attachments":[]}}
+{"type":"assistant.turn_start","id":"9e2b7d14-e04","parentId":"9e2b7d14-e03","timestamp":"2026-09-30T14:00:05.000Z","data":{"turnId":"0"}}
+{"type":"assistant.message","id":"9e2b7d14-e05","parentId":"9e2b7d14-e04","timestamp":"2026-09-30T14:00:07.000Z","data":{"messageId":"msg-k1","content":"Let me check the git status.","toolRequests":[{"toolCallId":"call-k1","name":"bash","arguments":{"command":"git status"},"type":"function"}],"turnId":"0"}}
+{"type":"tool.execution_start","id":"9e2b7d14-e06","parentId":"9e2b7d14-e05","timestamp":"2026-09-30T14:00:07.000Z","data":{"toolCallId":"call-k1","toolName":"bash","arguments":{"command":"git status"},"turnId":"0"}}
+{"type":"tool.execution_complete","id":"9e2b7d14-e07","parentId":"9e2b7d14-e06","timestamp":"2026-09-30T14:00:09.000Z","data":{"toolCallId":"call-k1","succ

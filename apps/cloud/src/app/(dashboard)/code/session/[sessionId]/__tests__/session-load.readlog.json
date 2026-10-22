@@ -1,0 +1,114 @@
+[
+  {
+    "seq": 1,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, code_project_id, title, summary, git_branch, started_at, ended_at, duration_seconds, turn_count, user_turn_count, tool_count, files_touched, source, source_session_id, parent_source_session_id, props, code_projects(display_name, repo_identity)",
+      "modifiers": [
+        "maybeSingle"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.id=\"9e4e0000-0000-4000-8000-000000000001\""
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "code_session_turns",
+    "op": "select",
+    "payload": {
+      "columns": "idx, role, kind, text, tool_name, file_path, ts, props",
+      "modifiers": [
+        "order.idx.asc",
+        "range.0.499"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.session_id=\"9e4e0000-0000-4000-8000-000000000001\"",
+      "eq.role=\"user\"",
+      "eq.kind=\"prose\""
+    ]
+  },
+  {
+    "seq": 3,
+    "table": "code_session_turns",
+    "op": "select",
+    "payload": {
+      "columns": "idx, role, kind, text, tool_name, file_path, ts, props",
+      "modifiers": [
+        "order.idx.asc",
+        "range.0.499"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.session_id=\"9e4e0000-0000-4000-8000-000000000001\"",
+      "or(role.neq.user,kind.neq.prose)"
+    ]
+  },
+  {
+    "seq": 4,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props",
+      "modifiers": [
+        "maybeSingle"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.id=\"9e4e0000-0000-4000-8000-000000000001\""
+    ]
+  },
+  {
+    "seq": 5,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, source_session_id, title, started_at, turn_count, sub_agent:props->subAgent",
+      "modifiers": [
+        "order.started_at.asc",
+        "limit.500"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.source=\"claude-code\"",
+      "eq.parent_source_session_id=\"sess-alpha\""
+    ]
+  },
+  {
+    "seq": 6,
+    "table": "code_kg_nodes",
+    "op": "select",
+    "payload": {
+      "columns": "id, models:props->models, usage:props->usage",
+      "modifiers": [
+        "order.created_at.asc",
+        "limit.1"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.node_type=\"session\"",
+      "eq.ref_id=\"9e4e0000-0000-4000-8000-000000000001\""
+    ]
+  },
+  {
+    "seq": 7,
+    "table": "code_session_issues",
+    "op": "select",
+    "payload": {
+      "columns": "session_id, ref, number, kind, role, evidence_quote, turn_idx, review_verb, build_verb, tier, turn_share, related_to",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "eq.session_id=\"9e4e0000-0000-4000-8000-000000000001\""
+    ]
+  }
+]

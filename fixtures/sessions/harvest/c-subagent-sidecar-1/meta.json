@@ -1,0 +1,8 @@
+{
+  "batch": "C",
+  "harness": "claude-code",
+  "turn_count": 35,
+  "size_bytes": 193712,
+  "has_subagent_sidecar": true,
+  "why_selected": "has sub-agent sidecar transcript dir"
+}

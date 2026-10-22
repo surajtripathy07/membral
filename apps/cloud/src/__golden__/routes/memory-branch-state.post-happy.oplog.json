@@ -1,0 +1,30 @@
+[
+  {
+    "seq": 1,
+    "table": "rate_limit_check",
+    "op": "rpc",
+    "payload": {
+      "p_key": "memoryBranchState:user:00000000-0000-4000-8000-00000000c0de",
+      "p_limit": 30,
+      "p_window_seconds": 60
+    }
+  },
+  {
+    "seq": 2,
+    "table": "memory_branch_state",
+    "op": "upsert",
+    "payload": [
+      {
+        "user_id": "00000000-0000-4000-8000-00000000c0de",
+        "code_project_id": "5eed0000-0000-4000-8000-000000000001",
+        "branch": "main",
+        "last_seen_sha": "0123456789abcdef0123456789abcdef01234567",
+        "merged_into": "main",
+        "merged_at": "2025-12-31T12:00:00.000Z",
+        "branch_gone_at": null,
+        "last_seen_at": "2025-12-31T12:00:00.000Z"
+      }
+    ],
+    "onConflict": "user_id,code_project_id,branch"
+  }
+]

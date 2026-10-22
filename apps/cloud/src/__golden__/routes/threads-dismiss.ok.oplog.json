@@ -1,0 +1,15 @@
+[
+  {
+    "seq": 1,
+    "table": "thread_dismissals",
+    "op": "upsert",
+    "payload": {
+      "user_id": "00000000-0000-4000-8000-00000000c0de",
+      "ref": "42",
+      "kind": "issue",
+      "reason": "resolved_elsewhere",
+      "created_at": "2026-01-01T00:00:00.000Z"
+    },
+    "onConflict": "user_id,kind,ref"
+  }
+]

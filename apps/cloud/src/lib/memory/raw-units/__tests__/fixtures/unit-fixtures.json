@@ -1,0 +1,2042 @@
+[
+ {
+  "name": "short-mixed",
+  "turns": [
+   {
+    "idx": 0,
+    "role": "user",
+    "kind": "prose",
+    "text": "Please add a retry to the CodeHub sync client.\n\nIt should back off."
+   },
+   {
+    "idx": 1,
+    "role": "assistant",
+    "kind": "thinking",
+    "text": "Hidden reasoning that must never become a unit."
+   },
+   {
+    "idx": 2,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "I will read the client first, then add the retry."
+   },
+   {
+    "idx": 3,
+    "role": "assistant",
+    "kind": "tool_use",
+    "text": "Read src/sync/client.ts"
+   },
+   {
+    "idx": 4,
+    "role": "user",
+    "kind": "tool_result",
+    "text": "export async function sync() {\n\tawait push();\n\treturn true;\n}\n"
+   },
+   {
+    "idx": 5,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "   \n\t "
+   },
+   {
+    "idx": 6,
+    "role": "assistant",
+    "kind": "tool_use",
+    "text": null
+   },
+   {
+    "idx": 7,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "Done: sync() now retries three times with doubling delay."
+   }
+  ],
+  "units": [
+   {
+    "unit": "c700",
+    "ord": 0,
+    "turn_idx": 0,
+    "turn_from": 0,
+    "turn_to": 7,
+    "parts": [
+     [
+      0,
+      0,
+      72
+     ],
+     [
+      2,
+      0,
+      60
+     ],
+     [
+      3,
+      0,
+      44
+     ],
+     [
+      4,
+      0,
+      77
+     ],
+     [
+      7,
+      0,
+      68
+     ]
+    ],
+    "win": null,
+    "text": "user: Please add a retry to the CodeHub sync client. It should back off.\nassistant: I will read the client first, then add the retry.\nassistant tool call: Read src/sync/client.ts\nuser tool result: export async function sync() { await push(); return true; }\nassistant: Done: sync() now retries three times with doubling delay.",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "adef9079f8c1b453d40de2a8635bde6383fec803896294972cf720614e778574",
+    "text_hash_nomic": "a171a38a72599c91c8f1798f71563c06c2a8a56e36c7eae5236fec15d59b88bd"
+   },
+   {
+    "unit": "win",
+    "ord": 0,
+    "turn_idx": 0,
+    "turn_from": 0,
+    "turn_to": 0,
+    "parts": null,
+    "win": [
+     0,
+     72
+    ],
+    "text": "user: Please add a retry to the CodeHub sync client. It should back off.",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "3755d2055cad425eac28c4d613fcc3b9939ef0ca6ac54253ed4e01415b466523",
+    "text_hash_nomic": "5d7ecf3fd145a01c269675c6bc08db4a01cce075a1ba6fdfa228dbdf02d45ad6"
+   },
+   {
+    "unit": "win",
+    "ord": 1,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 2,
+    "parts": null,
+    "win": [
+     0,
+     60
+    ],
+    "text": "assistant: I will read the client first, then add the retry.",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "9baa4a88c25d657a2567e22af836750d5cb7047828667d56c5c65a14ef5fd080",
+    "text_hash_nomic": "9ff229523ca0b1c61a6895e6d750b1fbe2642f820213a8bec69319147e5ba7dd"
+   },
+   {
+    "unit": "win",
+    "ord": 2,
+    "turn_idx": 3,
+    "turn_from": 3,
+    "turn_to": 3,
+    "parts": null,
+    "win": [
+     0,
+     44
+    ],
+    "text": "assistant tool call: Read src/sync/client.ts",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "f261f1ad140fbfcefd523080f6b2a139f7bc0c7d222cd198a2583896ec96a04a",
+    "text_hash_nomic": "2d71c58e18a79db71c50e666a699034f3632e047575c7ffab6976dcd12cce5df"
+   },
+   {
+    "unit": "win",
+    "ord": 3,
+    "turn_idx": 4,
+    "turn_from": 4,
+    "turn_to": 4,
+    "parts": null,
+    "win": [
+     0,
+     77
+    ],
+    "text": "user tool result: export async function sync() { await push(); return true; }",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "607ba2206689c117c8c61a262ecbe1a7e200ef6ed4d204c381f03ee5b3966db9",
+    "text_hash_nomic": "a145f28b04644f572093f3837f73bd1ad4c6faf0703d244a3599e90dbf1820f9"
+   },
+   {
+    "unit": "win",
+    "ord": 4,
+    "turn_idx": 7,
+    "turn_from": 7,
+    "turn_to": 7,
+    "parts": null,
+    "win": [
+     0,
+     68
+    ],
+    "text": "assistant: Done: sync() now retries three times with doubling delay.",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "ae3e90316699f05d1211ea6855d6797cb12d22850bcf26de422f6730f3c26ee4",
+    "text_hash_nomic": "3ccfd4594757ce7afd02ba729460164cf0e65793e0c3c9575468e7139200bce9"
+   },
+   {
+    "unit": "turn",
+    "ord": 0,
+    "turn_idx": 0,
+    "turn_from": 0,
+    "turn_to": 0,
+    "parts": null,
+    "win": null,
+    "text": "user: Please add a retry to the CodeHub sync client.\nIt should back off.",
+    "full_text": "user: Please add a retry to the CodeHub sync client.\nIt should back off.",
+    "turn_text": "user: Please add a retry to the CodeHub sync client. It should back off.",
+    "text_hash": "7c2649012579c34e05304463bb5da8dc87f58ae817b84a46651e3bab1256343f",
+    "text_hash_nomic": "ffdb0943461a1e783bb7aa4ef559c96d318248ba4bd5bf2fb2a294271f49ac89"
+   },
+   {
+    "unit": "turn",
+    "ord": 1,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 2,
+    "parts": null,
+    "win": null,
+    "text": "assistant: I will read the client first, then add the retry.",
+    "full_text": "assistant: I will read the client first, then add the retry.",
+    "turn_text": "assistant: I will read the client first, then add the retry.",
+    "text_hash": "9baa4a88c25d657a2567e22af836750d5cb7047828667d56c5c65a14ef5fd080",
+    "text_hash_nomic": "9ff229523ca0b1c61a6895e6d750b1fbe2642f820213a8bec69319147e5ba7dd"
+   },
+   {
+    "unit": "turn",
+    "ord": 2,
+    "turn_idx": 3,
+    "turn_from": 3,
+    "turn_to": 3,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool call: Read src/sync/client.ts",
+    "full_text": "assistant tool call: Read src/sync/client.ts",
+    "turn_text": "assistant tool call: Read src/sync/client.ts",
+    "text_hash": "f261f1ad140fbfcefd523080f6b2a139f7bc0c7d222cd198a2583896ec96a04a",
+    "text_hash_nomic": "2d71c58e18a79db71c50e666a699034f3632e047575c7ffab6976dcd12cce5df"
+   },
+   {
+    "unit": "turn",
+    "ord": 3,
+    "turn_idx": 4,
+    "turn_from": 4,
+    "turn_to": 4,
+    "parts": null,
+    "win": null,
+    "text": "user tool result: export async function sync() {\nawait push();\nreturn true;\n}",
+    "full_text": "user tool result: export async function sync() {\nawait push();\nreturn true;\n}",
+    "turn_text": "user tool result: export async function sync() { await push(); return true; }",
+    "text_hash": "eee20ead59ab2264a063e7fc03c6e0105180628a897eb0ad261f8e9ddeeb84de",
+    "text_hash_nomic": "b122a97405eddd50e9f5e88e8396c28de9b92aa6c1d983fc2f22b0ed899ac554"
+   },
+   {
+    "unit": "turn",
+    "ord": 4,
+    "turn_idx": 7,
+    "turn_from": 7,
+    "turn_to": 7,
+    "parts": null,
+    "win": null,
+    "text": "assistant: Done: sync() now retries three times with doubling delay.",
+    "full_text": "assistant: Done: sync() now retries three times with doubling delay.",
+    "turn_text": "assistant: Done: sync() now retries three times with doubling delay.",
+    "text_hash": "ae3e90316699f05d1211ea6855d6797cb12d22850bcf26de422f6730f3c26ee4",
+    "text_hash_nomic": "3ccfd4594757ce7afd02ba729460164cf0e65793e0c3c9575468e7139200bce9"
+   }
+  ]
+ },
+ {
+  "name": "long-prose-windows",
+  "turns": [
+   {
+    "idx": 0,
+    "role": "user",
+    "kind": "prose",
+    "text": "Why does the nightly export drop rows?"
+   },
+   {
+    "idx": 1,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn.\n\nreads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit: /srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly/\ntranscript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at."
+   },
+   {
+    "idx": 2,
+    "role": "assistant",
+    "kind": "tool_result",
+    "text": "xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy tail words after the long run"
+   },
+   {
+    "idx": 3,
+    "role": "user",
+    "kind": "prose",
+    "text": "importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript,   splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each"
+   }
+  ],
+  "units": [
+   {
+    "unit": "c700",
+    "ord": 0,
+    "turn_idx": 0,
+    "turn_from": 0,
+    "turn_to": 1,
+    "parts": [
+     [
+      0,
+      0,
+      44
+     ],
+     [
+      1,
+      0,
+      658
+     ]
+    ],
+    "win": null,
+    "text": "user: Why does the nightly export drop rows?\nassistant: CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn. reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "0c9c5d8e65b191c60d2467c35c701e0d097b627e16b04e81ca3456c5fbb685f8",
+    "text_hash_nomic": "425aa743c64c0a90135007d503da2edf4dc3ca8e8d073dd151976ea404ae8168"
+   },
+   {
+    "unit": "c700",
+    "ord": 1,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": [
+     [
+      1,
+      510,
+      1211
+     ]
+    ],
+    "win": null,
+    "text": "and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit: /srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly/ transcript, writes search CodeHub at per",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "423bf0086e3158ca4cdf9aaf001a5d045e730758ecc1b6085cf1fd8ecbabc7cf",
+    "text_hash_nomic": "efb02f1d9deb4a90cecd6aa790a858ee1066a9e0a3e53e3ee866b498d2756cde"
+   },
+   {
+    "unit": "c700",
+    "ord": 2,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 2,
+    "parts": [
+     [
+      1,
+      1171,
+      1628
+     ],
+     [
+      2,
+      0,
+      342
+     ]
+    ],
+    "win": null,
+    "text": "transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at.\nassistant tool result: xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "62edbad65f1a135c08a1abbfdd95242af4088d39ea3438a0f4d166f63164c8fb",
+    "text_hash_nomic": "f42d41171a456a459f8b43480a398f7e0da4f9eaa281f65c3f9c813d8660c0cb"
+   },
+   {
+    "unit": "c700",
+    "ord": 3,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 2,
+    "parts": [
+     [
+      2,
+      342,
+      1142
+     ]
+    ],
+    "win": null,
+    "text": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "b207802f22da53980f99726049d512ea9304aa8d22b57941d7694386eae23ee2",
+    "text_hash_nomic": "863412998938deef3ff6d88b20ce0b54debe2dbb0758dbf3f974c2eb7c595433"
+   },
+   {
+    "unit": "c700",
+    "ord": 4,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 3,
+    "parts": [
+     [
+      2,
+      1142,
+      1554
+     ],
+     [
+      3,
+      0,
+      288
+     ]
+    ],
+    "win": null,
+    "text": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy tail words after the long run\nuser: importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "f989ae99f9781d0a6e62b38dad20db52d0aa9f6b111e007dc5f2f258096f1292",
+    "text_hash_nomic": "66e34a9cad3a2000ffb9b133fb04dc91fb455dd092d3303676c3e94f705762b5"
+   },
+   {
+    "unit": "c700",
+    "ord": 5,
+    "turn_idx": 3,
+    "turn_from": 3,
+    "turn_to": 3,
+    "parts": [
+     [
+      3,
+      142,
+      412
+     ]
+    ],
+    "win": null,
+    "text": "can importer turn unit exact transcript, splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "e89f4046b8cf8527dd2b46947ba452a063e8df063706a2840166c90b742bb0ba",
+    "text_hash_nomic": "cf677e6ef0e55368c01b5e2bfad33f38cbb6bfc1dd1ed7af0194bf08bd49f8b2"
+   },
+   {
+    "unit": "win",
+    "ord": 0,
+    "turn_idx": 0,
+    "turn_from": 0,
+    "turn_to": 0,
+    "parts": null,
+    "win": [
+     0,
+     44
+    ],
+    "text": "user: Why does the nightly export drop rows?",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "98e0fa5de34139b4490a952cbc4af55abf40baf35b41c881703d89a083f4f902",
+    "text_hash_nomic": "b5ec8d3a45694bf1b3477e55802fb88bd1a5722b671817335467ad9d7fa3cc9c"
+   },
+   {
+    "unit": "win",
+    "ord": 1,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": [
+     0,
+     301
+    ],
+    "text": "assistant: CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "64df69e805524693535a00dd9041d0f6da687f1f030725512db11f8e73c4abb2",
+    "text_hash_nomic": "7dec46cbafa75f360dc37255491359459a55cf5bf8deea5be80a73df61730469"
+   },
+   {
+    "unit": "win",
+    "ord": 2,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": [
+     206,
+     509
+    ],
+    "text": "assistant (cont.): boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn. reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "f6bce22f9de45b4bbd60a612f2ef1539605987763f098a69e0b6a3a324ecfeca",
+    "text_hash_nomic": "654a11339c5d393b827830b5ba203817261c4b9f42ebb7901a0778302271a0e0"
+   },
+   {
+    "unit": "win",
+    "ord": 3,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": [
+     412,
+     714
+    ],
+    "text": "assistant (cont.): so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "449ead4baec74f41755197cf6a845814f695eda07d0b5121fa82e1ddec9cfc55",
+    "text_hash_nomic": "74ea1e2cfa8024d1433e17e9692f0cadc48f15875dd08857426dbb8007cc67ad"
+   },
+   {
+    "unit": "win",
+    "ord": 4,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": [
+     619,
+     999
+    ],
+    "text": "assistant (cont.): search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit: /srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//sr",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "40f0060751f8487e58ab9a92e84c942cc5c0d65f7f5a5117d1a26a0aebae0b9d",
+    "text_hash_nomic": "8b758e216f93fe11e91c22a49249ef8203d6da70976e7fa20654215dbf9a8dbd"
+   },
+   {
+    "unit": "win",
+    "ord": 5,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": [
+     999,
+     1299
+    ],
+    "text": "assistant (cont.): v/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly/ transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "536b20ff62fddaf9d93c16776e8632e8c8691f761daab3b8af0abde40013a3d0",
+    "text_hash_nomic": "908b8f023af79f13e719dafbb8b8d654a0c2b57548c608485e05463dba464f93"
+   },
+   {
+    "unit": "win",
+    "ord": 6,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": [
+     1205,
+     1509
+    ],
+    "text": "assistant (cont.): at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "6333256e495bec35834a934a3c3000b713215d7342c9f25dc6370ff921a524e7",
+    "text_hash_nomic": "23fc1e369bf1c1aabf207e55f0f5d53e805385f2bf2f2f95be5f43f565f9452a"
+   },
+   {
+    "unit": "win",
+    "ord": 7,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": [
+     1411,
+     1628
+    ],
+    "text": "assistant (cont.): splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at.",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "f96dd72ee2133ab942fb289abfaf3231ad2ccdad5ed8a2af030d4a06379ff081",
+    "text_hash_nomic": "fc1b93f0791b9e00b43f2ac8a70119ca9b0bd3895d7697d3ecae08c5bbe0b130"
+   },
+   {
+    "unit": "win",
+    "ord": 8,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 2,
+    "parts": null,
+    "win": [
+     0,
+     380
+    ],
+    "text": "assistant tool result: xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "f4b07ceb5fa49e5ba0ddbbd2f283d52a3e6f0b0e0d67d1a9539753c3abce9d78",
+    "text_hash_nomic": "c6b733028cf616f2d01344820eeddecc17ba514df7826fe3f4743fac664fe238"
+   },
+   {
+    "unit": "win",
+    "ord": 9,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 2,
+    "parts": null,
+    "win": [
+     380,
+     760
+    ],
+    "text": "assistant tool result (cont.): yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "a08bb2adf0467eec6338df736f4db32bc523b1f61c6ad4248693835543cc118e",
+    "text_hash_nomic": "59c7e8735617b5c28c24b0c69b08dbccf35af7475d901a14b03aadf6cd682e0a"
+   },
+   {
+    "unit": "win",
+    "ord": 10,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 2,
+    "parts": null,
+    "win": [
+     760,
+     1140
+    ],
+    "text": "assistant tool result (cont.): yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "a08bb2adf0467eec6338df736f4db32bc523b1f61c6ad4248693835543cc118e",
+    "text_hash_nomic": "59c7e8735617b5c28c24b0c69b08dbccf35af7475d901a14b03aadf6cd682e0a"
+   },
+   {
+    "unit": "win",
+    "ord": 11,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 2,
+    "parts": null,
+    "win": [
+     1140,
+     1520
+    ],
+    "text": "assistant tool result (cont.): yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "a08bb2adf0467eec6338df736f4db32bc523b1f61c6ad4248693835543cc118e",
+    "text_hash_nomic": "59c7e8735617b5c28c24b0c69b08dbccf35af7475d901a14b03aadf6cd682e0a"
+   },
+   {
+    "unit": "win",
+    "ord": 12,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 2,
+    "parts": null,
+    "win": [
+     1520,
+     1554
+    ],
+    "text": "assistant tool result (cont.): yyyy tail words after the long run",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "d4247b4bc6802dccbd8647cdda23bd5d67b9e9b0962dcab84526cf5f2fe98751",
+    "text_hash_nomic": "17958f5b5c8390b18e46fd30fdbd2da8aad2687358623627fa16b5569287d100"
+   },
+   {
+    "unit": "win",
+    "ord": 13,
+    "turn_idx": 3,
+    "turn_from": 3,
+    "turn_to": 3,
+    "parts": null,
+    "win": [
+     0,
+     303
+    ],
+    "text": "user: importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "b3e3eac416b3f2a72c3de36df3938004748b78615dd6e60586d84b0819b07152",
+    "text_hash_nomic": "23c39fa5e9638f91187a8b86fb28b7cd3d67a91cb996f5cbd70891dbbadd3628"
+   },
+   {
+    "unit": "win",
+    "ord": 14,
+    "turn_idx": 3,
+    "turn_from": 3,
+    "turn_to": 3,
+    "parts": null,
+    "win": [
+     207,
+     412
+    ],
+    "text": "user (cont.): turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "bf1229b503f2fdc3aa1f5cab9689df977129c40437d64025f25b665d88b2a5e8",
+    "text_hash_nomic": "84f7037c1cbe1485ace7ca9d0fd8f1ae1723c69c689c37f0a3585b077493c953"
+   },
+   {
+    "unit": "turn",
+    "ord": 0,
+    "turn_idx": 0,
+    "turn_from": 0,
+    "turn_to": 0,
+    "parts": null,
+    "win": null,
+    "text": "user: Why does the nightly export drop rows?",
+    "full_text": "user: Why does the nightly export drop rows?",
+    "turn_text": "user: Why does the nightly export drop rows?",
+    "text_hash": "98e0fa5de34139b4490a952cbc4af55abf40baf35b41c881703d89a083f4f902",
+    "text_hash_nomic": "b5ec8d3a45694bf1b3477e55802fb88bd1a5722b671817335467ad9d7fa3cc9c"
+   },
+   {
+    "unit": "turn",
+    "ord": 1,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": null,
+    "text": "assistant: CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn.\nreads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit:",
+    "full_text": "assistant: CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn.\nreads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit: /srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly/\ntranscript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at.",
+    "turn_text": "assistant: CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn. reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit: /srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly//srv/codehub/exports/nightly/ transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at.",
+    "text_hash": "3c05ce4e4760699265edf942a46005ab61b4112bc5362e4d60a540ca873f87b2",
+    "text_hash_nomic": "f0baceb08764d97d49096583da6f83be60a93c9da66e0df158ed467c62b6edf1"
+   },
+   {
+    "unit": "turn",
+    "ord": 2,
+    "turn_idx": 2,
+    "turn_from": 2,
+    "turn_to": 2,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool result: xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    "full_text": "assistant tool result: xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy tail words after the long run",
+    "turn_text": "assistant tool result: xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy tail words after the long run",
+    "text_hash": "ce9c52487c47a66d02183caa821157dd3c132baae722d95beb1b7084db48702b",
+    "text_hash_nomic": "3cdbac41598e4ae6930a57c18b950863d0f5ac79e1015e20b5c0d8fba979e328"
+   },
+   {
+    "unit": "turn",
+    "ord": 3,
+    "turn_idx": 3,
+    "turn_from": 3,
+    "turn_to": 3,
+    "parts": null,
+    "win": null,
+    "text": "user: importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "full_text": "user: importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "turn_text": "user: importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "text_hash": "0c5e6fcbecc0fc2e9b4b384f7c5a443f15ee5df5c489929932e4e222bc721eab",
+    "text_hash_nomic": "aae46dc3d2c8ecf0dfd2fa71385893d6a886e510bea576e20747e1df68f2ec1c"
+   }
+  ]
+ },
+ {
+  "name": "unicode-chunk-boundaries",
+  "turns": [
+   {
+    "idx": 1,
+    "role": "user",
+    "kind": "prose",
+    "text": "rollback 🚀 plan the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search"
+   },
+   {
+    "idx": 3,
+    "role": "assistant",
+    "kind": "tool_result",
+    "text": "日本語のログ été naïve café CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at\nsecond line\n  indented"
+   },
+   {
+    "idx": 5,
+    "role": "assistant",
+    "kind": "tool_use",
+    "text": "plain ascii words only importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the"
+   },
+   {
+    "idx": 7,
+    "role": "user",
+    "kind": "prose",
+    "text": "rollback 🚀 plan reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and\nsecond line\n  indented"
+   },
+   {
+    "idx": 9,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "日本語のログ été naïve café each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the"
+   },
+   {
+    "idx": 11,
+    "role": "assistant",
+    "kind": "tool_result",
+    "text": "plain ascii words only transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn\nsecond line\n  indented"
+   },
+   {
+    "idx": 13,
+    "role": "user",
+    "kind": "tool_use",
+    "text": "rollback 🚀 plan splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one"
+   },
+   {
+    "idx": 15,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "日本語のログ été naïve café it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer\nsecond line\n  indented"
+   },
+   {
+    "idx": 17,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "plain ascii words only at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit"
+   },
+   {
+    "idx": 19,
+    "role": "user",
+    "kind": "tool_result",
+    "text": "rollback 🚀 plan turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript,\nsecond line\n  indented"
+   },
+   {
+    "idx": 21,
+    "role": "assistant",
+    "kind": "tool_use",
+    "text": "日本語のログ été naïve café boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each"
+   },
+   {
+    "idx": 23,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "plain ascii words only and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that\nsecond line\n  indented"
+   },
+   {
+    "idx": 25,
+    "role": "user",
+    "kind": "prose",
+    "text": "rollback 🚀 plan writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it"
+   },
+   {
+    "idx": 27,
+    "role": "assistant",
+    "kind": "tool_result",
+    "text": "日本語のログ été naïve café one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite\nsecond line\n  indented"
+   },
+   {
+    "idx": 29,
+    "role": "assistant",
+    "kind": "tool_use",
+    "text": "plain ascii words only row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries"
+   },
+   {
+    "idx": 31,
+    "role": "user",
+    "kind": "prose",
+    "text": "rollback 🚀 plan per the each and that the it row cite reads boundaries so turn splits one can importer turn\nsecond line\n  indented"
+   },
+   {
+    "idx": 33,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "日本語のログ été naïve café unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact"
+   },
+   {
+    "idx": 35,
+    "role": "assistant",
+    "kind": "tool_result",
+    "text": "plain ascii words only so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes\nsecond line\n  indented"
+   },
+   {
+    "idx": 37,
+    "role": "user",
+    "kind": "tool_use",
+    "text": "rollback 🚀 plan that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub"
+   },
+   {
+    "idx": 39,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "日本語のログ été naïve café search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per\nsecond line\n  indented"
+   },
+   {
+    "idx": 41,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "plain ascii words only can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row"
+   },
+   {
+    "idx": 43,
+    "role": "user",
+    "kind": "tool_result",
+    "text": "rollback 🚀 plan cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads\nsecond line\n  indented"
+   },
+   {
+    "idx": 45,
+    "role": "assistant",
+    "kind": "tool_use",
+    "text": "日本語のログ été naïve café the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so"
+   },
+   {
+    "idx": 47,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "plain ascii words only exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits\nsecond line\n  indented"
+   }
+  ],
+  "units": [
+   {
+    "unit": "c700",
+    "ord": 0,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 7,
+    "parts": [
+     [
+      1,
+      0,
+      129
+     ],
+     [
+      3,
+      0,
+      216
+     ],
+     [
+      5,
+      0,
+      253
+     ],
+     [
+      7,
+      0,
+      99
+     ]
+    ],
+    "win": null,
+    "text": "user: rollback 🚀 plan the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search\nassistant tool result: 日本語のログ été naïve café CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at second line indented\nassistant tool call: plain ascii words only importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the\nuser: rollback 🚀 plan reads boundaries so turn splits one can importer turn unit exact transcript,",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "80c20f601d2970fe57b67818b87b703c9b2b000a7dee65ead86c826a2b73d0ac",
+    "text_hash_nomic": "e8c2aac563e4f886e9766f66083a3aff5d334857fd09dd2cd39bd5b8a9b1c1fc"
+   },
+   {
+    "unit": "c700",
+    "ord": 1,
+    "turn_idx": 5,
+    "turn_from": 5,
+    "turn_to": 11,
+    "parts": [
+     [
+      5,
+      209,
+      253
+     ],
+     [
+      7,
+      0,
+      302
+     ],
+     [
+      9,
+      0,
+      330
+     ],
+     [
+      11,
+      0,
+      22
+     ]
+    ],
+    "win": null,
+    "text": "transcript, writes search CodeHub at per the\nuser: rollback 🚀 plan reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and second line indented\nassistant: 日本語のログ été naïve café each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the\nassistant tool result:",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "7595576615cc612e1d60fa7f959a820a9c58c2f0f593279bf97b11b850215e16",
+    "text_hash_nomic": "aafc5a80cb284ccfda09b52b04824e87be7b3df0462c21308c9076231793cee6"
+   },
+   {
+    "unit": "c700",
+    "ord": 2,
+    "turn_idx": 9,
+    "turn_from": 9,
+    "turn_to": 15,
+    "parts": [
+     [
+      9,
+      209,
+      330
+     ],
+     [
+      11,
+      0,
+      166
+     ],
+     [
+      13,
+      0,
+      183
+     ],
+     [
+      15,
+      0,
+      233
+     ]
+    ],
+    "win": null,
+    "text": "boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the\nassistant tool result: plain ascii words only transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn second line indented\nuser tool call: rollback 🚀 plan splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one\nassistant: 日本語のログ été naïve café it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "f0f18da8cb4eb65296b7fec57774d0572663d1c1b165263b04ffff5c876afafb",
+    "text_hash_nomic": "8b4aa8cc7b9016941fa89f159900e0862106c58c723bb8ad73b43a8ae3a93a1f"
+   },
+   {
+    "unit": "c700",
+    "ord": 3,
+    "turn_idx": 15,
+    "turn_from": 15,
+    "turn_to": 19,
+    "parts": [
+     [
+      15,
+      85,
+      254
+     ],
+     [
+      17,
+      0,
+      273
+     ],
+     [
+      19,
+      0,
+      256
+     ]
+    ],
+    "win": null,
+    "text": "importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer second line indented\nassistant: plain ascii words only at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit\nuser tool result: rollback 🚀 plan turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "76610cb9b44c9ddb6de3ae6d38f86f6deb4e779f10e1d7d8a1c4effc550b6ad4",
+    "text_hash_nomic": "c3c80251a7c04667d3b5d78955b3ee721f3b10b372f23896f4ede2063c011208"
+   },
+   {
+    "unit": "c700",
+    "ord": 4,
+    "turn_idx": 19,
+    "turn_from": 19,
+    "turn_to": 25,
+    "parts": [
+     [
+      19,
+      110,
+      363
+     ],
+     [
+      21,
+      0,
+      151
+     ],
+     [
+      23,
+      0,
+      203
+     ],
+     [
+      25,
+      0,
+      91
+     ]
+    ],
+    "win": null,
+    "text": "the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, second line indented\nassistant tool call: 日本語のログ été naïve café boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each\nassistant: plain ascii words only and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that second line indented\nuser: rollback 🚀 plan writes search CodeHub at per the each and that the it row cite reads",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "1148fdfcd1b739147615f08c4d9986094c67281832dbecb914779bd5887490ca",
+    "text_hash_nomic": "dcd29713f3f32521d0a69a752512a1a315095a6ed4534d463876278709d7c929"
+   },
+   {
+    "unit": "c700",
+    "ord": 5,
+    "turn_idx": 23,
+    "turn_from": 23,
+    "turn_to": 29,
+    "parts": [
+     [
+      23,
+      150,
+      203
+     ],
+     [
+      25,
+      0,
+      216
+     ],
+     [
+      27,
+      0,
+      313
+     ],
+     [
+      29,
+      0,
+      117
+     ]
+    ],
+    "win": null,
+    "text": "CodeHub at per the each and that second line indented\nuser: rollback 🚀 plan writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it\nassistant tool result: 日本語のログ été naïve café one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite second line indented\nassistant tool call: plain ascii words only row cite reads boundaries so turn splits one can importer turn unit exact",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "03ee98c0e890c91e844837a4f436a9b6af513426fefdb976ffee716f561bc3bf",
+    "text_hash_nomic": "742d353b9a06f13437ffc71d897ee4b9021f84b4eebfcfe82d3120cde5b6397d"
+   },
+   {
+    "unit": "c700",
+    "ord": 6,
+    "turn_idx": 27,
+    "turn_from": 27,
+    "turn_to": 35,
+    "parts": [
+     [
+      27,
+      284,
+      313
+     ],
+     [
+      29,
+      0,
+      349
+     ],
+     [
+      31,
+      0,
+      135
+     ],
+     [
+      33,
+      0,
+      183
+     ],
+     [
+      35,
+      0,
+      9
+     ]
+    ],
+    "win": null,
+    "text": "row cite second line indented\nassistant tool call: plain ascii words only row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries\nuser: rollback 🚀 plan per the each and that the it row cite reads boundaries so turn splits one can importer turn second line indented\nassistant: 日本語のログ été naïve café unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact\nassistant",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "da065ede97a4390625d7ab27dc95cf8cbd3d92385a7abeaba4be471436c65031",
+    "text_hash_nomic": "46f1f3de249186e08f73836e7e9c7405b4718a0753bd875c8f63d19b7022df22"
+   },
+   {
+    "unit": "c700",
+    "ord": 7,
+    "turn_idx": 33,
+    "turn_from": 33,
+    "turn_to": 37,
+    "parts": [
+     [
+      33,
+      44,
+      183
+     ],
+     [
+      35,
+      0,
+      273
+     ],
+     [
+      37,
+      0,
+      292
+     ]
+    ],
+    "win": null,
+    "text": "transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact\nassistant tool result: plain ascii words only so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes second line indented\nuser tool call: rollback 🚀 plan that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "6a01c1b54810b1cc67256db1d99c0775c15acd39e67e24eaa11d88e9687281dd",
+    "text_hash_nomic": "3002de33cfaef058533569770332237befb705a661546bd483336c1d8e220f5a"
+   },
+   {
+    "unit": "c700",
+    "ord": 8,
+    "turn_idx": 37,
+    "turn_from": 37,
+    "turn_to": 43,
+    "parts": [
+     [
+      37,
+      145,
+      292
+     ],
+     [
+      39,
+      0,
+      355
+     ],
+     [
+      41,
+      0,
+      132
+     ],
+     [
+      43,
+      0,
+      64
+     ]
+    ],
+    "win": null,
+    "text": "CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub\nassistant: 日本語のログ été naïve café search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per second line indented\nassistant: plain ascii words only can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row\nuser tool result: rollback 🚀 plan cite reads boundaries so turn",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "1d4baae3fcca97221a55fe495921caab237d7b8f41f9eb0a4df18f6000c718bb",
+    "text_hash_nomic": "32a42b7ed0055f4d6134591fba87b34c17079a1beec93d0aceb45b426f8f4701"
+   },
+   {
+    "unit": "c700",
+    "ord": 9,
+    "turn_idx": 41,
+    "turn_from": 41,
+    "turn_to": 47,
+    "parts": [
+     [
+      41,
+      52,
+      132
+     ],
+     [
+      43,
+      0,
+      206
+     ],
+     [
+      45,
+      0,
+      236
+     ],
+     [
+      47,
+      0,
+      179
+     ]
+    ],
+    "win": null,
+    "text": "unit exact transcript, writes search CodeHub at per the each and that the it row\nuser tool result: rollback 🚀 plan cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads second line indented\nassistant tool call: 日本語のログ été naïve café the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so\nassistant: plain ascii words only exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "84bb2e94ddd2747d8ab82022c29b7cbebf0dbeade605439cf59c886faddf2dae",
+    "text_hash_nomic": "c90dc2482e20754762fd703f4d26afba6e53a211b420f54febf5818f92eaa174"
+   },
+   {
+    "unit": "c700",
+    "ord": 10,
+    "turn_idx": 47,
+    "turn_from": 47,
+    "turn_to": 47,
+    "parts": [
+     [
+      47,
+      34,
+      307
+     ]
+    ],
+    "win": null,
+    "text": "exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "17787fc5dfdbb841f8d3245c0060a9fa17f9d784d81a2fab947b065d23f2db79",
+    "text_hash_nomic": "365cfa3dce82824ff8773913fc952688125238302cf9246380c140db1468e83a"
+   },
+   {
+    "unit": "win",
+    "ord": 0,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": [
+     0,
+     129
+    ],
+    "text": "user: rollback 🚀 plan the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "9e9b664bf07ed42ae0edc8ce70e5833fe4b38e7e606adaed1c115bee64150a50",
+    "text_hash_nomic": "a7d445651b891a9c834c44882e51835a3cc4b48677c6bc9f6259709673eca1da"
+   },
+   {
+    "unit": "win",
+    "ord": 1,
+    "turn_idx": 3,
+    "turn_from": 3,
+    "turn_to": 3,
+    "parts": null,
+    "win": [
+     0,
+     216
+    ],
+    "text": "assistant tool result: 日本語のログ été naïve café CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "e8fd1344e8d4dc118c67dab6b6778cc69619a07b3afa85f0f94341ce2c0514ef",
+    "text_hash_nomic": "f5866f380a88792e4c17bb56acc2b73be71c36dd5fcbfdc9e896dd6859d7dd5d"
+   },
+   {
+    "unit": "win",
+    "ord": 2,
+    "turn_idx": 5,
+    "turn_from": 5,
+    "turn_to": 5,
+    "parts": null,
+    "win": [
+     0,
+     253
+    ],
+    "text": "assistant tool call: plain ascii words only importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "5becd861ea1508124aa0e487612f505fe5c81758817cff3128b2c117ecfa94ef",
+    "text_hash_nomic": "6bc9fe16039c041db0d4d10d78307ac60379f8cc2b22c390876fafe7513206c9"
+   },
+   {
+    "unit": "win",
+    "ord": 3,
+    "turn_idx": 7,
+    "turn_from": 7,
+    "turn_to": 7,
+    "parts": null,
+    "win": [
+     0,
+     302
+    ],
+    "text": "user: rollback 🚀 plan reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "b49976053c0b119f8a3de07576118deefd3dd0cee18873de1522c0fd2de74d31",
+    "text_hash_nomic": "32216a7b0420e831771a52564a3871a0363e7378602482bf54f4e064b138e7c0"
+   },
+   {
+    "unit": "win",
+    "ord": 4,
+    "turn_idx": 9,
+    "turn_from": 9,
+    "turn_to": 9,
+    "parts": null,
+    "win": [
+     0,
+     330
+    ],
+    "text": "assistant: 日本語のログ été naïve café each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "e1e71e3148b581ac32a9e495b697fc9bff1f84f1cc240378b0ce374175cf7204",
+    "text_hash_nomic": "b85f875dda6facbb4f8023ab3095f43b2bc5aef91bc56013710fcd192ba734f8"
+   },
+   {
+    "unit": "win",
+    "ord": 5,
+    "turn_idx": 11,
+    "turn_from": 11,
+    "turn_to": 11,
+    "parts": null,
+    "win": [
+     0,
+     166
+    ],
+    "text": "assistant tool result: plain ascii words only transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "a8a484253d9d94d4f488800b172a7b0e3282d48081fa883b593ca0d06dd24a75",
+    "text_hash_nomic": "ac9f4da02d906686a44bc77393775fa2432538fff4d559d3cb0bc08804846134"
+   },
+   {
+    "unit": "win",
+    "ord": 6,
+    "turn_idx": 13,
+    "turn_from": 13,
+    "turn_to": 13,
+    "parts": null,
+    "win": [
+     0,
+     183
+    ],
+    "text": "user tool call: rollback 🚀 plan splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "d3b0eb62ee72acb6d2472a10f58080fa2f1ebea85348e81ac237f4fbd9c7e256",
+    "text_hash_nomic": "41d44a4d7c9b14392f81182ed77c6b20ba0e5aaec335573464271b0a4cfef0a2"
+   },
+   {
+    "unit": "win",
+    "ord": 7,
+    "turn_idx": 15,
+    "turn_from": 15,
+    "turn_to": 15,
+    "parts": null,
+    "win": [
+     0,
+     254
+    ],
+    "text": "assistant: 日本語のログ été naïve café it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "9be420dab91b589b08b3101859fe45970faa06a692526690836fabfb340e5008",
+    "text_hash_nomic": "36f3d7b5c83179a2c00843964eb354e4adb02373ffa36b05cbb0ad46d9188203"
+   },
+   {
+    "unit": "win",
+    "ord": 8,
+    "turn_idx": 17,
+    "turn_from": 17,
+    "turn_to": 17,
+    "parts": null,
+    "win": [
+     0,
+     273
+    ],
+    "text": "assistant: plain ascii words only at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "60028489c7eccffc70f3aa7d43d69740c431e5d2f7ddec22b8cf20f2bc8b4458",
+    "text_hash_nomic": "53faad08f5686a981c9801aa1c09e20e99ed48203dde07fb1891f3e3cf67d4bf"
+   },
+   {
+    "unit": "win",
+    "ord": 9,
+    "turn_idx": 19,
+    "turn_from": 19,
+    "turn_to": 19,
+    "parts": null,
+    "win": [
+     0,
+     363
+    ],
+    "text": "user tool result: rollback 🚀 plan turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "f5887b6c8c57ed6f48fa41f0d283570559370a7b7ded421dcb05f96350d44526",
+    "text_hash_nomic": "04e0cfbbfd80aecc58c0bcfdefb55a007ce0ac90d361a0f37732f0ad31b9d9a5"
+   },
+   {
+    "unit": "win",
+    "ord": 10,
+    "turn_idx": 21,
+    "turn_from": 21,
+    "turn_to": 21,
+    "parts": null,
+    "win": [
+     0,
+     151
+    ],
+    "text": "assistant tool call: 日本語のログ été naïve café boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "cb1a8e5796d96026037874dcfe9d53b3b1e242bf73799a7fca0d56e250d6f91e",
+    "text_hash_nomic": "4b1d7cd98ec623f523ca118c57903859e3d146e69af439ac9ce7d6ba5d63a2df"
+   },
+   {
+    "unit": "win",
+    "ord": 11,
+    "turn_idx": 23,
+    "turn_from": 23,
+    "turn_to": 23,
+    "parts": null,
+    "win": [
+     0,
+     203
+    ],
+    "text": "assistant: plain ascii words only and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "40d5bfb9160b9a12322bf4ad9b3bf30452211dbf4a45c46b112c8e52fba98dfe",
+    "text_hash_nomic": "d85c3686354752dea4d745dc1feb015f180b3212fb30fedde564d218d1202450"
+   },
+   {
+    "unit": "win",
+    "ord": 12,
+    "turn_idx": 25,
+    "turn_from": 25,
+    "turn_to": 25,
+    "parts": null,
+    "win": [
+     0,
+     216
+    ],
+    "text": "user: rollback 🚀 plan writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "455ecdfc430a99eaf0c69f234d7c107458380f9c621c9f369965291b6f1f1757",
+    "text_hash_nomic": "70964d0033845afc6abd5fb413a3945eca1731ae34d1ba2422259dc33fcf04f1"
+   },
+   {
+    "unit": "win",
+    "ord": 13,
+    "turn_idx": 27,
+    "turn_from": 27,
+    "turn_to": 27,
+    "parts": null,
+    "win": [
+     0,
+     313
+    ],
+    "text": "assistant tool result: 日本語のログ été naïve café one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "36836a36d4de19bfb9a7c1f8eb7d1d1e627cc643b6d850db8110f016bbae273f",
+    "text_hash_nomic": "9f44ed37dea0b47473dec1a18023b5123ea5ece7abcf47bcfbf415b468764d4d"
+   },
+   {
+    "unit": "win",
+    "ord": 14,
+    "turn_idx": 29,
+    "turn_from": 29,
+    "turn_to": 29,
+    "parts": null,
+    "win": [
+     0,
+     349
+    ],
+    "text": "assistant tool call: plain ascii words only row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "0ed288eac560d84afeea4115fa0d9345a571978b98ddf2dc79077f01b97383f6",
+    "text_hash_nomic": "206f1cb093a6df5c2f3a3d3f2c2faa8692622e9eba5808f81abde3402bc00c48"
+   },
+   {
+    "unit": "win",
+    "ord": 15,
+    "turn_idx": 31,
+    "turn_from": 31,
+    "turn_to": 31,
+    "parts": null,
+    "win": [
+     0,
+     135
+    ],
+    "text": "user: rollback 🚀 plan per the each and that the it row cite reads boundaries so turn splits one can importer turn second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "7d340d30703877f3d25916b368429e1c3d69f8b2bc94308b52acbd298d0665db",
+    "text_hash_nomic": "992eee6deb9cdb31254629c250b52b901fa16638c67e9fb5f3c63d4ffa27f50a"
+   },
+   {
+    "unit": "win",
+    "ord": 16,
+    "turn_idx": 33,
+    "turn_from": 33,
+    "turn_to": 33,
+    "parts": null,
+    "win": [
+     0,
+     183
+    ],
+    "text": "assistant: 日本語のログ été naïve café unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "5989b206c1ca97a52808d822d159cd22dccbcfe98094dfe5d94c47ec1bc80134",
+    "text_hash_nomic": "2c4dd22a7ef85d4728e9acb47d69c8d8d592f1381bd90d1104e4b04b81d30ec5"
+   },
+   {
+    "unit": "win",
+    "ord": 17,
+    "turn_idx": 35,
+    "turn_from": 35,
+    "turn_to": 35,
+    "parts": null,
+    "win": [
+     0,
+     273
+    ],
+    "text": "assistant tool result: plain ascii words only so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "221ca48b87be4864cd5f1cb1fce7156fc6bc09e823d30adbb3749550af268985",
+    "text_hash_nomic": "8a549c59f0620be02565e5066d61e25089a7f14dee6f79d0386304119e4ccd95"
+   },
+   {
+    "unit": "win",
+    "ord": 18,
+    "turn_idx": 37,
+    "turn_from": 37,
+    "turn_to": 37,
+    "parts": null,
+    "win": [
+     0,
+     292
+    ],
+    "text": "user tool call: rollback 🚀 plan that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "32f64b3667da77d63062367bf50120d2d02866abc09790b6aea53182e72637e3",
+    "text_hash_nomic": "a97857b5a3d8cfa545553d2fd0a6df679a2f4fb497ecdf097708ed077a2de8b4"
+   },
+   {
+    "unit": "win",
+    "ord": 19,
+    "turn_idx": 39,
+    "turn_from": 39,
+    "turn_to": 39,
+    "parts": null,
+    "win": [
+     0,
+     355
+    ],
+    "text": "assistant: 日本語のログ été naïve café search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "21553ccdd10b04b7d030857d645c6c9b2e0aafbd84aa0c2b9aa3c6082823db60",
+    "text_hash_nomic": "4e8198265789c3396d4431be0263fd3963def3044cee617bdf1a6d2183c83629"
+   },
+   {
+    "unit": "win",
+    "ord": 20,
+    "turn_idx": 41,
+    "turn_from": 41,
+    "turn_to": 41,
+    "parts": null,
+    "win": [
+     0,
+     132
+    ],
+    "text": "assistant: plain ascii words only can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "9b5abace8781417618c3b04357bf9cbd472c8e5facb13d430fcb1e873947d10c",
+    "text_hash_nomic": "5f3245eaac507261c83f77b886c11e3f1f98af4262a447706d988f8bf9609f73"
+   },
+   {
+    "unit": "win",
+    "ord": 21,
+    "turn_idx": 43,
+    "turn_from": 43,
+    "turn_to": 43,
+    "parts": null,
+    "win": [
+     0,
+     206
+    ],
+    "text": "user tool result: rollback 🚀 plan cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "ad5456220d7f6ad549dd14d66cf37c6dcb0732969b75b6744611114b5f6caaa0",
+    "text_hash_nomic": "e1246792a209757db5f0f1d137f13c9118638a3c449dcd77449df255aab88993"
+   },
+   {
+    "unit": "win",
+    "ord": 22,
+    "turn_idx": 45,
+    "turn_from": 45,
+    "turn_to": 45,
+    "parts": null,
+    "win": [
+     0,
+     236
+    ],
+    "text": "assistant tool call: 日本語のログ été naïve café the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "afbc7dfef5c0abcee27e81811ffed86dc5a0bf3344a590c2649056ed046fb45a",
+    "text_hash_nomic": "2d658c27061cb05f0b1024e200b6f7d7ef82209fe417da8632c1e54879706e17"
+   },
+   {
+    "unit": "win",
+    "ord": 23,
+    "turn_idx": 47,
+    "turn_from": 47,
+    "turn_to": 47,
+    "parts": null,
+    "win": [
+     0,
+     307
+    ],
+    "text": "assistant: plain ascii words only exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits second line indented",
+    "full_text": null,
+    "turn_text": null,
+    "text_hash": "dd23e053f825a2b55e5593ff8182916e33a6cdae8a2b61d62cc4aaf7eeed3732",
+    "text_hash_nomic": "f934946d89e50743a13bdff5a9d74a75a1f67599d904f41cc9a315683d100a2f"
+   },
+   {
+    "unit": "turn",
+    "ord": 0,
+    "turn_idx": 1,
+    "turn_from": 1,
+    "turn_to": 1,
+    "parts": null,
+    "win": null,
+    "text": "user: rollback 🚀 plan the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search",
+    "full_text": "user: rollback 🚀 plan the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search",
+    "turn_text": "user: rollback 🚀 plan the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search",
+    "text_hash": "9e9b664bf07ed42ae0edc8ce70e5833fe4b38e7e606adaed1c115bee64150a50",
+    "text_hash_nomic": "a7d445651b891a9c834c44882e51835a3cc4b48677c6bc9f6259709673eca1da"
+   },
+   {
+    "unit": "turn",
+    "ord": 1,
+    "turn_idx": 3,
+    "turn_from": 3,
+    "turn_to": 3,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool result: 日本語のログ été naïve café CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at\nsecond line\nindented",
+    "full_text": "assistant tool result: 日本語のログ été naïve café CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at\nsecond line\nindented",
+    "turn_text": "assistant tool result: 日本語のログ été naïve café CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at second line indented",
+    "text_hash": "79b7f47544ec5c08b5b168166874609722a18feef373df6784c5415394fd1826",
+    "text_hash_nomic": "fc1f4f1ac034840afe1b1029dc0e776b696a5ee784648cfd2a499278aba0490b"
+   },
+   {
+    "unit": "turn",
+    "ord": 2,
+    "turn_idx": 5,
+    "turn_from": 5,
+    "turn_to": 5,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool call: plain ascii words only importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the",
+    "full_text": "assistant tool call: plain ascii words only importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the",
+    "turn_text": "assistant tool call: plain ascii words only importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the",
+    "text_hash": "5becd861ea1508124aa0e487612f505fe5c81758817cff3128b2c117ecfa94ef",
+    "text_hash_nomic": "6bc9fe16039c041db0d4d10d78307ac60379f8cc2b22c390876fafe7513206c9"
+   },
+   {
+    "unit": "turn",
+    "ord": 3,
+    "turn_idx": 7,
+    "turn_from": 7,
+    "turn_to": 7,
+    "parts": null,
+    "win": null,
+    "text": "user: rollback 🚀 plan reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and\nsecond line\nindented",
+    "full_text": "user: rollback 🚀 plan reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and\nsecond line\nindented",
+    "turn_text": "user: rollback 🚀 plan reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and second line indented",
+    "text_hash": "436143cfec23d72601fc39119f8d329b696fd2f3a7d317a88d6a70a4c1ceef85",
+    "text_hash_nomic": "af3bfd74c5d527273b647855ff5ab618b9cf33ff2ccf428aa0a82b0d7744d6e5"
+   },
+   {
+    "unit": "turn",
+    "ord": 4,
+    "turn_idx": 9,
+    "turn_from": 9,
+    "turn_to": 9,
+    "parts": null,
+    "win": null,
+    "text": "assistant: 日本語のログ été naïve café each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the",
+    "full_text": "assistant: 日本語のログ été naïve café each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the",
+    "turn_text": "assistant: 日本語のログ été naïve café each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the",
+    "text_hash": "e1e71e3148b581ac32a9e495b697fc9bff1f84f1cc240378b0ce374175cf7204",
+    "text_hash_nomic": "b85f875dda6facbb4f8023ab3095f43b2bc5aef91bc56013710fcd192ba734f8"
+   },
+   {
+    "unit": "turn",
+    "ord": 5,
+    "turn_idx": 11,
+    "turn_from": 11,
+    "turn_to": 11,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool result: plain ascii words only transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn\nsecond line\nindented",
+    "full_text": "assistant tool result: plain ascii words only transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn\nsecond line\nindented",
+    "turn_text": "assistant tool result: plain ascii words only transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn second line indented",
+    "text_hash": "0f72c00097c39267dec1af311d9de79de90851b20d3b5a75fe372b54f1ed111a",
+    "text_hash_nomic": "d66d59f42a0ee6b3790d1cd0e76a4a717ecf4a7c71fbb5e59c9885b16f7f4786"
+   },
+   {
+    "unit": "turn",
+    "ord": 6,
+    "turn_idx": 13,
+    "turn_from": 13,
+    "turn_to": 13,
+    "parts": null,
+    "win": null,
+    "text": "user tool call: rollback 🚀 plan splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one",
+    "full_text": "user tool call: rollback 🚀 plan splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one",
+    "turn_text": "user tool call: rollback 🚀 plan splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one",
+    "text_hash": "d3b0eb62ee72acb6d2472a10f58080fa2f1ebea85348e81ac237f4fbd9c7e256",
+    "text_hash_nomic": "41d44a4d7c9b14392f81182ed77c6b20ba0e5aaec335573464271b0a4cfef0a2"
+   },
+   {
+    "unit": "turn",
+    "ord": 7,
+    "turn_idx": 15,
+    "turn_from": 15,
+    "turn_to": 15,
+    "parts": null,
+    "win": null,
+    "text": "assistant: 日本語のログ été naïve café it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer\nsecond line\nindented",
+    "full_text": "assistant: 日本語のログ été naïve café it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer\nsecond line\nindented",
+    "turn_text": "assistant: 日本語のログ été naïve café it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer second line indented",
+    "text_hash": "6214228e67686eb56dd6950a5a90b62b33998f471b27857a661d4293d59ce56c",
+    "text_hash_nomic": "538fcda233d09b468ebc8df931bd7581460e39fbedbc8e6adb81e4675958f3e4"
+   },
+   {
+    "unit": "turn",
+    "ord": 8,
+    "turn_idx": 17,
+    "turn_from": 17,
+    "turn_to": 17,
+    "parts": null,
+    "win": null,
+    "text": "assistant: plain ascii words only at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit",
+    "full_text": "assistant: plain ascii words only at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit",
+    "turn_text": "assistant: plain ascii words only at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit",
+    "text_hash": "60028489c7eccffc70f3aa7d43d69740c431e5d2f7ddec22b8cf20f2bc8b4458",
+    "text_hash_nomic": "53faad08f5686a981c9801aa1c09e20e99ed48203dde07fb1891f3e3cf67d4bf"
+   },
+   {
+    "unit": "turn",
+    "ord": 9,
+    "turn_idx": 19,
+    "turn_from": 19,
+    "turn_to": 19,
+    "parts": null,
+    "win": null,
+    "text": "user tool result: rollback 🚀 plan turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript,\nsecond line\nindented",
+    "full_text": "user tool result: rollback 🚀 plan turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript,\nsecond line\nindented",
+    "turn_text": "user tool result: rollback 🚀 plan turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, second line indented",
+    "text_hash": "410461f34fc0fa58f979229b0b4b2ab8ae0d6a565aae3f66cf149d3adc9bd661",
+    "text_hash_nomic": "714c317b67ba034f8a31838972f88462902181f91237234588ea46ea62f86c85"
+   },
+   {
+    "unit": "turn",
+    "ord": 10,
+    "turn_idx": 21,
+    "turn_from": 21,
+    "turn_to": 21,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool call: 日本語のログ été naïve café boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "full_text": "assistant tool call: 日本語のログ été naïve café boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "turn_text": "assistant tool call: 日本語のログ été naïve café boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each",
+    "text_hash": "cb1a8e5796d96026037874dcfe9d53b3b1e242bf73799a7fca0d56e250d6f91e",
+    "text_hash_nomic": "4b1d7cd98ec623f523ca118c57903859e3d146e69af439ac9ce7d6ba5d63a2df"
+   },
+   {
+    "unit": "turn",
+    "ord": 11,
+    "turn_idx": 23,
+    "turn_from": 23,
+    "turn_to": 23,
+    "parts": null,
+    "win": null,
+    "text": "assistant: plain ascii words only and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that\nsecond line\nindented",
+    "full_text": "assistant: plain ascii words only and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that\nsecond line\nindented",
+    "turn_text": "assistant: plain ascii words only and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that second line indented",
+    "text_hash": "ea3301844d55204f7985c2ea31b9f840e729cee1609fa2f5b81223ac76eee890",
+    "text_hash_nomic": "590e8c08065e3c33a25944574fc1d5afd29c94e5445af9a85abad4a363c3b1d7"
+   },
+   {
+    "unit": "turn",
+    "ord": 12,
+    "turn_idx": 25,
+    "turn_from": 25,
+    "turn_to": 25,
+    "parts": null,
+    "win": null,
+    "text": "user: rollback 🚀 plan writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it",
+    "full_text": "user: rollback 🚀 plan writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it",
+    "turn_text": "user: rollback 🚀 plan writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it",
+    "text_hash": "455ecdfc430a99eaf0c69f234d7c107458380f9c621c9f369965291b6f1f1757",
+    "text_hash_nomic": "70964d0033845afc6abd5fb413a3945eca1731ae34d1ba2422259dc33fcf04f1"
+   },
+   {
+    "unit": "turn",
+    "ord": 13,
+    "turn_idx": 27,
+    "turn_from": 27,
+    "turn_to": 27,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool result: 日本語のログ été naïve café one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite\nsecond line\nindented",
+    "full_text": "assistant tool result: 日本語のログ été naïve café one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite\nsecond line\nindented",
+    "turn_text": "assistant tool result: 日本語のログ été naïve café one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite second line indented",
+    "text_hash": "e04eed69460ff60812b5f73067e4eb3249d2b7a6613f699a25a5be4b735ca1f7",
+    "text_hash_nomic": "c4e1343d6daf32361910cbc3860592587d6dcfca1b39363cb91f14d6381c448f"
+   },
+   {
+    "unit": "turn",
+    "ord": 14,
+    "turn_idx": 29,
+    "turn_from": 29,
+    "turn_to": 29,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool call: plain ascii words only row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries",
+    "full_text": "assistant tool call: plain ascii words only row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries",
+    "turn_text": "assistant tool call: plain ascii words only row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries",
+    "text_hash": "0ed288eac560d84afeea4115fa0d9345a571978b98ddf2dc79077f01b97383f6",
+    "text_hash_nomic": "206f1cb093a6df5c2f3a3d3f2c2faa8692622e9eba5808f81abde3402bc00c48"
+   },
+   {
+    "unit": "turn",
+    "ord": 15,
+    "turn_idx": 31,
+    "turn_from": 31,
+    "turn_to": 31,
+    "parts": null,
+    "win": null,
+    "text": "user: rollback 🚀 plan per the each and that the it row cite reads boundaries so turn splits one can importer turn\nsecond line\nindented",
+    "full_text": "user: rollback 🚀 plan per the each and that the it row cite reads boundaries so turn splits one can importer turn\nsecond line\nindented",
+    "turn_text": "user: rollback 🚀 plan per the each and that the it row cite reads boundaries so turn splits one can importer turn second line indented",
+    "text_hash": "fa97c4965d965fbd923a4a0dd3250b1c5dc351d691b90af8be0336ac19bf50f1",
+    "text_hash_nomic": "b35abd8debcab729679cef1e8d908047ee5f4f856ee70b2d8466ff74ef170ea0"
+   },
+   {
+    "unit": "turn",
+    "ord": 16,
+    "turn_idx": 33,
+    "turn_from": 33,
+    "turn_to": 33,
+    "parts": null,
+    "win": null,
+    "text": "assistant: 日本語のログ été naïve café unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact",
+    "full_text": "assistant: 日本語のログ été naïve café unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact",
+    "turn_text": "assistant: 日本語のログ été naïve café unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact",
+    "text_hash": "5989b206c1ca97a52808d822d159cd22dccbcfe98094dfe5d94c47ec1bc80134",
+    "text_hash_nomic": "2c4dd22a7ef85d4728e9acb47d69c8d8d592f1381bd90d1104e4b04b81d30ec5"
+   },
+   {
+    "unit": "turn",
+    "ord": 17,
+    "turn_idx": 35,
+    "turn_from": 35,
+    "turn_to": 35,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool result: plain ascii words only so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes\nsecond line\nindented",
+    "full_text": "assistant tool result: plain ascii words only so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes\nsecond line\nindented",
+    "turn_text": "assistant tool result: plain ascii words only so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes second line indented",
+    "text_hash": "765f09db56a1cdafc66b3222092295c1397115d2b667d34496b6d91142b52049",
+    "text_hash_nomic": "fca71fd48c5004f755e5ee05302ff8020dd97d06841ca694a3f38169a2e6dffe"
+   },
+   {
+    "unit": "turn",
+    "ord": 18,
+    "turn_idx": 37,
+    "turn_from": 37,
+    "turn_to": 37,
+    "parts": null,
+    "win": null,
+    "text": "user tool call: rollback 🚀 plan that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub",
+    "full_text": "user tool call: rollback 🚀 plan that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub",
+    "turn_text": "user tool call: rollback 🚀 plan that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub",
+    "text_hash": "32f64b3667da77d63062367bf50120d2d02866abc09790b6aea53182e72637e3",
+    "text_hash_nomic": "a97857b5a3d8cfa545553d2fd0a6df679a2f4fb497ecdf097708ed077a2de8b4"
+   },
+   {
+    "unit": "turn",
+    "ord": 19,
+    "turn_idx": 39,
+    "turn_from": 39,
+    "turn_to": 39,
+    "parts": null,
+    "win": null,
+    "text": "assistant: 日本語のログ été naïve café search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per\nsecond line\nindented",
+    "full_text": "assistant: 日本語のログ été naïve café search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per\nsecond line\nindented",
+    "turn_text": "assistant: 日本語のログ été naïve café search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per second line indented",
+    "text_hash": "e97d8686afb756f1ec22ab7395b5615d0399e461bedd6662e4732c3ec3dd7457",
+    "text_hash_nomic": "82a2b96052b9bc05d10c1d72c5b13cef5713e7b7af63a7d4b95d000b41436fbe"
+   },
+   {
+    "unit": "turn",
+    "ord": 20,
+    "turn_idx": 41,
+    "turn_from": 41,
+    "turn_to": 41,
+    "parts": null,
+    "win": null,
+    "text": "assistant: plain ascii words only can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row",
+    "full_text": "assistant: plain ascii words only can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row",
+    "turn_text": "assistant: plain ascii words only can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row",
+    "text_hash": "9b5abace8781417618c3b04357bf9cbd472c8e5facb13d430fcb1e873947d10c",
+    "text_hash_nomic": "5f3245eaac507261c83f77b886c11e3f1f98af4262a447706d988f8bf9609f73"
+   },
+   {
+    "unit": "turn",
+    "ord": 21,
+    "turn_idx": 43,
+    "turn_from": 43,
+    "turn_to": 43,
+    "parts": null,
+    "win": null,
+    "text": "user tool result: rollback 🚀 plan cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads\nsecond line\nindented",
+    "full_text": "user tool result: rollback 🚀 plan cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads\nsecond line\nindented",
+    "turn_text": "user tool result: rollback 🚀 plan cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads second line indented",
+    "text_hash": "87b6b2ad93a8e782370c12639570f24ee2db603babc6333993b985ea6b52c1d5",
+    "text_hash_nomic": "a2f6e67b0e1cfc7b272c8c3b8f0427fe2f9d26b6041ed945212166f25d4de7a1"
+   },
+   {
+    "unit": "turn",
+    "ord": 22,
+    "turn_idx": 45,
+    "turn_from": 45,
+    "turn_to": 45,
+    "parts": null,
+    "win": null,
+    "text": "assistant tool call: 日本語のログ été naïve café the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so",
+    "full_text": "assistant tool call: 日本語のログ été naïve café the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so",
+    "turn_text": "assistant tool call: 日本語のログ été naïve café the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so",
+    "text_hash": "afbc7dfef5c0abcee27e81811ffed86dc5a0bf3344a590c2649056ed046fb45a",
+    "text_hash_nomic": "2d658c27061cb05f0b1024e200b6f7d7ef82209fe417da8632c1e54879706e17"
+   },
+   {
+    "unit": "turn",
+    "ord": 23,
+    "turn_idx": 47,
+    "turn_from": 47,
+    "turn_to": 47,
+    "parts": null,
+    "win": null,
+    "text": "assistant: plain ascii words only exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits\nsecond line\nindented",
+    "full_text": "assistant: plain ascii words only exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits\nsecond line\nindented",
+    "turn_text": "assistant: plain ascii words only exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits second line indented",
+    "text_hash": "fff0f078c5ea91f127e7556c6b3f7df2b23547e1c2217507f7351f0bd00072ca",
+    "text_hash_nomic": "99a4884fc6916e64f1fd790270e76753a441da40a91b2b974ec16b05968efeca"
+   }
+  ]
+ },
+ {
+  "name": "big-turn-cap",
+  "turns": [
+   {
+    "idx": 0,
+    "role": "user",
+    "kind": "prose",
+    "text": "Summarise the attached log."
+   },
+   {
+    "idx": 1,
+    "role": "user",
+    "kind": "tool_result",
+    "text": "each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the each and that the it row cite reads boundaries so turn splits one can importer turn unit exact transcript, writes search CodeHub at per the END"
+   },
+   {
+    "idx": 2,
+    "role": "assistant",
+    "kind": "prose",
+    "text": "The log shows repeated reconnects."
+   }
+  ],
+  "counts": {
+   "c700": 52,
+   "win": 143,
+   "turn": 3
+  },
+  "units_digest": "718ff47e1ebbec71c9f4b92c4c61daf4b8822a5a643a6cd00c551fa608dc42a3"
+ },
+ {
+  "name": "no-units",
+  "turns": [
+   {
+    "idx": 0,
+    "role": "assistant",
+    "kind": "thinking",
+    "text": "only thinking"
+   },
+   {
+    "idx": 1,
+    "role": "user",
+    "kind": "prose",
+    "text": "  "
+   },
+   {
+    "idx": 2,
+    "role": "assistant",
+    "kind": "tool_use",
+    "text": ""
+   }
+  ],
+  "units": []
+ }
+]

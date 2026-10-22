@@ -1,0 +1,25 @@
+{
+  "name": "@membral/extension",
+  "version": "0.1.0",
+  "description": "Your coding agent can answer from what your past sessions found. Chrome extension that syncs ChatGPT and Claude.ai chats.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@membral/core": "*",
+    "@supabase/supabase-js": "^2.101.1"
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch --mode development",
+    "test": "vitest run",
+    "lint": "biome check ./src"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.33",
+    "@types/chrome": "^0.1.39",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,10 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral whoami [--api-url <url>] [--api-key <key>]
+
+Prints who you're signed in as (email + API URL + user id). Hidden — see
+'membral status' for the listed equivalent, which prints the same plus
+device state.
+
+--- STDERR ---

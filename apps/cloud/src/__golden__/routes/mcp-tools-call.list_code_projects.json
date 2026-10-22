@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "cache-control": "no-cache",
+    "content-type": "text/event-stream"
+  },
+  "afterCalls": 1,
+  "body": "event: message\ndata: {\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"freshness\\\":null,\\\"data\\\":[{\\\"id\\\":\\\"5eed0000-0000-4000-8000-000000000001\\\",\\\"source\\\":\\\"claude-code\\\",\\\"summary\\\":null,\\\"display_name\\\":\\\"acme/webapp\\\",\\\"repo_identity\\\":\\\"codehub.example/acme/webapp\\\",\\\"session_count\\\":2,\\\"last_active_at\\\":\\\"2025-12-22T10:05:00+00:00\\\"}]}\"}],\"freshness\":null},\"jsonrpc\":\"2.0\",\"id\":3}\n\n"
+}

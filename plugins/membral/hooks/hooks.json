@@ -1,0 +1,29 @@
+{
+  "description": "Membral memory preamble (SessionStart, plus a background import of the last 30 days on first run and at most daily after) and session upload (SessionEnd). Both run the CLI bundled in this plugin with Node and always exit 0.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run.mjs", "session-start"],
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run.mjs", "session-end"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

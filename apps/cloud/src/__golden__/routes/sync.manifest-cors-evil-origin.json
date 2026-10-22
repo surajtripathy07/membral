@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"conversations\":[{\"source\":\"chatgpt\",\"source_id\":\"chat-1\",\"updated_at\":\"2025-12-18T09:30:00.000Z\"}]}"
+}

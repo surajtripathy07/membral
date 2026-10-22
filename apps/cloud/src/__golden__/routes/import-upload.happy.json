@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "x-request-id": "00000000-0000-4000-a000-000000000001"
+  },
+  "afterCalls": 1,
+  "body": "{\"provider\":\"claude\",\"total\":1,\"conversationsTotal\":1,\"imported\":1,\"updated\":0,\"skipped\":[],\"skippedCount\":0,\"errors\":[],\"durationMs\":0,\"partial\":false,\"conversationLimitSkipped\":0,\"atLimit\":false}"
+}

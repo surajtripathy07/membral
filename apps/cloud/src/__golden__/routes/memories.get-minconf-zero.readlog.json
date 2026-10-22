@@ -1,0 +1,18 @@
+[
+  {
+    "seq": 1,
+    "table": "memories",
+    "op": "select",
+    "payload": {
+      "columns": "*",
+      "modifiers": [
+        "order.confidence.desc",
+        "limit.50"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "gte.confidence=0"
+    ]
+  }
+]

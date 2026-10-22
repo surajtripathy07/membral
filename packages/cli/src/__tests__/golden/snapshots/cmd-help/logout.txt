@@ -1,0 +1,9 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral logout
+
+Sign out and forget the saved credentials — deletes
+~/.membral/credentials.json. Takes no flags.
+
+--- STDERR ---

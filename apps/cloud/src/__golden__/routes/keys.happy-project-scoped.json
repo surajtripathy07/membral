@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"api_key\":\"lls_MFV6n8TpDjNYfaLH7BE2W4Clyu8UOV6D\",\"scope_node_id\":null,\"scope_code_project_id\":\"5eed0000-0000-4000-8000-000000000001\"}"
+}

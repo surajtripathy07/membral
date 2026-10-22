@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 1,
+  "body": "{\"imported\":1,\"skipped\":0,\"total\":1,\"errors\":[]}"
+}

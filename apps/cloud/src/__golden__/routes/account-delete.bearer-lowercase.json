@@ -1,0 +1,8 @@
+{
+  "status": 401,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Unauthorized\"}"
+}

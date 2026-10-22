@@ -1,0 +1,32 @@
+EXIT: 1
+--- STDOUT ---
+Your coding agent can answer from what your past sessions found, including what nobody wrote down.
+Start: membral setup
+Membral remembers what your sessions did, decided and found; it is not a live view of your forge.
+Your agent checks a PR or issue's current state live.
+
+Usage
+  membral <command> [flags]
+
+Commands
+  setup      Sign in, scan harnesses, choose syncs, and run the first import
+  login      Sign in through your browser
+  logout     Sign out and forget the saved credentials
+  use        List profiles, or switch server (e.g. local <-> prod)
+  status     Show your account, this device, and what synced last
+  import     Import a ChatGPT or Claude.ai export file
+  sessions   Upload this machine's coding-session transcripts
+  local      Run the whole server on this machine with Docker
+  help       Print this help, a command's help, or --all for hook internals
+
+Flags
+  --help, -h      Show this help, or a command's own help
+  --version, -v   Show the version
+
+Run `membral <command> --help` for that command's flags.
+Run `membral help --all` for hook internals.
+Docs: https://membral.me
+
+
+--- STDERR ---
+Unknown command: nonsense

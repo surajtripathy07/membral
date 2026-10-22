@@ -1,0 +1,12 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral mcp-headers --api-url <url>
+
+Not for interactive use — Codex runs this as the http_headers_helper of
+[mcp_servers.membral] in ~/.codex/config.toml (written by setup). Prints
+{"Authorization": "Bearer <key>"} using the saved key for <url> from
+~/.membral/credentials.json, so the key never sits in config.toml. Exits 1
+and prints nothing when no saved profile matches <url>.
+
+--- STDERR ---

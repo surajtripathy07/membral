@@ -1,0 +1,9 @@
+Membral: user/codehub · last session 16h ago (harness-injected context, not a user message)
+Membral holds what past sessions did, decided and found, including hours ago. Search it before re-deriving: why X was decided, which MRs/issues a session opened or worked on, results, dead ends, what a parallel session did today (mcp__membral__memory_search).
+Membral is not live state: never take an MR/issue's open/merged status, CI, conflicts, review threads or deploys from it. It gives the link; check live with gh/glab/git. Pass project="user/codehub".
+recall_token: v1.eyJ1IjoiMGEwYTAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDAwMDAxIiwicCI6ImZhNGUwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMSIsInQiOiIyMDI2LTA2LTE0VDAwOjAwOjAwLjAwMFoifQ.hZvFeaZtpXb76x1jOYBugPckGL8Tr9fC2RrVwUFfMuY
+---
+{
+  "open_blockers": [],
+  "recall_token": "v1.eyJ1IjoiMGEwYTAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDAwMDAxIiwicCI6ImZhNGUwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMSIsInQiOiIyMDI2LTA2LTE0VDAwOjAwOjAwLjAwMFoifQ.hZvFeaZtpXb76x1jOYBugPckGL8Tr9fC2RrVwUFfMuY"
+}

@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "x-request-id": "golden-rid-1"
+  },
+  "afterCalls": 0,
+  "body": "{\"status\":\"ok\",\"checks\":{\"supabase\":\"ok\"}}"
+}

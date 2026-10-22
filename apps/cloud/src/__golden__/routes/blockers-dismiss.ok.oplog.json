@@ -1,0 +1,16 @@
+[
+  {
+    "seq": 1,
+    "table": "session_memories",
+    "op": "update",
+    "payload": {
+      "retired_at": "2026-01-01T00:00:00.000Z",
+      "retire_reason": "user_resolved"
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.id=[\"5eed0000-0000-4000-8000-000000000104\"]",
+      "is.retired_at=null"
+    ]
+  }
+]

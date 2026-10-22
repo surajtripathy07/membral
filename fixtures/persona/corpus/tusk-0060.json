@@ -1,0 +1,41 @@
+{
+  "id": "chatgpt:tusk-0060",
+  "source": "chatgpt",
+  "source_id": "tusk-0060",
+  "title": "how many people for a genetically viable colony",
+  "created_at": "2025-09-18T16:29:24.000Z",
+  "updated_at": "2025-09-18T16:30:31.000Z",
+  "model": "gpt-4o",
+  "messages": [
+    {
+      "role": "user",
+      "content": "how many people for a genetically viable mars colony need the number for tweet doing my part!!!",
+      "timestamp": "2025-09-18T16:29:24.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "For a genetically viable colony, you'd typically want at least 500 individuals to ensure a healthy level of genetic diversity and minimize inbreeding risk long-term. Geneticists suggest a more conservative number could be around 2,000 for additional resilience. Sounds like you're well on your way with those kids! 🚀🌌",
+      "timestamp": "2025-09-18T16:30:31.000Z",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "synthetic": true,
+    "persona": "elon-tusk",
+    "generator": "fixtures/persona/generate.ts",
+    "seed": {
+      "life_areas": [
+        "Occupy Mars",
+        "Fatherhood"
+      ],
+      "purpose": "quick-lookup",
+      "depth": "quick",
+      "arc_refs": [
+        "mars",
+        "fatherhood"
+      ]
+    }
+  },
+  "synced_at": "2026-07-01T00:00:00.000Z"
+}

@@ -1,0 +1,123 @@
+# Keep the Vercel upload to source only — the build runs on Vercel (turbo, see apps/cloud/vercel.json).
+#
+# `vercel --prod` uploads the local WORKING DIRECTORY regardless of git
+# tracking (unlike a git-push-triggered deploy) — unlike .gitignore, a
+# missing entry here doesn't just skip a commit, it ships whatever's
+# sitting on disk (secrets, real corpus data, PII) straight into the
+# deploy artifact/source viewer. Round-3 review HIGH 18: this file used to
+# drift from .gitignore — apps/cloud/scripts/spike-k89/output (real
+# founder extraction output), apps/cloud/scripts/kg/prompt-lab/transcripts
+# (real conversation exports), handoff_6_april_5.txt (a root-level session
+# transcript, missed by the `handoff` entry below because it matches the
+# `handoff/` DIRECTORY, not this sibling file), and MEMBRAL.md (sweep-
+# generated session context) were all gitignored but NOT vercelignored, so
+# a `vercel --prod` from a maintainer checkout would have shipped them.
+#
+# STRUCTURAL FIX: everything below the first section is copied VERBATIM
+# from .gitignore (kept in the same order, one pattern per line) so the
+# two files cannot silently diverge again — `scripts/check-vercelignore.sh`
+# fails the build if a .gitignore pattern is ever missing here. Do not
+# hand-edit this file out of sync with .gitignore; add to .gitignore first,
+# then re-sync this section (or run check-vercelignore.sh -v to see the
+# diff) and keep the Vercel-only build-artifact extras in the second
+# section below.
+
+# ============================================================
+# Verbatim copy of every pattern in .gitignore (round-3 review HIGH 18) —
+# checked by scripts/check-vercelignore.sh. The one negation (un-ignoring
+# .claude/CONSTITUTION.md) is kept for fidelity with .gitignore's own
+# semantics; it has no practical effect here since .claude is ALSO
+# fully excluded below by the Vercel-only "**/.claude" entry (belt and
+# suspenders — CONSTITUTION.md is governance text, not a secret, so this
+# errs toward "ignored, not shipped" either way).
+# ============================================================
+node_modules/
+dist/
+.turbo/
+.next/
+out/
+.env
+.env.local
+.env.*.local
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+coverage/
+supabase/.temp/
+*.sqlite3
+*.sqlite3-journal
+private/
+handoff*
+MEMBRAL.md
+AUDIT.md
+SCAFFOLDING-DESIGN.md
+.beads/
+.claude/*
+!.claude/CONSTITUTION.md
+.opencode/
+.omo/
+PRD.md
+LOCAL_DEV.md
+screenshot.mjs
+screenshot-auth.mjs
+screenshot-search.mjs
+debug.mjs
+tools/
+*.log
+logs/
+*.tsbuildinfo
+packages/extension/dist/
+~/.membral/
+data/
+apps/cloud/scripts/spike-k89/output/
+eval-runs/
+design/uploads/Screenshot 2026-06-16 at 5.12.09 PM.png
+design/screens/01-map.png
+design/screens/03-pulse.png
+design/screens/03-v.png
+design/screens/connected2.png
+design/*.zip
+design/.thumbnail
+.dolt/
+*.db
+.beads-credential-key
+apps/cloud/scripts/kg/prompt-lab/transcripts/
+apps/cloud/scripts/kg/prompt-lab/prompt.txt
+.vercel
+apps/cloud/public/downloads/*.zip
+apps/cloud/public/downloads/manifest.json
+
+# ============================================================
+# Vercel-only extras (build artifacts / paths that were never in
+# .gitignore because git never tracked them in the first place, or a
+# belt-and-suspenders full-directory exclude for something .gitignore
+# only partially excludes). check-vercelignore.sh does not require these
+# to appear in .gitignore — this section is additive on top of the
+# verbatim copy above.
+# ============================================================
+node_modules
+.git
+.turbo
+**/.turbo
+**/.next
+**/dist
+**/*.tsbuildinfo
+**/supabase/.temp
+**/public/downloads
+.beads
+**/.claude
+data
+handoff
+eval-runs
+fixtures
+design
+membral_output
+scratch
+scratch*
+*.log
+*.jsonl
+apps/cloud/scripts/spike-k89/output
+apps/cloud/scripts/kg/prompt-lab/transcripts

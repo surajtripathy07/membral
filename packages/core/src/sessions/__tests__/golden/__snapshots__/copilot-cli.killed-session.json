@@ -1,0 +1,49 @@
+{
+  "actionsVersion": 2,
+  "contentHash": "92f50b59e26cd032b9bd05d0ec175c1b9174db5dc4ee51bce643a6fdb2f1ede4",
+  "endedAt": "2026-09-30T14:00:07.000Z",
+  "filesTouched": [],
+  "model": "gpt-5-mini",
+  "models": [
+    "gpt-5-mini"
+  ],
+  "repo": {
+    "path": "/home/dev/codehub/ledger"
+  },
+  "source": "copilot-cli",
+  "sourceSessionId": "9e2b7d14-5a3c-4f80-b6d2-0c1e4a7f3b02",
+  "startedAt": "2026-09-30T14:00:00.000Z",
+  "toolCounts": {
+    "bash": 1
+  },
+  "turns": [
+    {
+      "idx": 0,
+      "kind": "prose",
+      "role": "user",
+      "text": "What changed on this branch since main?",
+      "ts": "2026-09-30T14:00:04.000Z"
+    },
+    {
+      "idx": 1,
+      "kind": "prose",
+      "role": "assistant",
+      "text": "Let me check the git status.",
+      "ts": "2026-09-30T14:00:07.000Z"
+    },
+    {
+      "action": {
+        "dir": "/home/dev/codehub/ledger",
+        "source": "cli",
+        "verb": "navigated"
+      },
+      "idx": 2,
+      "inputDigest": "git status",
+      "kind": "tool_use",
+      "role": "assistant",
+      "toolName": "bash",
+      "toolUseId": "call-k1",
+      "ts": "2026-09-30T14:00:07.000Z"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+[
+  {
+    "seq": 1,
+    "table": "profiles",
+    "op": "select",
+    "payload": {
+      "columns": "id, api_key_scope_node_id, api_key_scope_code_project_id",
+      "modifiers": [
+        "single"
+      ]
+    },
+    "filters": [
+      "eq.api_key_hash=\"a8abdf10a4b03162bd408d337e60ab3ab2df8572b76115e8fff18079f0656e36\""
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "source, source_session_id, turn_count, ended_at, content_hash, actions_version:props->actions_version",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.source_session_id=[\"sess-alpha\",\"sess-beta\",\"sess-unknown\"]"
+    ]
+  }
+]

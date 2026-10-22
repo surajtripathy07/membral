@@ -1,0 +1,38 @@
+[
+  {
+    "seq": 1,
+    "table": "profiles",
+    "op": "select",
+    "payload": {
+      "columns": "api_key_prefix, api_key_scope_node_id, api_key_scope_code_project_id",
+      "modifiers": [
+        "single"
+      ]
+    },
+    "filters": [
+      "eq.id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "code_projects",
+    "op": "select",
+    "payload": {
+      "columns": "id, display_name, repo_identity",
+      "modifiers": [
+        "order.last_active_at.desc"
+      ]
+    }
+  },
+  {
+    "seq": 3,
+    "table": "api_keys",
+    "op": "select",
+    "payload": {
+      "columns": "id, key_prefix, label, created_at, last_used_at, revoked_at",
+      "modifiers": [
+        "order.created_at.desc"
+      ]
+    }
+  }
+]

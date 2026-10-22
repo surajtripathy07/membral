@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/x-ndjson; charset=utf-8"
+  },
+  "afterCalls": 0,
+  "body": "{\"type\":\"meta\",\"format\":\"membral-account-export-ndjson-v1\",\"exported_at\":\"2026-01-01T00:00:00.000Z\"}\n{\"type\":\"profile\",\"id\":\"00000000-0000-4000-8000-00000000c0de\",\"email\":\"dev@codehub.test\",\"display_name\":\"Dev\",\"tier\":\"free\",\"conversation_limit\":500,\"created_at\":\"2025-12-01T00:00:00.000Z\"}\n{\"type\":\"conversation\",\"id\":\"5eed0000-0000-4000-8000-000000000200\",\"source\":\"chatgpt\",\"source_id\":\"chat-1\",\"title\":\"Planning the login flow\",\"model\":\"gpt-4o\",\"messages\":[{\"content\":\"How should login work?\",\"role\":\"user\",\"timestamp\":\"2025-12-18T09:00:00.000Z\"},{\"content\":\"Start with one button in the header.\",\"role\":\"assistant\",\"timestamp\":\"2025-12-18T09:01:00.000Z\"}],\"metadata\":{},\"created_at\":\"2025-12-18T09:00:00.000Z\",\"updated_at\":\"2025-12-18T09:30:00.000Z\"}\n{\"type\":\"done\",\"conversations\":1}\n"
+}

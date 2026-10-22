@@ -1,0 +1,7 @@
+{
+  "agentType": "general-purpose",
+  "description": "Investigate the flaky checkout test root cause",
+  "spawnDepth": 1,
+  "toolUseId": "toolu_agent1",
+  "model": "codehub-meta-override-model"
+}

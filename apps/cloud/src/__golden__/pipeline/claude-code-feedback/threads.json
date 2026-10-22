@@ -1,0 +1,55 @@
+{
+  "estimated": true,
+  "open": [],
+  "recent": [
+    {
+      "closure": {
+        "kind": "action",
+        "session_id": "fa4e0000-0000-4000-8000-000000000005",
+        "turn_idx": 2,
+        "verb": "merged"
+      },
+      "cost_est_total": null,
+      "estimated": true,
+      "events": [
+        {
+          "at": "2026-02-04T00:00:05.000Z",
+          "build_verb": null,
+          "review_verb": "viewed",
+          "session": "fa4e0000-0000-4000-8000-000000000005"
+        }
+      ],
+      "ladder": {
+        "build_verb": null,
+        "discussed": false,
+        "review_verb": "viewed",
+        "triaged": false
+      },
+      "last_seen_at": "2026-02-04T00:00:04.000Z",
+      "open": false,
+      "ref": "/home/dev/codehub-api#41",
+      "refKind": "merge_request",
+      "sessions": [
+        {
+          "at": "2026-02-04T00:00:04.000Z",
+          "build_verb": null,
+          "cost_est": null,
+          "ended_at": "2026-02-04T00:01:04.000Z",
+          "id": "fa4e0000-0000-4000-8000-000000000005",
+          "proof_session_id": "fa4e0000-0000-4000-8000-000000000005",
+          "review_verb": "viewed",
+          "role": "referenced",
+          "session_cost_usd": null,
+          "share": 0,
+          "started_at": "2026-02-04T00:00:00.000Z",
+          "tier": "observed",
+          "turn_idx": 1
+        }
+      ],
+      "title": "dev/codehub-api#41",
+      "url": null
+    }
+  ],
+  "recurring_blockers": [],
+  "window_days": 30
+}

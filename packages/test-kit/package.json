@@ -1,0 +1,30 @@
+{
+  "name": "@membral/test-kit",
+  "version": "0.1.0",
+  "description": "Your coding agent can answer from what your past sessions found. Shared test doubles (devDependency only, never shipped).",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "biome check ./src",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2",
+    "vitest": "^3.2.4"
+  }
+}

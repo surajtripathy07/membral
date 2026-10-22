@@ -1,0 +1,143 @@
+{
+  "_comment": "Step 0.2 forge command table (goal 2026-09-27_g0-behaviour-lock, G0 §0.2). Not pulled from a real transcript — forge-actions.test.ts has no file-based fixtures of its own (grep for readFileSync/FIXTURES in it: none), so this is a small, hand-authored, representative command table covering the verb families forge-actions.ts recognises, modelled on the same input shapes forge-actions.test.ts builds inline (git delivery, gh/glab review ladder, MCP tools, chained commands, a failed call, a test runner, a slash line, a pasted URL). Every 'bash'/'mcp' case is a committed ToolActionInput; 'slash'/'paste' cases are the raw prose text those two entry points take directly.",
+  "bash": [
+    {
+      "id": "git-commit",
+      "toolName": "Bash",
+      "input": { "command": "git commit -m \"make debit posting idempotent\"" },
+      "result": "[15178-5-idempotent-debits d7e5977] make debit posting idempotent\n 1 file changed, 4 insertions(+)",
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "git-push",
+      "toolName": "Bash",
+      "input": { "command": "git push -u origin HEAD" },
+      "result": "Branch '15178-5-idempotent-debits' set up to track 'origin/15178-5-idempotent-debits'.\n   1234abc..d7e5977  HEAD -> 15178-5-idempotent-debits",
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "git-checkout",
+      "toolName": "Bash",
+      "input": { "command": "git checkout -b fix/rounding" },
+      "result": "Switched to a new branch 'fix/rounding'",
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "git-checkout-plain-branch",
+      "toolName": "Bash",
+      "input": { "command": "git checkout fix/rounding" },
+      "result": "Switched to branch 'fix/rounding'\nYour branch is up to date with 'origin/fix/rounding'.",
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "git-checkout-plain-path",
+      "toolName": "Bash",
+      "input": { "command": "git checkout src/ledger.ts" },
+      "result": "Updated 1 path from the index",
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "gh-pr-create",
+      "toolName": "Bash",
+      "input": { "command": "gh pr create --title \"Fix rounding\" --body \"...\"" },
+      "result": "https://codehub.example/acme/billing/pull/4711",
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "glab-mr-create-other-repo",
+      "toolName": "Bash",
+      "input": { "command": "glab mr create --fill --yes --title \"Make debit posting idempotent\"" },
+      "result": "Creating merge request for 15178-5-idempotent-debits into main in acme/billing\n\n!17050 Make debit posting idempotent (15178-5-idempotent-debits)\n https://codehub.example/acme/billing/-/merge_requests/17050",
+      "cwd": "/home/dev/other-repo"
+    },
+    {
+      "id": "gh-pr-view",
+      "toolName": "Bash",
+      "input": { "command": "gh pr view 4711" },
+      "result": "title:\tFix rounding\nstate:\tMERGED\nauthor:\tdev\n",
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "npm-test",
+      "toolName": "Bash",
+      "input": { "command": "npm test" },
+      "result": "Test Suites: 4 passed, 4 total\nTests:       22 passed, 22 total",
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "failed-commit-hook",
+      "toolName": "Bash",
+      "input": { "command": "git commit -m \"quick fix\"" },
+      "result": "husky - pre-commit hook exited with code 1 (error)",
+      "isError": true,
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "chained-add-commit-push",
+      "toolName": "Bash",
+      "input": {
+        "command": "git add -A && git commit -m \"wire billing endpoint\" && git push origin feature/billing"
+      },
+      "result": "[feature/billing 9f8e7d6] wire billing endpoint\n 2 files changed, 30 insertions(+)\nTo codehub.example:acme/billing.git\n   1234abc..9f8e7d6  feature/billing -> feature/billing",
+      "cwd": "/home/dev/acme-webapp"
+    },
+    {
+      "id": "rm-unrelated",
+      "toolName": "Bash",
+      "input": { "command": "rm -rf dist/" },
+      "result": "",
+      "cwd": "/home/dev/acme-webapp"
+    }
+  ],
+  "mcp": [
+    {
+      "id": "mcp-get-merge-request",
+      "toolName": "mcp__gitlab__get_merge_request",
+      "mcpTool": "get_merge_request",
+      "input": { "project_id": "acme/billing", "merge_request_iid": 17049 },
+      "result": "{\"iid\":17049,\"state\":\"opened\",\"title\":\"Review debits\"}"
+    },
+    {
+      "id": "mcp-get-issue",
+      "toolName": "mcp__gitlab__get_issue",
+      "mcpTool": "get_issue",
+      "input": { "project_id": "acme%2Fbilling", "issue_iid": "16002" },
+      "result": "{\"iid\":16002,\"state\":\"closed\"}"
+    },
+    {
+      "id": "mcp-list-issues-two-items",
+      "toolName": "mcp__codehub__list_issues",
+      "mcpTool": "list_issues",
+      "input": { "project_id": "acme/billing", "issue_iid": "16002" },
+      "result": "[{\"iid\":16002,\"state\":\"opened\",\"title\":\"Rounding drift\"},{\"iid\":16003,\"state\":\"closed\",\"title\":\"Ledger totals\"}]"
+    },
+    {
+      "id": "mcp-get-merge-request-other-iid",
+      "toolName": "mcp__codehub__get_merge_request",
+      "mcpTool": "get_merge_request",
+      "input": { "project_id": "acme/billing", "merge_request_iid": 17049 },
+      "result": "{\"iid\":17050,\"state\":\"merged\",\"title\":\"Another change\",\"source_branch\":\"other-branch\"}"
+    }
+  ],
+  "slash": [
+    {
+      "id": "slash-review-mr",
+      "text": "<command-name>/review-mr</command-name>\n<command-message>review-mr</command-message>\n<command-args>this is the MR we are reviewing https://codehub.example/acme/billing/-/merge_requests/17049</command-args>"
+    }
+  ],
+  "paste": [
+    {
+      "id": "paste-mr-url",
+      "text": "here is the MR https://codehub.example/acme/billing/-/merge_requests/17049 — what do you think?"
+    },
+    {
+      "id": "paste-issue-url",
+      "text": "see https://codehub.example/acme/billing/-/issues/16002"
+    }
+  ],
+  "settleActionDirVerdicts": [
+    { "kind": "project" },
+    { "kind": "repo", "repo": "acme/other-service" },
+    { "kind": "unknown" }
+  ]
+}

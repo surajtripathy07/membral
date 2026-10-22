@@ -1,0 +1,35 @@
+{
+  "id": "chatgpt:tusk-0133",
+  "source": "chatgpt",
+  "source_id": "tusk-0133",
+  "title": "how to fold a fitted sheet, i'm not joking",
+  "created_at": "2026-02-21T02:49:38.000Z",
+  "updated_at": "2026-02-21T02:52:30.000Z",
+  "model": "gpt-4o",
+  "messages": [
+    {
+      "role": "user",
+      "content": "why is folding a fitted sheet impossible?? need step-by-step like rocket science. help.",
+      "timestamp": "2026-02-21T02:49:38.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "Folding a fitted sheet can feel like a mystery, but here's a step-by-step:\n\n1. **Hold it inside out** by the short sides, with one hand in each corner.\n2. **Flip a corner** over the other, tucking one into the other, so you have two corners nested.\n3. **Repeat with the other side**, so all corners are in one hand.\n4. **Lay it down on a flat surface**, adjusting the edges to form a square shape.\n5. **Fold into thirds** lengthwise, tucking in elastic edges to keep it neat.\n6. **Fold into a rectangle** or square for storage.\n\nIt may not be rocket science, but it's still tricky. You'll have it down in no time!",
+      "timestamp": "2026-02-21T02:52:30.000Z",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "synthetic": true,
+    "persona": "elon-tusk",
+    "generator": "fixtures/persona/generate.ts",
+    "seed": {
+      "life_areas": [],
+      "purpose": "quick-lookup",
+      "depth": "quick",
+      "arc_refs": []
+    }
+  },
+  "synced_at": "2026-07-01T00:00:00.000Z"
+}

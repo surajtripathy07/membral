@@ -1,0 +1,25 @@
+[
+  {
+    "seq": 1,
+    "table": "rate_limit_check",
+    "op": "rpc",
+    "payload": {
+      "p_key": "keys:user:00000000-0000-4000-8000-00000000c0de",
+      "p_limit": 10,
+      "p_window_seconds": 60
+    }
+  },
+  {
+    "seq": 2,
+    "table": "api_keys",
+    "op": "update",
+    "payload": {
+      "revoked_at": "2026-01-01T00:00:00.000Z"
+    },
+    "filters": [
+      "eq.id=\"5eed0000-0000-4000-8000-000000000300\"",
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.revoked_at=null"
+    ]
+  }
+]

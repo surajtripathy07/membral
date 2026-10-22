@@ -1,0 +1,51 @@
+{
+  "id": "chatgpt:tusk-0093",
+  "source": "chatgpt",
+  "source_id": "tusk-0093",
+  "title": "quick: melting point of Inconel vs the exhaust temp",
+  "created_at": "2025-12-02T21:48:27.000Z",
+  "updated_at": "2025-12-02T21:50:48.000Z",
+  "model": "gpt-4o",
+  "messages": [
+    {
+      "role": "user",
+      "content": "melting point of Inconel vs exhaust temp of Leviathan engine quick!!!",
+      "timestamp": "2025-12-02T21:48:27.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "The melting point of Inconel (depending on the alloy) is around 1,350 to 1,425°C. The exhaust temperature of the Leviathan engine is approximately 3,300°C. Without film cooling, the nozzle wouldn't survive — the exhaust temperature is far above the melting point.",
+      "timestamp": "2025-12-02T21:49:06.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "user",
+      "content": "cowards!!!!",
+      "timestamp": "2025-12-02T21:49:57.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "While I understand the frustration, it's important to ensure material integrity in high-stress environments. Film cooling is crucial here to protect the nozzle and ensure the engine operates safely. Let me know if you need more details on alternative materials or cooling techniques.",
+      "timestamp": "2025-12-02T21:50:48.000Z",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "synthetic": true,
+    "persona": "elon-tusk",
+    "generator": "fixtures/persona/generate.ts",
+    "seed": {
+      "life_areas": [
+        "SpaceY"
+      ],
+      "purpose": "quick-lookup",
+      "depth": "quick",
+      "arc_refs": [
+        "spacey"
+      ]
+    }
+  },
+  "synced_at": "2026-07-01T00:00:00.000Z"
+}

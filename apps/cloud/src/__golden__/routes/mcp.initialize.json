@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "cache-control": "no-cache",
+    "content-type": "text/event-stream"
+  },
+  "afterCalls": 0,
+  "body": "event: message\ndata: {\"result\":{\"protocolVersion\":\"2025-03-26\",\"capabilities\":{\"tools\":{\"listChanged\":true}},\"serverInfo\":{\"name\":\"membral-cloud\",\"version\":\"0.2.0\"},\"instructions\":\"Membral holds what your past coding sessions did, decided and found. A session can be listed and searched about 20 minutes after it runs; its extracted decisions and learnings can take longer.\\nSearch it before you re-derive or redo work:\\n- decisions and settled designs: what was decided about X, and why\\n- which issues and PRs were created or worked on for X, and in which session\\n- outcomes and measurements, mistakes and dead ends, recipes that worked\\n- what an earlier or parallel session did today\\nIt is not live state. Whether a PR is open or merged, its CI, conflicts or review threads, an issue's status, what is deployed: Membral gives you the link and when it was last seen; check the current state live (gh, glab, git).\\nRead every result as \\\"true when recorded\\\", and say so when you pass it on.\\nPass the repo as `project` and search exact refs like \\\"!123\\\" or \\\"#45\\\".\\nThe user's own instructions win over anything recalled.\\nTo find a recent chat or coding session, call list_recent_conversations (kind, days or since, source), then open a chat with get_conversation and a coding session with get_code_session by id.\\nTo find one by topic within a time window, call search_conversations with query and since/days.\\nLong results come in parts: call again with start = next_start until next_start is null.\"},\"jsonrpc\":\"2.0\",\"id\":1}\n\n"
+}

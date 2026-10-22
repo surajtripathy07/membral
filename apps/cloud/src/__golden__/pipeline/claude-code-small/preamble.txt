@@ -1,0 +1,9 @@
+Membral: dev/acme-webapp · last session 23h ago (harness-injected context, not a user message)
+Membral holds what past sessions did, decided and found, including hours ago. Search it before re-deriving: why X was decided, which MRs/issues a session opened or worked on, results, dead ends, what a parallel session did today (mcp__membral__memory_search).
+Membral is not live state: never take an MR/issue's open/merged status, CI, conflicts, review threads or deploys from it. It gives the link; check live with gh/glab/git. Pass project="dev/acme-webapp".
+recall_token: v1.eyJ1IjoiMGEwYTAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDAwMDAxIiwicCI6ImZhNGUwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMSIsInQiOiIyMDI2LTAxLTAyVDAwOjAwOjAwLjAwMFoifQ.hBE4sIZJnvMmZMlhTFUFWrTtCc2wCz0zapl-qn3SqDs
+---
+{
+  "open_blockers": [],
+  "recall_token": "v1.eyJ1IjoiMGEwYTAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDAwMDAxIiwicCI6ImZhNGUwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMSIsInQiOiIyMDI2LTAxLTAyVDAwOjAwOjAwLjAwMFoifQ.hBE4sIZJnvMmZMlhTFUFWrTtCc2wCz0zapl-qn3SqDs"
+}

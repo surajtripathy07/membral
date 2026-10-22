@@ -1,0 +1,18 @@
+{
+  "membral": {
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "node scripts/run.mjs agy-session-start",
+        "timeout": 5
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node scripts/run.mjs agy-session-end",
+        "timeout": 10
+      }
+    ]
+  }
+}

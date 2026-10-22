@@ -1,0 +1,51 @@
+{
+  "id": "chatgpt:tusk-0182",
+  "source": "chatgpt",
+  "source_id": "tusk-0182",
+  "title": "Raptor-ish engine thrust target, ballpark",
+  "created_at": "2026-05-21T00:47:48.000Z",
+  "updated_at": "2026-05-21T00:53:16.000Z",
+  "model": "gpt-4o",
+  "messages": [
+    {
+      "role": "user",
+      "content": "gimme the sea-level thrust for a full-flow staged combustion engine fridge-sized, rough ballpark",
+      "timestamp": "2026-05-21T00:47:48.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "A fridge-sized full-flow staged combustion engine could theoretically produce around 100,000 to 200,000 pounds of thrust at sea level. The actual thrust would depend heavily on specifics like fuel type, nozzle design, and optimized combustion conditions.",
+      "timestamp": "2026-05-21T00:50:17.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "user",
+      "content": "ok cool thx",
+      "timestamp": "2026-05-21T00:51:29.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "You're welcome! If you need more detailed calculations or want to explore specific design variations, let me know.",
+      "timestamp": "2026-05-21T00:53:16.000Z",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "synthetic": true,
+    "persona": "elon-tusk",
+    "generator": "fixtures/persona/generate.ts",
+    "seed": {
+      "life_areas": [
+        "SpaceY"
+      ],
+      "purpose": "quick-lookup",
+      "depth": "quick",
+      "arc_refs": [
+        "spacey"
+      ]
+    }
+  },
+  "synced_at": "2026-07-01T00:00:00.000Z"
+}

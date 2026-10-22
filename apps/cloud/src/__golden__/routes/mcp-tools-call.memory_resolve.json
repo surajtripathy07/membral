@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "cache-control": "no-cache",
+    "content-type": "text/event-stream"
+  },
+  "afterCalls": 1,
+  "body": "event: message\ndata: {\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"No open blocker of yours with that id.\"}],\"isError\":true,\"freshness\":null},\"jsonrpc\":\"2.0\",\"id\":3}\n\n"
+}

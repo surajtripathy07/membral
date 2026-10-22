@@ -1,0 +1,96 @@
+[
+  {
+    "seq": 1,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props, parent_source_session_id, source, source_session_id, code_projects(repo_identity)",
+      "modifiers": [
+        "order.started_at.asc",
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "not.started_at.is=null"
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props, parent_source_session_id, source, source_session_id, code_projects(repo_identity)",
+      "modifiers": [
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.started_at=null"
+    ]
+  },
+  {
+    "seq": 3,
+    "table": "code_session_turns",
+    "op": "select",
+    "payload": {
+      "columns": "id, session_id, idx, role, kind, text, tool_name, ts, props",
+      "modifiers": [
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 4,
+    "table": "code_session_issues",
+    "op": "select",
+    "payload": {
+      "columns": "id, session_id, ref, number, kind, role, review_verb, build_verb, tier, turn_share, related_to, turn_idx, evidence_quote",
+      "modifiers": [
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 5,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, short_title, title, summary, started_at, source, source_session_id, parent_source_session_id, sub_agent:props->subAgent",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.id=[\"5eed0000-0000-4000-8000-000000000006\",\"5eed0000-0000-4000-8000-000000000002\"]"
+    ]
+  },
+  {
+    "seq": 6,
+    "table": "code_session_turns",
+    "op": "select",
+    "payload": {
+      "columns": "id, session_id, idx, text, owner_text:props->>ownerText",
+      "modifiers": [
+        "order.id.asc",
+        "limit.1000"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "in.session_id=[\"5eed0000-0000-4000-8000-000000000002\",\"5eed0000-0000-4000-8000-000000000006\"]",
+      "eq.role=\"user\"",
+      "eq.kind=\"prose\""
+    ]
+  }
+]

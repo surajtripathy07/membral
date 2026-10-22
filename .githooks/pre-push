@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# .githooks/pre-push — D-060: the local gate is the merge gate.
+#
+# Runs scripts/ci-local.sh (the `gate` job of .github/workflows/ci.yml, same
+# commands, kept in sync by scripts/check-ci-local-sync.mjs) before every
+# push and blocks the push when any step fails. The receipt lands in
+# .ci-local/<HEAD sha>.txt.
+#
+#   CI_LOCAL_SKIP=1   bypass (prints a warning)
+#   CI_LOCAL_SMOKE=1  also run the smoke job (needs Docker/Supabase)
+set -euo pipefail
+
+# git exports GIT_DIR (and, in a linked worktree, friends) to hooks. Any test
+# that shells out to git in a temp repo would then operate on THIS repo
+# instead (e.g. `git remote add origin` fails: origin already exists).
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX GIT_OBJECT_DIRECTORY
+
+if [ "${CI_LOCAL_SKIP:-}" = "1" ]; then
+  echo "pre-push: WARNING CI_LOCAL_SKIP=1 — pushing without the local CI gate (D-060)" >&2
+  exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+ARGS=()
+[ "${CI_LOCAL_SMOKE:-}" = "1" ] && ARGS+=(--smoke)
+
+if ! bash "$REPO_ROOT/scripts/ci-local.sh" ${ARGS[@]+"${ARGS[@]}"} </dev/null; then
+  echo "pre-push: local CI gate failed; receipt: $REPO_ROOT/.ci-local/$(git rev-parse HEAD).txt" >&2
+  echo "pre-push: fix it, or bypass once with CI_LOCAL_SKIP=1 git push" >&2
+  exit 1
+fi

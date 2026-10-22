@@ -1,0 +1,233 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/*
+ * Membral design tokens (docs/design/tokens.md — the single source; that file
+ * documents this block). Paper & ink: the @theme values are the LIGHT palette;
+ * the prefers-color-scheme block below re-points the same names for dark, so
+ * every utility (`bg-canvas`, `text-muted`, …) follows the system theme with no
+ * `dark:` variants in components.
+ */
+@theme {
+  /* ground + surfaces — warm paper */
+  --color-canvas: #f6f3ec; /* page background, <body> */
+  --color-surface: #fbf9f4; /* cards, panels, sidebar — a lighter sheet */
+  --color-raised: #efeadf; /* hover fills, table header rows — a darker sheet */
+  --color-sunken: #f0ece3; /* code blocks, inset wells */
+  /* lines — hairlines, never shadows */
+  --color-line: #ddd6c8; /* default border */
+  --color-line-soft: #e8e2d6; /* dividers inside a card */
+  --color-line-strong: #c9c0ae; /* hovered / focused borders, button outlines */
+  /* text hierarchy — ink to pencil */
+  --color-ink: #1c1a17; /* headings, primary values — 15.7:1 canvas */
+  --color-ink-2: #3f3a33; /* body copy, secondary values — 10.2:1 canvas */
+  --color-muted: #6b655c; /* labels, timestamps, units — 5.20 canvas / 5.48 surface / 4.81 raised */
+  --color-faint: #958e82; /* decorative only — never information (2.9:1) */
+  /* one accent — oxblood */
+  --color-accent: #8a2b1f; /* links, active nav, focus, marks — 7.75:1 canvas */
+  --color-accent-ink: #fbf9f4; /* text on a filled accent surface — 8.2:1 */
+  --color-accent-soft: #f1e7df; /* solid (not translucent) active-row wash */
+  --color-focus: #8a2b1f; /* focus ring only, never a fill */
+  /* sources — identity, never status */
+  --color-src-claude: #9a4e17;
+  --color-src-chatgpt: #1f6f57;
+  --color-src-opencode: #5e4fa2;
+  /* status — status, never decoration */
+  --color-ok: #2f5d3a; /* open / positive — deep green */
+  --color-warn: #7f5a10; /* ochre */
+  --color-error: #a32f22; /* brick — redder than the accent */
+  --color-syncing: #2e5a87;
+  /* spacing (4px base) */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 24px;
+  --spacing-6: 32px;
+  --spacing-7: 48px;
+  --spacing-8: 64px;
+  /* radius — square-ish paper edges */
+  --radius-xs: 2px; /* chips, marks */
+  --radius-sm: 3px; /* buttons, inputs */
+  --radius-card: 4px; /* cards and panels */
+  --radius-full: 999px; /* dots only — never a pill */
+  /* Tailwind's stock radii re-pointed so a stray rounded-lg/xl stays square */
+  --radius-md: 3px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  /* shadows — a popover gets one quiet paper edge, nothing glows */
+  --shadow-xs: 0 1px 0 rgb(28 26 23 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(28 26 23 / 0.08);
+  --shadow-md: 0 1px 3px rgb(28 26 23 / 0.1);
+  --shadow-lg: 0 2px 6px rgb(28 26 23 / 0.1);
+  --shadow-xl: 0 2px 6px rgb(28 26 23 / 0.1);
+  /* type scale: size + paired line-height */
+  --text-micro: 11px;
+  --text-micro--line-height: 16px; /* units, table meta */
+  --text-label: 12px;
+  --text-label--line-height: 16px; /* small meta labels */
+  --text-body-sm: 13px;
+  --text-body-sm--line-height: 20px; /* dense rows */
+  --text-body: 14px;
+  --text-body--line-height: 22px; /* default */
+  --text-lead: 16px;
+  --text-lead--line-height: 26px; /* session-spine prompts */
+  --text-h3: 18px;
+  --text-h3--line-height: 26px;
+  --text-h2: 22px;
+  --text-h2--line-height: 30px;
+  --text-h1: 28px;
+  --text-h1--line-height: 36px; /* page titles */
+  --text-display: 44px;
+  --text-display--line-height: 50px; /* landing hero only */
+  /* families — serif heads, humanist sans body, mono only for refs/shas/code */
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* legacy — frozen pages only (/memories, /search, /conversations). Aliases of
+     the live tokens so they follow the theme. Do not use in new code. */
+  --color-brand: var(--color-accent);
+  --color-border-strong: var(--color-line-strong);
+  --color-border-soft: var(--color-line-soft);
+  --color-ink-muted: var(--color-muted);
+  --radius-tile: 4px;
+}
+
+/* Dark: warm charcoal, not blue-black. Same names, re-pointed. Applies when
+   the system is dark unless the viewer pinned light, or whenever they pinned
+   dark — <html data-theme> comes from the membral_theme cookie (lib/theme.ts). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-canvas: #1b1a17;
+    --color-surface: #23211d;
+    --color-raised: #2c2a25;
+    --color-sunken: #171613;
+    --color-line: #3a362f;
+    --color-line-soft: #2f2c27;
+    --color-line-strong: #4b463d;
+    --color-ink: #ece6da; /* 14.0:1 canvas */
+    --color-ink-2: #cfc8ba; /* 10.5:1 canvas */
+    --color-muted: #a39b8d; /* 6.32 canvas / 5.84 surface / 5.21 raised */
+    --color-faint: #6e675c;
+    --color-accent: #d98a7a; /* rose-oxblood — 6.52 canvas / 5.37 raised */
+    --color-accent-ink: #1b1a17;
+    --color-accent-soft: #332824;
+    --color-focus: #d98a7a;
+    --color-src-claude: #d9924f;
+    --color-src-chatgpt: #5fb39a;
+    --color-src-opencode: #a99ce0;
+    --color-ok: #8db58f;
+    --color-warn: #d4a955;
+    --color-error: #eb8573;
+    --color-syncing: #8fb0d6;
+    --shadow-xs: 0 1px 0 rgb(0 0 0 / 0.2);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 1px 3px rgb(0 0 0 / 0.35);
+    --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.35);
+    --shadow-xl: 0 2px 6px rgb(0 0 0 / 0.35);
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-canvas: #1b1a17;
+  --color-surface: #23211d;
+  --color-raised: #2c2a25;
+  --color-sunken: #171613;
+  --color-line: #3a362f;
+  --color-line-soft: #2f2c27;
+  --color-line-strong: #4b463d;
+  --color-ink: #ece6da; /* 14.0:1 canvas */
+  --color-ink-2: #cfc8ba; /* 10.5:1 canvas */
+  --color-muted: #a39b8d; /* 6.32 canvas / 5.84 surface / 5.21 raised */
+  --color-faint: #6e675c;
+  --color-accent: #d98a7a; /* rose-oxblood — 6.52 canvas / 5.37 raised */
+  --color-accent-ink: #1b1a17;
+  --color-accent-soft: #332824;
+  --color-focus: #d98a7a;
+  --color-src-claude: #d9924f;
+  --color-src-chatgpt: #5fb39a;
+  --color-src-opencode: #a99ce0;
+  --color-ok: #8db58f;
+  --color-warn: #d4a955;
+  --color-error: #eb8573;
+  --color-syncing: #8fb0d6;
+  --shadow-xs: 0 1px 0 rgb(0 0 0 / 0.2);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 1px 3px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.35);
+  --shadow-xl: 0 2px 6px rgb(0 0 0 / 0.35);
+}
+
+/* Tailwind's `dark:` (used only for dark:prose-invert) follows the same rule. */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+  }
+}
+
+/* A section heading: serif small caps over a hairline — replaces the
+   letter-spaced ALL-CAPS mono label. Source text stays sentence case. */
+@utility section-label {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.03em;
+  color: var(--color-ink-2);
+}
+
+/* Calm reveal motion (brief §4). Honors reduced-motion. */
+@keyframes sb-fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sb-reveal {
+  animation: sb-fade-rise 300ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-reveal {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,273 @@
+name: CI
+
+on:
+  pull_request:
+    # labeled/unlabeled: the pure-move step reads PR labels, and a re-run
+    # reuses the original event payload, so a label change must re-trigger.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: build, test, lint, typecheck
+    runs-on: ubuntu-latest
+    # 15, not 10 (step 0.7): the coverage run below repeats every package's
+    # tests under v8 instrumentation.
+    timeout-minutes: 15
+    env:
+      # #184: mock next/font/google's Google Fonts fetch so an intermittent
+      # network failure in `next build` can't fail this gate.
+      NEXT_FONT_GOOGLE_MOCKED_RESPONSES: ${{ github.workspace }}/apps/cloud/test/next-font-google-mock.cjs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # check-pure-move diffs <base>...HEAD, which needs the merge base.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm install -g npm@11.19.0
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - run: npm ci
+
+      - run: npx turbo run build test lint typecheck
+
+      # Architecture refactor programme step 0.7 guards (P1, P3, P9, gate G6).
+      - name: Mock-path guard (G6)
+        run: npm run check:mock-paths
+
+      - name: Ratchets (G1–G5)
+        run: npm run check:ratchets
+
+      - name: Script tests
+        run: bash scripts/__tests__/run.sh
+
+      - name: Doc paths
+        run: npm run check:doc-paths
+
+      - name: Vercel functions globs match
+        run: npm run check:vercel-functions
+
+      - name: Coverage ratchet
+        run: npm run coverage
+
+      # Opt-in: runs only on PRs labelled `pure-move` (G1+ rung PRs and P1
+      # programme PRs; not the G0 lock, which adds goldens, tests and seams by
+      # design). Move-only diffs unless a P9 label is present (lock-extend,
+      # test-add, test-supersede). Labels and SHA go through env, never
+      # interpolated into the script.
+      - name: Pure-move check (P1, P9)
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'pure-move')
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: node scripts/check-pure-move.mjs "$BASE_SHA" --labels "$PR_LABELS" --explain
+
+      # Same `pure-move` gate as above (step 0.9): fails when a touched
+      # module has a branch no test covers, unless the PR body lists it as
+      # `accepted-uncovered: path:line`. PR_BODY goes through env (never
+      # interpolated into the script) and into a temp file the script reads.
+      - name: Move coverage check (0.9)
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'pure-move')
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          PR_BODY_FILE="$(mktemp)"
+          printf '%s' "$PR_BODY" > "$PR_BODY_FILE"
+          node scripts/check-move-coverage.mjs "$BASE_SHA" --pr-body-file "$PR_BODY_FILE"
+
+  smoke:
+    name: smoke (maintainer-run e2e)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # #184: mock next/font/google's Google Fonts fetch so an intermittent
+      # network failure in `next build` can't fail this job either.
+      NEXT_FONT_GOOGLE_MOCKED_RESPONSES: ${{ github.workspace }}/apps/cloud/test/next-font-google-mock.cjs
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm install -g npm@11.19.0
+
+      - run: npm ci
+
+      # Docker is preinstalled on ubuntu-latest runners — this is what
+      # `supabase start` needs to bring up the local stack (Postgres,
+      # GoTrue, PostgREST, ...) exactly like a maintainer's laptop.
+      # Pinned to the version `npx supabase --version` prints on the
+      # driver's machine (step 0.6, D6) — `latest` let `gen types` output
+      # drift under CI without any local change to notice.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.117.0
+
+      # -x excludes containers this smoke run never touches (issue #144 /
+      # goal 2026-09-12 W8): studio/imgproxy/logflare/vector are pure UI or
+      # observability sidecars, edge-runtime is unused (no Edge Functions
+      # here), mailpit is unnecessary because the throwaway user is created
+      # via the admin API with email_confirm:true (no confirmation email is
+      # ever sent). Cuts a meaningful slice of container start time on every
+      # run. NOT verified locally in this environment (no Docker daemon in
+      # this session) — see the smoke report for what to double-check on
+      # the first real CI run (the -x flag's exact accepted names, and
+      # whether excluding mailpit trips anything auth-related in this
+      # Supabase CLI version).
+      - name: Start local Supabase
+        working-directory: apps/cloud
+        run: supabase start -x studio,imgproxy,logflare,vector,edge-runtime,mailpit
+
+      # `supabase start` above already applied every migration under
+      # supabase/migrations/, so the live schema is up to date here. Fails
+      # the build if the committed database.generated.ts (step 0.6, D6) has
+      # drifted from that schema, e.g. a migration landed without a
+      # matching `npm run db:types` regen.
+      - name: Check generated DB types are up to date
+        working-directory: apps/cloud
+        run: npm run db:types:check
+
+      # Same shape as scripts/dev-up.sh's own `.env.local` bootstrap —
+      # kept in-line here rather than shelling out to that script, since
+      # dev-up.sh also runs `npm install`/`turbo build` itself and prompts
+      # for Docker in ways this job has already handled via prior steps.
+      - name: Write apps/cloud/.env.local from supabase status
+        working-directory: apps/cloud
+        run: |
+          STATUS_ENV="$(supabase status -o env)"
+          ANON_KEY="$(echo "$STATUS_ENV" | grep '^ANON_KEY=' | cut -d'"' -f2)"
+          SERVICE_ROLE_KEY="$(echo "$STATUS_ENV" | grep '^SERVICE_ROLE_KEY=' | cut -d'"' -f2)"
+          API_URL="$(echo "$STATUS_ENV" | grep '^API_URL=' | cut -d'"' -f2)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}"
+            echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}"
+            echo "NEXT_PUBLIC_APP_URL=http://localhost:3001"
+          } > .env.local
+          # The same values as job env for every later step (F9): turbo does
+          # not hash the gitignored .env.local, but these names are in
+          # turbo.json's globalEnv, so exporting them gives this job's cloud
+          # build its own cache key. Without it, the gate job's build (no
+          # Supabase env) has the same hash and its restored .next — with
+          # empty NEXT_PUBLIC_* inlined — would be served by `next start`.
+          cat .env.local >> "$GITHUB_ENV"
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-smoke-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-smoke-${{ runner.os }}-
+            turbo-${{ runner.os }}-
+
+      # Sees the Supabase env exported above, so its hash never matches the
+      # gate job's env-less build restored via the `turbo-${os}-` key.
+      - name: Build (with the local Supabase env)
+        run: npx turbo build
+
+      - run: npx playwright install --with-deps chromium
+
+      # Production server (`next start`) on the build above: the dev server
+      # compiled a cold session page in 15-20 s and tripped Playwright's 30 s
+      # budget on every red main run since b275709 (goal 2026-09-26 W1).
+      - run: npm run smoke
+        env:
+          SMOKE_MODE: start
+
+  # The new-user local path on Linux: build the CLI and the cloud image here,
+  # then `membral local up` against that image with a throwaway HOME. No LLM
+  # keys and no Ollama, so extraction stays off; the check is that the stack
+  # comes up healthy, answers /api/health, and comes down cleanly.
+  # --no-sweep: setup would otherwise schedule the backstop sweep on the
+  # runner's own systemd/crontab, which a throwaway HOME must not touch.
+  linux-local:
+    name: linux local stack (membral local up)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HOME_SCRATCH: /tmp/membral-home
+      MEMBRAL_CI_IMAGE: membral-cloud:ci-${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm install -g npm@11.19.0
+
+      - run: npm ci
+
+      - name: Build the CLI
+        run: npx turbo build --filter=@membral/cli
+
+      - name: Docker and Compose versions
+        run: |
+          docker version
+          docker compose version
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Build the cloud image (local only, not pushed)
+        timeout-minutes: 25
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/cloud/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.MEMBRAL_CI_IMAGE }}
+          cache-from: type=gha,scope=linux-local
+          cache-to: type=gha,mode=max,scope=linux-local
+
+      - name: membral local up
+        id: up
+        timeout-minutes: 12
+        run: |
+          mkdir -p "$HOME_SCRATCH"
+          HOME="$HOME_SCRATCH" MEMBRAL_IMAGE="$MEMBRAL_CI_IMAGE" \
+            node packages/cli/dist/index.js local up --yes --no-sweep
+
+      - name: membral local status
+        timeout-minutes: 2
+        run: HOME="$HOME_SCRATCH" node packages/cli/dist/index.js local status
+
+      - name: /api/health answers 200
+        timeout-minutes: 2
+        run: curl -fsS --retry 5 --retry-delay 3 --retry-all-errors http://127.0.0.1:3000/api/health
+
+      - name: Stack logs on failure
+        if: failure()
+        run: |
+          for s in db auth rest gateway app; do
+            echo "::group::$s"
+            HOME="$HOME_SCRATCH" node packages/cli/dist/index.js local logs "$s" || true
+            echo "::endgroup::"
+          done
+
+      - name: membral local down
+        if: always() && steps.up.outcome != 'skipped'
+        timeout-minutes: 3
+        run: HOME="$HOME_SCRATCH" node packages/cli/dist/index.js local down --wipe --yes

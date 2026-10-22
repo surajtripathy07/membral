@@ -1,0 +1,45 @@
+-- ============================================================
+-- 033_memory_node_type.sql
+-- ADR 0027 M1 (issue #14) — 'Memory' as a knowledge-graph node type.
+-- Depends on: 011 (kg_node_type enum, kg_nodes).
+--
+-- ENUM ONLY. This migration is deliberately the smallest possible unit: one
+-- new label on public.kg_node_type. Nothing else — no table changes, no
+-- indexes (idx_kg_nodes_user_type from migration 011 already covers
+-- (user_id, type) and therefore already covers Memory for free), no RPCs.
+-- The read RPC is migration 034, SPLIT OUT on purpose: PG17 refuses to let a
+-- newly-added enum value be used inside the same transaction that added it,
+-- and the Supabase CLI wraps each migration file in one transaction. A
+-- combined file would fail with "unsafe use of new value of enum type" the
+-- first time the RPC body referenced type = 'Memory'.
+--
+-- This is the repo's FIRST enum extension. Migration 029 (code sessions,
+-- ADR 0021) deliberately avoided one — it chose four dedicated code_* tables
+-- specifically to keep kg_node_type closed and the conversation pipeline
+-- structurally blind to code data. This migration takes the extension that
+-- 029 declined, because ADR 0027 Q1 (Accepted 2026-07-25) decided memories
+-- ARE conversation-graph data — a Memory is a claim mined from the same
+-- transcripts as every other kg_nodes row, and it wants the same edges
+-- (decides, holds_stance, is_about, mentions_person), provenance, edit RPCs,
+-- and RLS that every other node type gets for free. See ADR 0027 Q1 for the
+-- full rejection of the alternatives (four separate node types; a parallel
+-- memory_claims table; overloading Artifact/Item).
+--
+-- IRREVERSIBLE: PostgreSQL cannot drop a value from an enum type (no
+-- `ALTER TYPE ... DROP VALUE`). If 'Memory' ever proves wrong, this label
+-- lingers in kg_node_type forever — the only way out is a full enum
+-- rebuild (new type + column rewrite), not a migration. ADR 0027
+-- "Consequences" accepts this explicitly as the cost of the decision.
+--
+-- `kind` deliberately gets NO enum and NO CHECK constraint. Per ADR 0027
+-- rider (Q1 / Consequences): the four product kinds — decision, preference,
+-- pattern, insight — must be able to change freely (in particular, `insight`
+-- is flagged as likely to be dropped pending the founder-1k 50-memory eval,
+-- ADR 0027 §Q3 "Insight, honestly" / open question 1). kg_nodes.kind is
+-- already a free `text` column with no constraint (see migration 011); this
+-- migration does not add one, and none should be added until the kind set is
+-- proven stable. The taxonomy source of truth for the four kinds is
+-- MEMORY_KINDS in packages/core/src/graph.ts, not the database.
+-- ============================================================
+
+alter type public.kg_node_type add value if not exists 'Memory';

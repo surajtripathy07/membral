@@ -1,0 +1,27 @@
+[
+  {
+    "seq": 1,
+    "table": "rate_limit_check",
+    "op": "rpc",
+    "payload": {
+      "p_key": "sync:user:00000000-0000-4000-8000-00000000c0de",
+      "p_limit": 60,
+      "p_window_seconds": 60
+    }
+  },
+  {
+    "seq": 2,
+    "table": "sync_heartbeats",
+    "op": "upsert",
+    "payload": [
+      {
+        "user_id": "00000000-0000-4000-8000-00000000c0de",
+        "source": "chatgpt",
+        "last_run_at": "2026-01-01T00:00:00.000Z",
+        "last_item_at": null,
+        "updated_at": "2026-01-01T00:00:00.000Z"
+      }
+    ],
+    "onConflict": "user_id,source"
+  }
+]

@@ -1,0 +1,13 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral login [--api-url <url>]
+
+Sign in through your browser (device-authorization flow): prints a URL and
+a confirmation code, tries to open your browser, polls until you confirm,
+then saves ~/.membral/credentials.json (mode 0600). Ctrl-C cancels cleanly.
+
+Flags
+  --api-url <url>   Overrides the default API URL
+
+--- STDERR ---

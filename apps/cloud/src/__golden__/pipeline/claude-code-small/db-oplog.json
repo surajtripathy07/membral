@@ -1,0 +1,344 @@
+[
+  {
+    "op": "insert",
+    "payload": {
+      "display_name": "dev/acme-webapp",
+      "props": {},
+      "remote_url": null,
+      "repo_identity": "/home/dev/acme-webapp",
+      "repo_path": "/home/dev/acme-webapp",
+      "session_count": 0,
+      "source": "claude-code",
+      "user_id": "0a0a0000-0000-4000-8000-000000000001"
+    },
+    "seq": 1,
+    "table": "code_projects"
+  },
+  {
+    "op": "insert",
+    "payload": {
+      "code_project_id": "fa4e0000-0000-4000-8000-000000000001",
+      "content_hash": "",
+      "cwd": "/home/dev/acme-webapp",
+      "duration_seconds": 20,
+      "ended_at": "2026-01-01T00:00:20.000Z",
+      "files_touched": [
+        "/home/dev/acme-webapp/src/router.ts",
+        "/home/dev/acme-webapp/src/routes/health.ts"
+      ],
+      "git_branch": "feature/onboarding-flow",
+      "model": "codehub-model-1",
+      "parent_source_session_id": null,
+      "props": {
+        "actions_version": 2,
+        "models": [
+          "codehub-model-1"
+        ],
+        "profile": {
+          "commits": 0,
+          "edits": 2,
+          "files": 1,
+          "forgeActions": 0,
+          "pushes": 0,
+          "reads": 1,
+          "refs": [],
+          "tests": 1,
+          "turns": 13,
+          "userProse": 2,
+          "version": 1
+        }
+      },
+      "source": "claude-code",
+      "source_session_id": "22222222-2222-4222-8222-222222222222",
+      "started_at": "2026-01-01T00:00:00.000Z",
+      "summary": null,
+      "title": "Add a health check endpoint to the CodeHub API server.",
+      "tool_count": 4,
+      "turn_count": 13,
+      "user_id": "0a0a0000-0000-4000-8000-000000000001",
+      "user_turn_count": 2
+    },
+    "seq": 2,
+    "table": "code_sessions"
+  },
+  {
+    "op": "rpc",
+    "payload": {
+      "p_forge_refs": [],
+      "p_forge_refs_version": 1,
+      "p_session_id": "fa4e0000-0000-4000-8000-000000000002",
+      "p_turns": [
+        {
+          "file_path": null,
+          "idx": 0,
+          "kind": "prose",
+          "props": {},
+          "role": "user",
+          "text": "Add a health check endpoint to the CodeHub API server.",
+          "tool_name": null,
+          "ts": "2026-01-01T00:00:00.000Z"
+        },
+        {
+          "file_path": null,
+          "idx": 1,
+          "kind": "thinking",
+          "props": {},
+          "role": "assistant",
+          "text": "I should look at the router file first.\n\nThe health route likely belongs in routes/health.ts.",
+          "tool_name": null,
+          "ts": "2026-01-01T00:00:08.000Z"
+        },
+        {
+          "file_path": null,
+          "idx": 2,
+          "kind": "prose",
+          "props": {},
+          "role": "assistant",
+          "text": "I will add a new health route file and wire it into the router.",
+          "tool_name": null,
+          "ts": "2026-01-01T00:00:10.000Z"
+        },
+        {
+          "file_path": "/home/dev/acme-webapp/src/router.ts",
+          "idx": 3,
+          "kind": "tool_use",
+          "props": {
+            "toolUseId": "toolu_read1"
+          },
+          "role": "assistant",
+          "text": null,
+          "tool_name": "Read",
+          "ts": "2026-01-01T00:00:11.000Z"
+        },
+        {
+          "file_path": "/home/dev/acme-webapp/src/routes/health.ts",
+          "idx": 4,
+          "kind": "tool_use",
+          "props": {
+            "toolUseId": "toolu_write1"
+          },
+          "role": "assistant",
+          "text": "export const health = () => {};",
+          "tool_name": "Write",
+          "ts": "2026-01-01T00:00:12.000Z"
+        },
+        {
+          "file_path": null,
+          "idx": 5,
+          "kind": "tool_result",
+          "props": {},
+          "role": "user",
+          "text": "[tool_result elided: ok]",
+          "tool_name": "Read",
+          "ts": "2026-01-01T00:00:13.000Z"
+        },
+        {
+          "file_path": null,
+          "idx": 6,
+          "kind": "tool_result",
+          "props": {},
+          "role": "user",
+          "text": "[tool_result elided: error]",
+          "tool_name": "Write",
+          "ts": "2026-01-01T00:00:14.000Z"
+        },
+        {
+          "file_path": null,
+          "idx": 7,
+          "kind": "prose",
+          "props": {},
+          "role": "assistant",
+          "text": "The write failed — let me retry with Edit instead.",
+          "tool_name": null,
+          "ts": "2026-01-01T00:00:15.000Z"
+        },
+        {
+          "file_path": "/home/dev/acme-webapp/src/routes/health.ts",
+          "idx": 8,
+          "kind": "tool_use",
+          "props": {
+            "toolUseId": "toolu_edit1"
+          },
+          "role": "assistant",
+          "text": "b",
+          "tool_name": "Edit",
+          "ts": "2026-01-01T00:00:16.000Z"
+        },
+        {
+          "file_path": null,
+          "idx": 9,
+          "kind": "tool_use",
+          "props": {
+            "action": {
+              "source": "cli",
+              "verb": "tested"
+            },
+            "inputDigest": "npm test",
+            "toolUseId": "toolu_bash1"
+          },
+          "role": "assistant",
+          "text": null,
+          "tool_name": "Bash",
+          "ts": "2026-01-01T00:00:17.000Z"
+        },
+        {
+          "file_path": null,
+          "idx": 10,
+          "kind": "tool_result",
+          "props": {},
+          "role": "user",
+          "text": "[tool_result elided: ok]",
+          "tool_name": "Edit",
+          "ts": "2026-01-01T00:00:18.000Z"
+        },
+        {
+          "file_path": null,
+          "idx": 11,
+          "kind": "tool_result",
+          "props": {},
+          "role": "user",
+          "text": "[tool_result elided: ok]",
+          "tool_name": "Bash",
+          "ts": "2026-01-01T00:00:19.000Z"
+        },
+        {
+          "file_path": null,
+          "idx": 12,
+          "kind": "prose",
+          "props": {},
+          "role": "user",
+          "text": "Looks good. Also remove the test API key [REDACTED] from the config before committing.",
+          "tool_name": null,
+          "ts": "2026-01-01T00:00:20.000Z"
+        }
+      ],
+      "p_user_id": "0a0a0000-0000-4000-8000-000000000001"
+    },
+    "seq": 3,
+    "table": "import_code_session_turns"
+  },
+  {
+    "filters": [
+      "eq.id=\"fa4e0000-0000-4000-8000-000000000002\"",
+      "eq.user_id=\"0a0a0000-0000-4000-8000-000000000001\""
+    ],
+    "op": "update",
+    "payload": {
+      "content_hash": "cb57f57b31da7e4bb042081697303fdc5f54810c7e553edceef827c113bbecb0"
+    },
+    "seq": 4,
+    "table": "code_sessions"
+  },
+  {
+    "filters": [
+      "eq.id=\"fa4e0000-0000-4000-8000-000000000001\""
+    ],
+    "op": "update",
+    "payload": {
+      "last_active_at": "2026-01-01T00:00:20.000Z",
+      "props": {
+        "portrait_dirty": true
+      },
+      "session_count": 1,
+      "updated_at": "2026-01-02T00:00:00.000Z"
+    },
+    "seq": 5,
+    "table": "code_projects"
+  },
+  {
+    "op": "rpc",
+    "payload": {
+      "p_expect": null,
+      "p_remove": [],
+      "p_session_id": "fa4e0000-0000-4000-8000-000000000002",
+      "p_set": {
+        "memory_extraction_lock": {
+          "at": "2026-01-02T00:00:00.000Z",
+          "run_id": "golden-run"
+        }
+      },
+      "p_user_id": "0a0a0000-0000-4000-8000-000000000001"
+    },
+    "seq": 6,
+    "table": "code_session_props_patch"
+  },
+  {
+    "op": "rpc",
+    "payload": {
+      "p_expect": null,
+      "p_remove": [],
+      "p_session_id": "fa4e0000-0000-4000-8000-000000000002",
+      "p_set": {
+        "memory_checkpoint_turn_idx": 12,
+        "memory_extraction": {
+          "at": "2026-01-02T00:00:00.000Z",
+          "blockers_reasked": 0,
+          "blockers_resolution_unverified": 0,
+          "blockers_resolved_later": 0,
+          "blockers_resolved_observed": 0,
+          "budget_hit": false,
+          "dangling_receipts": 0,
+          "deduped": 0,
+          "deduped_text": 0,
+          "dropped_hallucinated_ref": 0,
+          "dropped_narration": 0,
+          "dropped_owner_voice": 0,
+          "dropped_pii": 0,
+          "dropped_subagent_brief": 0,
+          "durable_defaulted": 0,
+          "embed_failed": 0,
+          "feedback": 0,
+          "issues": 0,
+          "issues_offered": 0,
+          "prompt_version": "memory-extract-v26",
+          "records": 0,
+          "recurrences": 0,
+          "repaired_pii": 0,
+          "repaired_ref": 0,
+          "retired_resolved_blocker": 0,
+          "retired_unverified": 0,
+          "retried_empty": 2,
+          "retry_failed": 0,
+          "retry_recovered": 0,
+          "retry_skipped_budget": 0,
+          "run_id": "golden-run",
+          "served_verdicts": 0,
+          "served_verdicts_no_receipt": 0,
+          "tail_turns_extracted": 12,
+          "tail_turns_uncovered": 0,
+          "user_pass_records": 0,
+          "user_pass_windows_abandoned": [],
+          "user_pass_windows_budget_released": 0,
+          "user_pass_windows_failed": 0,
+          "user_pass_windows_skipped": 0,
+          "verified": 0,
+          "windows_dropped_user_prose": 0,
+          "windows_extracted": 1,
+          "windows_total": 1
+        },
+        "memory_user_pass_failures": {}
+      },
+      "p_user_id": "0a0a0000-0000-4000-8000-000000000001"
+    },
+    "seq": 7,
+    "table": "code_session_props_patch"
+  },
+  {
+    "op": "rpc",
+    "payload": {
+      "p_expect": {
+        "memory_extraction_lock": {
+          "run_id": "golden-run"
+        }
+      },
+      "p_remove": [
+        "memory_extraction_lock"
+      ],
+      "p_session_id": "fa4e0000-0000-4000-8000-000000000002",
+      "p_set": {},
+      "p_user_id": "0a0a0000-0000-4000-8000-000000000001"
+    },
+    "seq": 8,
+    "table": "code_session_props_patch"
+  }
+]

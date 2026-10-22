@@ -1,0 +1,60 @@
+{
+  "baselineSha": "851d9c9",
+  "ratchets": [
+    {
+      "id": "G1",
+      "description": "service-role construction only in lib/db, lib/supabase, lib/env.ts (middleware.ts reads only public env); excludes __tests__ and __golden__",
+      "root": "apps/cloud/src",
+      "extensions": [".ts", ".tsx"],
+      "match": "SUPABASE_SERVICE_ROLE_KEY",
+      "pathExcludes": [
+        "/__tests__/",
+        "/__golden__/",
+        "^apps/cloud/src/(lib/db/|lib/supabase/|lib/env\\.ts$|middleware\\.ts$)"
+      ],
+      "mode": "max",
+      "baseline": 1
+    },
+    {
+      "id": "G2",
+      "description": "no private service-role factory left",
+      "root": "apps/cloud/src",
+      "extensions": null,
+      "match": "function getServiceClient\\(",
+      "pathExcludes": ["/__tests__/"],
+      "mode": "max",
+      "baseline": 1
+    },
+    {
+      "id": "G3",
+      "description": "no import/export of lib/kg from outside lib/kg (@/lib/, ./kg/, ../kg/, ../../lib/kg/; comments not counted)",
+      "root": "apps/cloud/src",
+      "extensions": [".ts", ".tsx"],
+      "match": "(from|import\\()\\s*['\"](@/lib/|(?:\\.\\./)+(?:lib/)?|\\./)kg/",
+      "pathExcludes": ["^apps/cloud/src/lib/kg/", "/__tests__/"],
+      "mode": "set",
+      "baseline": []
+    },
+    {
+      "id": "G4",
+      "description": "server-only env reads only in lib/env and lib/flags (NEXT_PUBLIC_* and NODE_ENV excluded); excludes __tests__ and __golden__ (the golden harness reads its own run knobs)",
+      "root": "apps/cloud/src",
+      "extensions": [".ts", ".tsx"],
+      "match": "process\\.env\\.[A-Z0-9_]+",
+      "matchExclude": "^process\\.env\\.(NEXT_PUBLIC_[A-Z0-9_]+|NODE_ENV)$",
+      "pathExcludes": ["/__tests__/", "/__golden__/", "^apps/cloud/src/lib/(env\\.ts$|env/|flags/)"],
+      "mode": "max",
+      "baseline": 0
+    },
+    {
+      "id": "G5",
+      "description": "lib never imports app (tests excluded)",
+      "root": "apps/cloud/src/lib",
+      "extensions": [".ts", ".tsx"],
+      "match": "(@/app/|\\.\\./app/)",
+      "pathExcludes": ["/__tests__/"],
+      "mode": "max",
+      "baseline": 0
+    }
+  ]
+}

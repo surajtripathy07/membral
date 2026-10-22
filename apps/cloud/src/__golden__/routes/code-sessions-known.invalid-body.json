@@ -1,0 +1,8 @@
+{
+  "status": 400,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Invalid request body — expected { sessions: [{ source, source_session_id, turn_count, ended_at }] } (max 500)\",\"detail\":[{\"path\":\"sessions.0.source\",\"message\":\"Too small: expected string to have >=1 characters\"},{\"path\":\"sessions.0.source_session_id\",\"message\":\"Invalid input: expected string, received undefined\"},{\"path\":\"sessions.0.turn_count\",\"message\":\"Invalid input: expected number, received undefined\"},{\"path\":\"sessions.0.ended_at\",\"message\":\"Invalid input: expected string, received undefined\"}]}"
+}

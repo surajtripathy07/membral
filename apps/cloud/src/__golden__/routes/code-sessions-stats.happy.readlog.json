@@ -1,0 +1,32 @@
+[
+  {
+    "seq": 1,
+    "table": "profiles",
+    "op": "select",
+    "payload": {
+      "columns": "id, api_key_scope_node_id, api_key_scope_code_project_id",
+      "modifiers": [
+        "single"
+      ]
+    },
+    "filters": [
+      "eq.api_key_hash=\"a8abdf10a4b03162bd408d337e60ab3ab2df8572b76115e8fff18079f0656e36\""
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "code_sessions",
+    "op": "select",
+    "payload": {
+      "columns": "id, started_at, turn_count, user_turn_count, props",
+      "modifiers": [
+        "order.started_at.asc"
+      ]
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "is.parent_source_session_id=null",
+      "gte.started_at=\"2025-12-02T00:00:00.000Z\""
+    ]
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "seq": 1,
+    "table": "rate_limit_check",
+    "op": "rpc",
+    "payload": {
+      "p_key": "memories:user:00000000-0000-4000-8000-00000000c0de",
+      "p_limit": 120,
+      "p_window_seconds": 60
+    }
+  },
+  {
+    "seq": 2,
+    "table": "memories",
+    "op": "insert",
+    "payload": [
+      {
+        "user_id": "00000000-0000-4000-8000-00000000c0de",
+        "type": "insight",
+        "content": "Users skim the header before scrolling.",
+        "confidence": 0.7,
+        "tags": [],
+        "source_conversation_ids": []
+      }
+    ]
+  }
+]

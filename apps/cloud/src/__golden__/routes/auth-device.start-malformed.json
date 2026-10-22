@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"deviceCode\":\"dvc_MFV6n8TpDjNYfaLH7BE2W4Clyu8UOV6DqM3yFzxhhqs\",\"userCode\":\"4567-89AB\",\"verificationUri\":\"http://localhost:3001/device\",\"verificationUriComplete\":\"http://localhost:3001/device?code=4567-89AB\",\"expiresIn\":600,\"interval\":3}"
+}

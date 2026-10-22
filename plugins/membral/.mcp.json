@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "membral": {
+      "type": "http",
+      "alwaysLoad": true,
+      "url": "https://membral.me/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${user_config.api_key}"
+      }
+    }
+  }
+}

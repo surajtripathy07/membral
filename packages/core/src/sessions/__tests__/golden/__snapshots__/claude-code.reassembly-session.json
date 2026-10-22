@@ -1,0 +1,58 @@
+{
+  "actionsVersion": 2,
+  "contentHash": "2e2c95ab0d0cdb89f70d8dd927f14e5124bcf9b7a9d27b80e4ce571a3b055d14",
+  "endedAt": "2026-02-02T00:00:06.000Z",
+  "filesTouched": [],
+  "model": "codehub-model-2",
+  "models": [
+    "codehub-model-2"
+  ],
+  "repo": {
+    "branch": "main",
+    "path": "/home/dev/acme-webapp"
+  },
+  "source": "claude-code",
+  "sourceSessionId": "33333333-3333-4333-8333-333333333333",
+  "startedAt": "2026-02-02T00:00:00.000Z",
+  "toolCounts": {
+    "Bash": 1
+  },
+  "turns": [
+    {
+      "idx": 0,
+      "kind": "thinking",
+      "role": "assistant",
+      "text": "Real thinking content.",
+      "ts": "2026-02-02T00:00:00.000Z"
+    },
+    {
+      "idx": 1,
+      "kind": "prose",
+      "role": "assistant",
+      "text": "Part one.\n\nPart two.",
+      "ts": "2026-02-02T00:00:02.000Z"
+    },
+    {
+      "idx": 2,
+      "kind": "tool_use",
+      "role": "assistant",
+      "toolName": "Bash",
+      "toolUseId": "toolu_bash9",
+      "ts": "2026-02-02T00:00:04.000Z"
+    },
+    {
+      "idx": 3,
+      "kind": "thinking",
+      "role": "assistant",
+      "text": "After tool call.",
+      "ts": "2026-02-02T00:00:05.000Z"
+    },
+    {
+      "idx": 4,
+      "kind": "prose",
+      "role": "user",
+      "text": "Confirmed, thanks.",
+      "ts": "2026-02-02T00:00:06.000Z"
+    }
+  ]
+}

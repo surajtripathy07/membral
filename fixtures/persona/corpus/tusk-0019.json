@@ -1,0 +1,63 @@
+{
+  "id": "chatgpt:tusk-0019",
+  "source": "chatgpt",
+  "source_id": "tusk-0019",
+  "title": "static fire abort — what does sensor code 214 mean",
+  "created_at": "2025-06-04T23:34:13.000Z",
+  "updated_at": "2025-06-04T23:41:25.000Z",
+  "model": "gpt-4o",
+  "messages": [
+    {
+      "role": "user",
+      "content": "static fire aborted! sensor code 214! what does it mean?!!?!?",
+      "timestamp": "2025-06-04T23:34:13.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "Code 214 typically indicates a fault detected in the fuel line temperature sensors of the Leviathan rocket's engine system. It's often triggered when the temperature readings are outside the expected range, which can suggest a possible fuel flow issue or a sensor malfunction.",
+      "timestamp": "2025-06-04T23:36:57.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "user",
+      "content": "can we fix it by adjusting the calibration? or just ignore it??? need an answer fast!!!!",
+      "timestamp": "2025-06-04T23:38:58.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "Ignoring this fault is risky, as it could mask a genuine fuel flow problem. First, verify the sensor's calibration to rule out a false positive. If the sensor is functioning correctly, inspect the fuel lines for blockages or temperature regulation failures. Ensure all systems are reset before considering another static fire test.",
+      "timestamp": "2025-06-04T23:39:36.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "user",
+      "content": "got it. if reset doesn't work, what's the next step? still want to hit the launch date. no room for cowards.",
+      "timestamp": "2025-06-04T23:40:38.000Z",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "If recalibration and system resets don't resolve the issue, conduct a thorough inspection of the fuel delivery system for leaks or malfunctions. Consider a component swap for the affected sensor if necessary. Keeping the timeline tight is important, but safety must remain the priority to ensure a successful launch.",
+      "timestamp": "2025-06-04T23:41:25.000Z",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "synthetic": true,
+    "persona": "elon-tusk",
+    "generator": "fixtures/persona/generate.ts",
+    "seed": {
+      "life_areas": [
+        "SpaceY"
+      ],
+      "purpose": "problem-solving",
+      "depth": "quick",
+      "arc_refs": [
+        "spacey"
+      ]
+    }
+  },
+  "synced_at": "2026-07-01T00:00:00.000Z"
+}

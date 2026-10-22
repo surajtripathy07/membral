@@ -1,0 +1,8 @@
+{
+  "model": "gpt-4o-mini",
+  "scripted": true,
+  "calls": 4,
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "usd": 0
+}

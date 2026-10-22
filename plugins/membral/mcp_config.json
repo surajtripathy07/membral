@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "membral": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://membral.me/api/mcp",
+        "--header",
+        "Authorization:${MEMBRAL_AUTH_HEADER}"
+      ]
+    }
+  }
+}

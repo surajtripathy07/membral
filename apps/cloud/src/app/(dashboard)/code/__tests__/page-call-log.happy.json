@@ -1,0 +1,128 @@
+[
+  [
+    "createClient",
+    []
+  ],
+  [
+    "supabase.auth.getUser",
+    []
+  ],
+  [
+    "supabase.rpc",
+    [
+      "project_alias_seed",
+      {
+        "p_user": "user-1"
+      }
+    ]
+  ],
+  [
+    "supabase.from",
+    [
+      "code_sessions"
+    ]
+  ],
+  [
+    "supabase.select",
+    [
+      "id, code_project_id, started_at, turn_count, user_turn_count, files_touched, props"
+    ]
+  ],
+  [
+    "supabase.eq",
+    [
+      "user_id",
+      "user-1"
+    ]
+  ],
+  [
+    "supabase.is",
+    [
+      "parent_source_session_id",
+      null
+    ]
+  ],
+  [
+    "supabase.gte",
+    [
+      "started_at",
+      "2026-08-29T05:55:05.736Z"
+    ]
+  ],
+  [
+    "supabase.order",
+    [
+      "started_at",
+      {
+        "ascending": true
+      }
+    ]
+  ],
+  [
+    "supabase.range",
+    [
+      0,
+      999
+    ]
+  ],
+  [
+    "getCodeProjectsPage",
+    [
+      "user-1",
+      1,
+      20
+    ]
+  ],
+  [
+    "resolveProjectCanonical",
+    [
+      "user-1"
+    ]
+  ],
+  [
+    "aggregateAgentStats",
+    [
+      [
+        {
+          "id": "sess-1",
+          "code_project_id": "proj-1",
+          "started_at": "2026-09-10T00:00:00.000Z",
+          "turn_count": 5,
+          "user_turn_count": 3,
+          "files_touched": [
+            "a.ts"
+          ],
+          "props": {}
+        }
+      ],
+      {
+        "tz": "UTC",
+        "startDate": "2026-08-29",
+        "endDate": "2026-09-28"
+      }
+    ]
+  ],
+  [
+    "aggregateAgentStats",
+    [
+      [
+        {
+          "id": "sess-1",
+          "code_project_id": "proj-1",
+          "started_at": "2026-09-10T00:00:00.000Z",
+          "turn_count": 5,
+          "user_turn_count": 3,
+          "files_touched": [
+            "a.ts"
+          ],
+          "props": {}
+        }
+      ],
+      {
+        "tz": "UTC",
+        "startDate": "2026-08-29",
+        "endDate": "2026-09-28"
+      }
+    ]
+  ]
+]

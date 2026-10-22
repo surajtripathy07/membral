@@ -1,0 +1,14 @@
+# Re-export shims left at a module's old path after a move (architecture
+# refactor programme, rule P3). One repo-relative path per line, e.g.
+#   apps/cloud/src/lib/kg/llm.ts
+# `#` starts a comment. scripts/check-mock-paths.mjs fails any vi.mock /
+# vi.doMock whose target resolves to a path listed here: mocking a shim does
+# not intercept callers that import the new path. Mock the new path instead.
+apps/cloud/src/lib/memory/__tests__/fake-supabase.ts
+apps/cloud/src/lib/code-sessions/__tests__/fake-supabase.ts
+apps/cloud/src/lib/kg/__tests__/fake-supabase.ts
+apps/cloud/src/lib/kg/llm.ts
+apps/cloud/src/lib/kg/spend-ledger.ts
+apps/cloud/src/lib/kg/embedding-client.ts
+apps/cloud/src/lib/kg/concurrency.ts
+apps/cloud/src/lib/kg/pagination.ts

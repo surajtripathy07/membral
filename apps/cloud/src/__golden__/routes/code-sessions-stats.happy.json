@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"days\":30,\"window_start\":\"2025-12-02T00:00:00.000Z\",\"window_end\":\"2026-01-01T00:00:00.000Z\",\"totals\":{\"cost_usd\":null,\"sessions\":2,\"turns\":6,\"user_turns\":2,\"tokens\":{\"input\":0,\"output\":0,\"cache_read\":0,\"cache_creation\":0},\"subagent_cost_usd\":0,\"subagent_runs\":0},\"by_model\":[],\"coverage\":{\"sessions_total\":2,\"sessions_with_usage\":0}}"
+}

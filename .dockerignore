@@ -1,0 +1,24 @@
+# Build context for apps/cloud/Dockerfile (W7 7.1). Allow-list: ship only what
+# the cloud image build needs, never local env files, build output or notes.
+*
+!package.json
+!package-lock.json
+!turbo.json
+!packages/
+!apps/cloud/
+
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/.vercel
+**/.env
+**/.env.*
+**/*.local
+**/coverage
+apps/cloud/supabase/.temp
+apps/cloud/supabase/.branches
+apps/cloud/public/membral-cli.tgz
+apps/cloud/public/downloads
+apps/cloud/scripts/spike-k89/output
+apps/cloud/scripts/kg/prompt-lab/transcripts

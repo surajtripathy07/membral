@@ -1,0 +1,195 @@
+{
+  "chained-add-commit-push": {
+    "project": {
+      "source": "cli",
+      "verb": "navigated"
+    },
+    "repo": {
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "navigated"
+    },
+    "unknown": {
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "navigated"
+    }
+  },
+  "gh-pr-view": {
+    "project": {
+      "ref": "!4711",
+      "refKind": "merge_request",
+      "source": "cli",
+      "state": "merged",
+      "title": "Fix rounding",
+      "verb": "viewed"
+    },
+    "repo": {
+      "ref": "acme/other-service!4711",
+      "refKind": "merge_request",
+      "source": "cli",
+      "state": "merged",
+      "title": "Fix rounding",
+      "verb": "viewed"
+    },
+    "unknown": {
+      "ref": "!4711",
+      "refKind": "merge_request",
+      "repoUnknown": true,
+      "source": "cli",
+      "state": "merged",
+      "title": "Fix rounding",
+      "verb": "viewed"
+    }
+  },
+  "git-checkout": {
+    "project": {
+      "branch": "fix/rounding",
+      "branchConfirmed": true,
+      "ref": "fix/rounding",
+      "refKind": "branch",
+      "source": "cli",
+      "verb": "navigated"
+    },
+    "repo": {
+      "branch": "fix/rounding",
+      "branchConfirmed": true,
+      "ref": "fix/rounding",
+      "refKind": "branch",
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "navigated"
+    },
+    "unknown": {
+      "branch": "fix/rounding",
+      "branchConfirmed": true,
+      "ref": "fix/rounding",
+      "refKind": "branch",
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "navigated"
+    }
+  },
+  "git-checkout-plain-branch": {
+    "project": {
+      "branch": "fix/rounding",
+      "branchConfirmed": true,
+      "ref": "fix/rounding",
+      "refKind": "branch",
+      "source": "cli",
+      "verb": "navigated"
+    },
+    "repo": {
+      "branch": "fix/rounding",
+      "branchConfirmed": true,
+      "ref": "fix/rounding",
+      "refKind": "branch",
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "navigated"
+    },
+    "unknown": {
+      "branch": "fix/rounding",
+      "branchConfirmed": true,
+      "ref": "fix/rounding",
+      "refKind": "branch",
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "navigated"
+    }
+  },
+  "git-checkout-plain-path": {
+    "project": {
+      "branch": "src/ledger.ts",
+      "ref": "src/ledger.ts",
+      "refKind": "branch",
+      "source": "cli",
+      "verb": "navigated"
+    },
+    "repo": {
+      "branch": "src/ledger.ts",
+      "ref": "src/ledger.ts",
+      "refKind": "branch",
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "navigated"
+    },
+    "unknown": {
+      "branch": "src/ledger.ts",
+      "ref": "src/ledger.ts",
+      "refKind": "branch",
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "navigated"
+    }
+  },
+  "git-commit": {
+    "project": {
+      "branch": "15178-5-idempotent-debits",
+      "refKind": "commit",
+      "sha": "d7e5977",
+      "source": "cli",
+      "subject": "make debit posting idempotent",
+      "verb": "committed"
+    },
+    "repo": {
+      "branch": "15178-5-idempotent-debits",
+      "refKind": "commit",
+      "repoUnknown": true,
+      "sha": "d7e5977",
+      "source": "cli",
+      "subject": "make debit posting idempotent",
+      "verb": "committed"
+    },
+    "unknown": {
+      "branch": "15178-5-idempotent-debits",
+      "refKind": "commit",
+      "repoUnknown": true,
+      "sha": "d7e5977",
+      "source": "cli",
+      "subject": "make debit posting idempotent",
+      "verb": "committed"
+    }
+  },
+  "git-push": {
+    "project": {
+      "branch": "15178-5-idempotent-debits",
+      "ref": "15178-5-idempotent-debits",
+      "refKind": "branch",
+      "source": "cli",
+      "verb": "pushed"
+    },
+    "repo": {
+      "branch": "15178-5-idempotent-debits",
+      "ref": "15178-5-idempotent-debits",
+      "refKind": "branch",
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "pushed"
+    },
+    "unknown": {
+      "branch": "15178-5-idempotent-debits",
+      "ref": "15178-5-idempotent-debits",
+      "refKind": "branch",
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "pushed"
+    }
+  },
+  "npm-test": {
+    "project": {
+      "source": "cli",
+      "verb": "tested"
+    },
+    "repo": {
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "tested"
+    },
+    "unknown": {
+      "repoUnknown": true,
+      "source": "cli",
+      "verb": "tested"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral install-session-hook [--api-url <url>] [--settings <path>] [--remove]
+
+Install (or --remove to uninstall) the Claude Code SessionEnd hook (uploads
+each session), SessionStart hook (injects the memory preamble) and
+UserPromptSubmit hook (injects past work related to each prompt) in
+~/.claude/settings.json. Idempotent — safe to run more than once. 'membral
+setup' calls this itself for every machine with Claude Code detected; run
+it directly only to reinstall by hand or to --remove all three hooks.
+
+--- STDERR ---

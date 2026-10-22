@@ -1,0 +1,8 @@
+{
+  "status": 403,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Scoped API keys cannot read aggregate stats\"}"
+}

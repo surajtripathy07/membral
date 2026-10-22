@@ -1,0 +1,8 @@
+{
+  "status": 500,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Failed to revoke API key\"}"
+}

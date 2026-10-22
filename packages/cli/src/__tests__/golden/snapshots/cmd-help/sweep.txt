@@ -1,0 +1,22 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral sweep [--remove]
+
+Not for interactive use — setup schedules it every 20 minutes: the launchd
+agent me.membral.sweep on macOS, the systemd user timer membral-sweep.timer
+on Linux, or a marked crontab entry when user systemd is not available.
+--remove unschedules it.
+
+Uploads every harness's sessions that ended since the last successful
+sweep, nudges memory extraction, then answers the server's ref-keyed questions about your own
+commits and branches with read-only git (cat-file, merge-base, show-ref;
+never a time range) so the dashboard can tell a merged thread from an open
+one. Records the time in ~/.membral/sweep-state.json. Logs to
+~/.membral/logs/sweep.log.
+
+MEMBRAL_SWEEP_FETCH=1 opts into network: the sweep then runs
+`git fetch --prune origin` in your checkout (updates and prunes your
+remote-tracking refs) and `git ls-remote` to learn which branches are gone.
+
+--- STDERR ---

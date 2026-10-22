@@ -1,0 +1,30 @@
+[
+  {
+    "seq": 1,
+    "table": "conversations",
+    "op": "select",
+    "payload": {
+      "columns": "id, source, title, created_at, updated_at, model, messages, metadata",
+      "modifiers": [
+        "single"
+      ]
+    },
+    "filters": [
+      "eq.id=\"c0de0000-0000-4000-8000-000000000001\"",
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\""
+    ]
+  },
+  {
+    "seq": 2,
+    "table": "memories",
+    "op": "select",
+    "payload": {
+      "columns": "*",
+      "modifiers": []
+    },
+    "filters": [
+      "eq.user_id=\"00000000-0000-4000-8000-00000000c0de\"",
+      "contains.source_conversation_ids=[\"c0de0000-0000-4000-8000-000000000001\"]"
+    ]
+  }
+]

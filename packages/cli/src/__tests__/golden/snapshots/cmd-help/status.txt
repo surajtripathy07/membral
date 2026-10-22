@@ -1,0 +1,15 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral status [--api-url <url>] [--api-key <key>] [--rename <name>]
+
+Show your account, this device, and what synced last: signed-in account and
+user id, device identity, the ~/.membral/sync.json allowlist, and the last
+successful sweep.
+
+Flags
+  --api-url <url>   Overrides the default API URL
+  --api-key <key>   Overrides the saved/env credentials for this run
+  --rename <name>   Persist a new name to this machine's device.json
+
+--- STDERR ---
