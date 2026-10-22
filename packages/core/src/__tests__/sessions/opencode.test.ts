@@ -16,16 +16,15 @@ function readFixture(name: string): string {
   return readFileSync(join(FIXTURES, name), "utf8");
 }
 
-// Derived from a real opencode session on the maintainer's machine
-// (`~/.local/share/opencode/opencode.db`, session `ses_1403d271dffeWEmI9XDZ6bdCGT`,
-// 2026-06-13) — 2 user turns, 2 assistant replies split across opencode's
+// Derived from a opencode session
+// (session `ses_0000000000000000example1`) — 2 user turns, 2 assistant replies split across opencode's
 // per-step `message` rows, real `bash`/`glob` tool calls, real (non-zero)
 // token usage. Every path, repo name, username, model/provider id, and
 // external URL was replaced with a generic placeholder; the result was
 // verified to produce zero hits against `.claude/scrub-list.txt`
 // (case-insensitive), `$HOME`, and the machine username (see W6 report).
 const raw = readFixture("small-session.json");
-const ref = { source: "opencode", sourceSessionId: "ses_1403d271dffeWEmI9XDZ6bdCGT", path: "n/a" };
+const ref = { source: "opencode", sourceSessionId: "ses_0000000000000000example1", path: "n/a" };
 
 describe("opencodeParser.parse — small-session fixture", () => {
   const parsed = opencodeParser.parse(ref, raw);
@@ -36,7 +35,7 @@ describe("opencodeParser.parse — small-session fixture", () => {
 
   it("reports the correct source and sourceSessionId", () => {
     expect(parsed.source).toBe("opencode");
-    expect(parsed.sourceSessionId).toBe("ses_1403d271dffeWEmI9XDZ6bdCGT");
+    expect(parsed.sourceSessionId).toBe("ses_0000000000000000example1");
   });
 
   it("has at least one user turn and one assistant turn", () => {
@@ -49,7 +48,7 @@ describe("opencodeParser.parse — small-session fixture", () => {
   it("captures the user prose turns in order", () => {
     const userProse = parsed.turns.filter((t) => t.role === "user" && t.kind === "prose");
     expect(userProse).toHaveLength(2);
-    expect(userProse[0].text).toContain("memory-extraction pipeline");
+    expect(userProse[0].text).toContain("retry with backoff");
     expect(userProse[1].text).toBe("use https://github.com/example-org/example-repo/pull/1, and fix my local install");
   });
 
@@ -133,9 +132,9 @@ describe("opencodeParser.parse — small-session fixture", () => {
   });
 });
 
-// Derived from a real parent+child pair on the maintainer's machine
-// (parent `ses_1c5d1b61cffekrWE8RP9x47b4O`, child
-// `ses_1c5d1b5f4ffe8vLAUjq23av2Vv`) — the parent's `task` tool_use was
+// Derived from a parent+child pair
+// (parent `ses_0000000000000000example2`, child
+// `ses_0000000000000000example3`) — the parent's `task` tool_use was
 // CANCELLED before producing any `output` text, so the only join key
 // available is the structured `state.metadata.sessionId` (2026-09-12
 // review, findings 6 and 10). The real (much longer, project-specific)
@@ -143,7 +142,7 @@ describe("opencodeParser.parse — small-session fixture", () => {
 // path/repo name/provider was genericized the same way as the first
 // fixture — verified zero scrub-list/username/$HOME hits (see W6 report).
 const subAgentRaw = readFixture("session-with-subagent.json");
-const subAgentRef = { source: "opencode", sourceSessionId: "ses_1c5d1b61cffekrWE8RP9x47b4O", path: "n/a" };
+const subAgentRef = { source: "opencode", sourceSessionId: "ses_0000000000000000example2", path: "n/a" };
 
 describe("opencodeParser.parse — session-with-subagent fixture (sub-agent tree)", () => {
   const parsed = opencodeParser.parse(subAgentRef, subAgentRaw);
@@ -155,7 +154,7 @@ describe("opencodeParser.parse — session-with-subagent fixture (sub-agent tree
 
   it("joins toolUseId/description via the cancelled task tool_use, using state.metadata.sessionId (no output text exists to regex against)", () => {
     const sub = parsed.subAgents?.[0];
-    expect(sub?.agentId).toBe("ses_1c5d1b5f4ffe8vLAUjq23av2Vv");
+    expect(sub?.agentId).toBe("ses_0000000000000000example3");
     expect(sub?.toolUseId).toBe("01KRX2WJG8YQPQ0B6MKXF241P6");
     expect(sub?.description).toBe(
       "Implementation orchestrator that drives TDD-first code delivery by routing work to specialist subagents",
@@ -200,7 +199,7 @@ describe("opencodeParser.parse — session-with-subagent fixture (sub-agent tree
         state: {
           status: "completed",
           input: { command: "git log" },
-          output: "task_id: ses_1c5d1b5f4ffe8vLAUjq23av2Vv (decoy)",
+          output: "task_id: ses_0000000000000000example3 (decoy)",
         },
       }),
     });

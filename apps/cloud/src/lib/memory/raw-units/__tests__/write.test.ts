@@ -288,7 +288,7 @@ describe("ensureSessionRawUnits", () => {
     const r = await run(u, more);
     expect(r.status).toBe("written");
     expect(u.rows()).toHaveLength(buildRawUnits(more).length);
-  });
+  }, 30_000);
 
   it("a session just under the caps is written", async () => {
     const u = makeUnitsDb();

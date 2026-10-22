@@ -449,7 +449,7 @@ grant execute on function public.kg_person_detail(uuid) to authenticated;
 --   (a) their normalized labels are IDENTICAL (case/punctuation variants of the
 --       same name — "Alex Martin" ≡ "alex_martin"), OR
 --   (b) one person's label appears (normalized) in another person's aliases
---       (alias merge — "Wife" → the real name).
+--       (alias merge — "the CTO" → the stored name).
 --   Never a fuzzy/edit-distance match: "Kabir Rao" and "Kabir Rai"
 --   differ by one letter and are LEFT SEPARATE. is_user_identity persons and the
 --   '_self' sentinel are excluded from person-merge grouping entirely, so the

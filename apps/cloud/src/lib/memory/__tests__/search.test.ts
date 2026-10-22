@@ -121,16 +121,16 @@ describe("resolveProjectId", () => {
   // ---- G (2026-09-25): short repo name resolution ----
   it("resolves a short repo name (one path segment) when there's no exact repo-identity match", async () => {
     const supabase = makeFakeSupabase({
-      code_projects: [{ id: PROJECT_A, user_id: USER, repo_identity: "github.com/acme/membral-personal" }],
+      code_projects: [{ id: PROJECT_A, user_id: USER, repo_identity: "github.com/acme/example-repo" }],
     });
-    expect(await resolveProjectId(supabase, USER, "membral-personal", null)).toBe(PROJECT_A);
+    expect(await resolveProjectId(supabase, USER, "example-repo", null)).toBe(PROJECT_A);
   });
 
   it("resolves the two-segment owner/repo short form", async () => {
     const supabase = makeFakeSupabase({
-      code_projects: [{ id: PROJECT_A, user_id: USER, repo_identity: "github.com/acme/membral-personal" }],
+      code_projects: [{ id: PROJECT_A, user_id: USER, repo_identity: "github.com/acme/example-repo" }],
     });
-    expect(await resolveProjectId(supabase, USER, "acme/membral-personal", null)).toBe(PROJECT_A);
+    expect(await resolveProjectId(supabase, USER, "acme/example-repo", null)).toBe(PROJECT_A);
   });
 
   it("resolves via display_name when it doesn't match any repo_identity segment", async () => {
@@ -152,18 +152,18 @@ describe("resolveProjectId", () => {
   it("throws AmbiguousProjectError naming every candidate when more than one project matches", async () => {
     const supabase = makeFakeSupabase({
       code_projects: [
-        { id: PROJECT_A, user_id: USER, repo_identity: "github.com/acme/membral-personal" },
-        { id: PROJECT_B, user_id: USER, repo_identity: "gitlab.com/other/membral-personal" },
+        { id: PROJECT_A, user_id: USER, repo_identity: "github.com/acme/example-repo" },
+        { id: PROJECT_B, user_id: USER, repo_identity: "gitlab.com/other/example-repo" },
       ],
     });
-    await expect(resolveProjectId(supabase, USER, "membral-personal", null)).rejects.toThrow(AmbiguousProjectError);
+    await expect(resolveProjectId(supabase, USER, "example-repo", null)).rejects.toThrow(AmbiguousProjectError);
   });
 
   it("a code-scoped key's bound wins even when a short name is also passed", async () => {
     const supabase = makeFakeSupabase({
       code_projects: [{ id: PROJECT_A, user_id: USER, repo_identity: "github.com/acme/other-repo" }],
     });
-    expect(await resolveProjectId(supabase, USER, "membral-personal", PROJECT_A)).toBe(PROJECT_A);
+    expect(await resolveProjectId(supabase, USER, "example-repo", PROJECT_A)).toBe(PROJECT_A);
   });
 
   it("no short-name match at all -> null, same as today's unresolvable case", async () => {
@@ -176,16 +176,16 @@ describe("resolveProjectId", () => {
 
 describe("matchProjectsByShortName", () => {
   const projects = [
-    { id: "p1", display_name: null, repo_identity: "github.com/acme/membral-personal" },
+    { id: "p1", display_name: null, repo_identity: "github.com/acme/example-repo" },
     { id: "p2", display_name: "sibling", repo_identity: "github.com/acme/sibling-repo" },
   ];
 
   it("matches the last repo_identity segment", () => {
-    expect(matchProjectsByShortName(projects, "membral-personal").map((p) => p.id)).toEqual(["p1"]);
+    expect(matchProjectsByShortName(projects, "example-repo").map((p) => p.id)).toEqual(["p1"]);
   });
 
   it("matches owner/repo", () => {
-    expect(matchProjectsByShortName(projects, "acme/membral-personal").map((p) => p.id)).toEqual(["p1"]);
+    expect(matchProjectsByShortName(projects, "acme/example-repo").map((p) => p.id)).toEqual(["p1"]);
   });
 
   it("matches display_name over an unrelated repo_identity", () => {

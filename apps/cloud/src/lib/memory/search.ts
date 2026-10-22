@@ -130,7 +130,7 @@ export interface MemorySearchResult {
 //   On-topic: 14/16 keep records (e.g. "always use pnpm" 8, "opencode
 //     parser" 27, "Postgres wedged outage restart fix" 1 via (c)). The two
 //     that return [] are "repository purpose overview" (max cos 0.416, cov
-//     0.33) and "home loan prepayment" (0.372, 0.33 -- a personal topic in a
+//     0.33) and "sourdough starter recipe" (0.372, 0.33 -- a personal topic in a
 //     code-session store).
 // SEM_FLOOR sits above the highest off-topic cosine; (c)'s coverage floor
 // sits above the highest off-topic coverage.

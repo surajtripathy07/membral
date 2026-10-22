@@ -115,7 +115,7 @@ jobs:
 
       # Docker is preinstalled on ubuntu-latest runners — this is what
       # `supabase start` needs to bring up the local stack (Postgres,
-      # GoTrue, PostgREST, ...) exactly like a maintainer's laptop.
+      # GoTrue, PostgREST, ...) exactly like a developer's machine.
       # Pinned to the version `npx supabase --version` prints on the
       # driver's machine (step 0.6, D6) — `latest` let `gen types` output
       # drift under CI without any local change to notice.

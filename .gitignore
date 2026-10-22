@@ -103,10 +103,7 @@ apps/cloud/scripts/spike-k89/output/
 # are public; everything under eval-runs/ stays local. Never commit.
 eval-runs/
 
-# L1 scrub (membral-608): design screenshots that visually render the founder's
-# real graph (employer/manager/coworker names, real corpus count). Text-based
-# design files were redacted in place; these are pixels — quarantined instead.
-design/uploads/Screenshot 2026-06-16 at 5.12.09 PM.png
+# local-only artefacts: design screenshots (pixels, quarantined)
 design/screens/01-map.png
 design/screens/03-pulse.png
 design/screens/03-v.png
@@ -121,11 +118,7 @@ design/.thumbnail
 *.db
 .beads-credential-key
 
-# Prompt-iteration lab (apps/cloud/scripts/kg/prompt-lab): transcripts/ holds real
-# founder-corpus conversation exports (personal data, never commit); prompt.txt is
-# the maintainer's scratch working copy of CLAIMS_PROMPT_BLOCK, regenerated via
-# `--export` — the production source of truth stays claims.ts. README.md and run.ts
-# themselves ARE committed.
+# local-only artefacts: prompt-iteration lab transcripts and scratch prompt.
 apps/cloud/scripts/kg/prompt-lab/transcripts/
 apps/cloud/scripts/kg/prompt-lab/prompt.txt
 .vercel

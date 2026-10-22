@@ -3,8 +3,7 @@
 // Fixture turn shapes are copied from REAL code_session_turns rows observed
 // against the founder corpus (via a scratch script per the task brief), then
 // SCRUBBED: repo/project names and prose replaced with fictional CodeHub /
-// parade-planner content (pre-commit scrub-list blocks real personal-project
-// names like the actual finance-tracker repo this pattern was observed on).
+// parade-planner content (fixtures use fictional CodeHub repo names).
 // Shapes preserved exactly: `props.inputDigest` on Bash tool_use turns,
 // `[tool_result elided: ok]` on the following tool_result turn, and the
 // heredoc `-m "$(cat <<'EOF' ... EOF)"` commit-message convention.

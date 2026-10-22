@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { computeThreads, type ThreadIssueRow, type ThreadSessionRow, type ThreadTurnRow } from "../open-threads";
 
-const REF = "codehub.example/e2e-edge/sprachbox#5";
+const REF = "codehub.example/e2e-edge/example-repo#5";
 const NOW = new Date("2026-09-26T21:00:00Z");
 
 const session = (id: string, started_at: string): ThreadSessionRow => ({
@@ -105,7 +105,7 @@ describe("C-9/B7: thread titles are observed text, never command fragments", () 
   });
 
   it("review r2 S1: one session committing for two items — each row counts only its own tied commits", () => {
-    const REF_B = "codehub.example/e2e-edge/sprachbox#7";
+    const REF_B = "codehub.example/e2e-edge/example-repo#7";
     const commit = (idx: number, sha: string, branch: string, subject: string) =>
       turn("s1", idx, `2026-09-26T19:0${idx}:00Z`, { verb: "committed", sha, branch, subject, source: "cli" });
     const turns = [
@@ -119,7 +119,7 @@ describe("C-9/B7: thread titles are observed text, never command fragments", () 
         sessions,
         issues: [row("s1"), row("s1", { ref: REF_B, number: 7 })],
         turns,
-        projectIdentity: { p1: "codehub.example/e2e-edge/sprachbox" },
+        projectIdentity: { p1: "codehub.example/e2e-edge/example-repo" },
       },
       { now: NOW },
     );
@@ -135,7 +135,7 @@ describe("C-9/B7: thread titles are observed text, never command fragments", () 
         sessions,
         issues: [row("s1")],
         turns: [commit(1, "eee5555", "main", "Merge work (#5)")],
-        projectIdentity: { p1: "codehub.example/e2e-edge/sprachbox" },
+        projectIdentity: { p1: "codehub.example/e2e-edge/example-repo" },
       },
       { now: NOW },
     );

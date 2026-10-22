@@ -1,6 +1,5 @@
-// opencode session parser (goal 2026-09-12 W6 / D5; second harness per the
-// maintainer's 2026-09-12 decision — "if I were to pick two harnesses I'd
-// pick Claude and opencode").
+// opencode session parser (goal 2026-09-12 W6 / D5; opencode is the project's
+// second harness).
 //
 // opencode stores sessions in a SQLite database
 // (`~/.local/share/opencode/opencode.db`), not one-file-per-session JSONL

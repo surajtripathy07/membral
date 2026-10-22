@@ -44,7 +44,7 @@ const TOKEN_ESTIMATE_LIMIT = 8000;
 // the two extremes — Cyrillic/Greek tokenize meaningfully denser than ASCII
 // but far less densely than Devanagari or CJK in a BPE vocab trained
 // predominantly on English/European text. This is a per-codepoint-CLASS
-// range table, not a word-list — works for any script, not just Hindi.
+// range table, not a word-list — works for any script, not just one script.
 const CHARS_PER_TOKEN_ASCII = 4; // Basic Latin .. combining diacritics (< U+0370)
 const CHARS_PER_TOKEN_CYRILLIC_GREEK = 2.2; // Greek and Coptic (0370-03FF) + Cyrillic/Cyrillic Supplement (0400-052F)
 const CHARS_PER_TOKEN_CJK = 1.5; // Hiragana/Katakana, CJK Unified+Ext A, Hangul syllables, CJK Compatibility Ideographs

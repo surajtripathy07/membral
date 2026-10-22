@@ -80,6 +80,10 @@ $$;
 -- column requires. Cut on characters: if the first 250,000 characters are over the byte cap, keep
 -- 250,000 - (extra bytes of multi-byte characters) characters, but never fewer than 62,500 (4 bytes per character is the
 -- UTF-8 maximum, so 62,500 characters always fit).
+-- Load pgvector into this session first: hnsw.* are placeholder GUCs until the library is loaded, and a
+-- non-superuser (the local stack applies migrations as `postgres`) cannot SET a placeholder in CREATE FUNCTION.
+do $$ begin perform '[0]'::vector; end $$;
+
 create or replace function public.session_raw_units_fts_src(p_text text, p_full_text text)
 returns text
 language sql

@@ -101,7 +101,7 @@ or anything else without a deliberate new decision.
    > afterward:
    > ```sql
    > -- Every profile with no explicit limit gets the normal hosted-mode default (100).
-   > -- Exclude the maintainer's own account(s) first if they should stay unlimited.
+   > -- Exclude the operator's account(s) first if they should stay unlimited.
    > update public.profiles set conversation_limit = 100
    > where conversation_limit is null
    >   and id not in ('<your-own-user-id>'); -- replace with your own auth.users.id, or drop this line entirely
@@ -250,7 +250,7 @@ can't be squatted the way an email address can, and needs no confirmation wait.
 
 **Teaser grant (issue #128)** — instead of a full, unlimited `llm` enable, give a
 new account a small trial budget (roughly the cost of pass-1 extraction over their latest ~20
-chats, at ~$0.0068/conversation measured on the founder corpus):
+chats, at ~$0.0068/conversation measured on a sample corpus):
 
 ```bash
 npm run flags --workspace=@membral/cloud -- grant --feature llm --email x@y.com --budget-usd 0.15
@@ -287,7 +287,7 @@ large enough to matter.
 
 ---
 
-> **Native binaries on Vercel.** `package-lock.json` only records the optional native packages for the platform that ran `npm install` (macOS ARM here). Vercel builds on Linux x64, so every `*-darwin-arm64` native package in the lockfile has its `*-linux-x64(-gnu)` counterpart pinned in the root `package.json` `optionalDependencies` (lightningcss, Tailwind oxide, rolldown, rollup, esbuild, sharp, Next SWC, Biome). When you upgrade any of those, bump the pin to the same version or the Vercel build fails with "Cannot find module … linux-x64-gnu". Also: the Supabase anon key must be saved with `vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production --type config` (it is public by design; the CLI refuses a credential-looking `NEXT_PUBLIC_` value otherwise), and the hosted auth URL settings can be set non-interactively with the Management API: `PATCH https://api.supabase.com/v1/projects/<ref>/config/auth` with `site_url`, `uri_allow_list`, `mailer_autoconfirm:false`.
+> **Native binaries on Vercel.** `package-lock.json` only records the optional native packages for the platform that ran `npm install` (a macOS ARM machine). Vercel builds on Linux x64, so every `*-darwin-arm64` native package in the lockfile has its `*-linux-x64(-gnu)` counterpart pinned in the root `package.json` `optionalDependencies` (lightningcss, Tailwind oxide, rolldown, rollup, esbuild, sharp, Next SWC, Biome). When you upgrade any of those, bump the pin to the same version or the Vercel build fails with "Cannot find module … linux-x64-gnu". Also: the Supabase anon key must be saved with `vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production --type config` (it is public by design; the CLI refuses a credential-looking `NEXT_PUBLIC_` value otherwise), and the hosted auth URL settings can be set non-interactively with the Management API: `PATCH https://api.supabase.com/v1/projects/<ref>/config/auth` with `site_url`, `uri_allow_list`, `mailer_autoconfirm:false`.
 
 ## 3. DNS (membral.me, registered at GoDaddy)
 
@@ -434,7 +434,7 @@ This deploy does not replace a local setup you may run — the two can coexist:
 ## 7. Auth email (Resend)
 
 Issue #135. Step 1.6 above says "configure your own SMTP provider" — this is the concrete
-runbook for that, using **Resend** (maintainer decision, 2026-09-08) as the SMTP relay, sending
+runbook for that, using **Resend** (project decision) as the SMTP relay, sending
 from `membral.me`. The repo side (branded HTML templates, local `config.toml` stanzas) is already
 done — everything below is a human/dashboard gate an agent cannot do for you (account creation,
 DNS, pasting a secret into a dashboard).

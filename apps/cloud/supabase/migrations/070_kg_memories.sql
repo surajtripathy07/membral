@@ -374,7 +374,7 @@ returns table (
   -- the browser UI. These three additionally expose the memory's
   -- NON-SENSITIVE FACE: objects 7/8/10 (MCP + the context card) serve THESE,
   -- not `strongest_receipt`/`latest_text`/`said_at` above, because a memory
-  -- with even one sensitive instance out of many (e.g. Rohan: 2 of 53) used
+  -- with even one sensitive instance out of many (e.g. Kabir: 2 of 53) used
   -- to be dropped from get_context_for/who_is_this_user ENTIRELY — a
   -- regression vs. the pre-070 instance-grain RPCs, and worse than the thing
   -- #107's sensitivity gate is meant to prevent (adv round2 finding 1).
@@ -1317,7 +1317,7 @@ as $function$
     -- population bigger than what the caller actually saw. Filtered here so
     -- both describe servable rows.
     -- Fix round 2 (R1, BLOCKER, amends D5): a memory is not dropped just
-    -- because SOME of its instances are sensitive (e.g. Rohan: 2 sensitive
+    -- because SOME of its instances are sensitive (e.g. Kabir: 2 sensitive
     -- of 53 — dropping the whole memory lost the demo's own headline person
     -- entirely, adv round2 finding 1). Eligible iff it has >= 1
     -- NON-sensitive instance with a receipt; the memory's non-sensitive face
@@ -1350,7 +1350,7 @@ as $function$
         -- face actually served here (latest_text_nonsensitive /
         -- strongest_receipt_nonsensitive) is non-sensitive — so the aggregate
         -- bool_or was defeating the mapping-layer's own defense and dropping
-        -- the Rohan memory a second time, downstream of the SQL fix (round 2
+        -- the Kabir memory a second time, downstream of the SQL fix (round 2
         -- verified only in psql, never through mapClaimRow). `sensitive:
         -- false` here is not a lie: it describes the served face, which the
         -- eligibility filter has already proven non-sensitive.
@@ -1363,7 +1363,7 @@ as $function$
         'memory_key', r.memory_key, 'memory_confidence', r.memory_confidence,
         -- Fix round 1 (F7): instance_count now emitted (was never emitted by
         -- any of objects 7/8/10 — the demo's own headline evidence,
-        -- "get_context_for('Rohan') ... with its instance_count", could not
+        -- "get_context_for('Kabir') ... with its instance_count", could not
         -- be produced without it). instance_count/conversation_count are the
         -- memory's FULL counts (R1 — unchanged, not narrowed to the
         -- non-sensitive slice).
@@ -1583,8 +1583,8 @@ as $function$
   eligible as (
     -- Fix round 1 (F8): see mcp_memories_context's identical comment.
     -- Fix round 2 (R1, BLOCKER): see mcp_memories_context's identical
-    -- non-sensitive-face comment. `mcp_memories_identity` includes Rohan
-    -- again once this is applied (34 rows -> the rohan child memory present,
+    -- non-sensitive-face comment. `mcp_memories_identity` includes Kabir
+    -- again once this is applied (34 rows -> the kabir child memory present,
     -- adv round2 finding 1).
     select * from base
     where has_nonsensitive_instance
@@ -1621,7 +1621,7 @@ as $function$
         -- Round 3 fix (finding 1, BLOCKER) — see mcp_memories_context's
         -- identical comment above. This is the object whose regression the
         -- round-3 review demonstrated end-to-end (getMemoriesIdentity's
-        -- Rohan row dropped by mapClaimRow); it is the one that most needed
+        -- Kabir row dropped by mapClaimRow); it is the one that most needed
         -- the fix.
         'sensitive', false,
         'has_sensitive_instance', f.sensitive,

@@ -1,8 +1,8 @@
 -- ============================================================
 -- 060_project_aliases.sql
 -- Project clubbing (goal 2026-08-26 W7/D8): the same real project shows up
--- under several raw labels — `dev/membral`, `surajtripathy07/membral`,
--- `surajtripathy07/membral-personal` in code_projects.display_name — because
+-- under several raw labels — `dev/widgets`, `acme/widgets`,
+-- `acme/widgets-app` in code_projects.display_name — because
 -- claims_browse_entity_labels' (migration 055) collapse algorithm only ever
 -- merges labels that are a case-insensitive PREFIX of one another, and none
 -- of these three is a prefix of another. This migration adds a small,
@@ -11,30 +11,29 @@
 -- browser, and (via lib/memory/project-aliases.ts) the code list and the
 -- bridge context proposal all agree on one canonical label per project.
 --
--- FOUNDER-1K VERIFICATION (2026-08-27, live psql against the real corpus):
--- three code_projects rows for this user all share repo_path
--- '/Users/<you>/dev/membral' (a GitHub remote renamed over time, and
--- one session captured before any remote existed) despite three DIFFERENT
+-- EXAMPLE (the case this was built against): three code_projects rows for
+-- one user all share repo_path '/home/dev/widgets' (a remote renamed over
+-- time, and one session captured before any remote existed) despite three DIFFERENT
 -- repo_identity values (two remote-derived, one path-fallback) — repo_path
 -- is the real "same underlying project" signal here, not repo_identity
 -- (which is unique per (user_id, repo_identity) by construction and can
 -- never itself repeat). Two of the three display_names ALSO agree under
--- normalized-slug equality (`dev/membral`, `surajtripathy07/membral` both
--- normalize to "membral"); `surajtripathy07/membral-personal` does not
--- (normalizes to "membralpersonal") and is pulled into the same group only
+-- normalized-slug equality (`dev/widgets`, `acme/widgets` both
+-- normalize to "widgets"); `acme/widgets-app` does not
+-- (normalizes to "widgetsapp") and is pulled into the same group only
 -- via the repo_path lineage edge. Both heuristics below are therefore
 -- necessary; either alone leaves this exact case only partially merged.
 --
--- `acmeaix.com` -> `Acme AIx`: normalized-slug equality DOES collapse
--- these two strings to the same value ("acmeaix") — verified directly
--- against project_alias_normalize() below. But `acmeaix.com` is not
+-- `acmewidgets.example` -> `Acme Widgets`: normalized-slug equality DOES collapse
+-- these two strings to the same value ("acmewidgets") — verified directly
+-- against project_alias_normalize() below. But `acmewidgets.example` is not
 -- itself a candidate label anywhere in this corpus: it appears only
 -- embedded inside the PROSE of an unrelated kg_claims row (kind='project')
 -- that merely mentions it — never as a kg_claims.name value, a
 -- code_projects.display_name, or any other column the seed function reads
--- (verified live: `select distinct name from kg_claims where kind='project'`
+-- (checked: `select distinct name from kg_claims where kind='project'`
 -- and every code_projects identity column for this user were checked by
--- hand; neither contains the literal "acmeaix.com"). The seed therefore
+-- hand; neither contains the literal "acmewidgets.example"). The seed therefore
 -- cannot produce this merge from the current corpus, and per this task's own
 -- instruction no row is hand-inserted to fake it — see the W7 report for the
 -- full before/after facet JSON this finding is based on.
@@ -80,8 +79,8 @@ create policy "project_aliases: users delete own rows" on public.project_aliases
 -- project_alias_normalize(text) — casefold, strip a leading `dev/` or
 -- `owner/` prefix (both are just "everything up to the LAST '/'", so one
 -- regexp_replace handles both), strip a trailing TLD-shaped suffix
--- (.com/.ai/.io/... — BEFORE punctuation stripping, else "acmeaix.com"
--- would become "acmeaixcom" instead of "acmeaix"), then strip every
+-- (.com/.ai/.io/... — BEFORE punctuation stripping, else "acmewidgets.example"
+-- would become "acmewidgetsexample" instead of "acmewidgets"), then strip every
 -- remaining non-alphanumeric character (punctuation/-/_/./whitespace).
 -- `immutable` — pure string transform. Mirrored byte-for-byte by
 -- lib/memory/project-aliases.ts's normalizeProjectSlug (unit-tested against
@@ -179,7 +178,7 @@ grant execute on function public.project_alias_resolve(uuid, text) to service_ro
 --       (user_id, repo_identity) by construction (migration 029's own
 --       constraint) and so can never repeat — repo_path is the column that
 --       actually carries "same underlying project, different remote state
---       over time" in real data (see this file's header for the founder-1k
+--       over time" in real data (see this file's header for the
 --       case this was built against).
 --
 -- Both edge sets feed one union-find over the candidate labels (iterative
@@ -390,7 +389,7 @@ grant execute on function public.project_alias_seed(uuid) to service_role;
 -- case-insensitive-prefix collapse (055, unchanged) then runs over the pool
 -- of resolved labels instead of the raw ones — an alias always wins over the
 -- prefix heuristic, and the prefix heuristic still catches anything the
--- alias table doesn't cover (e.g. "Acme AIx" / "Acme AIX" case
+-- alias table doesn't cover (e.g. "Acme Widgets" / "Acme WIDGETS" case
 -- variants). 'person' is untouched: resolved_label = raw_label for every
 -- row, so the pool is exactly the same label set 055 produced — byte-
 -- identical output for people.

@@ -79,7 +79,7 @@ describe("R-1: a thread's priority is a flagged quote on that ref", () => {
         sessions: [session("s1", "2026-09-26T22:29:00Z")],
         issues: [row("s1")],
         memories: [
-          // Real quotes from runs R (S01 t3, N07) and U16; the Hindi one is the same shape.
+          // Real quotes from runs R (S01 t3, N07) and U16; the non-English one is the same shape.
           said("friday", "the README fix has to land before Friday's demo", { kind: "decision", turn_idx: 3 }),
           said("prio", "first finish the README, that's the priority", { turn_idx: 5 }),
           said("de", "Issue #5 die wichtigste Priorität, das muss diese Woche fertig werden", {

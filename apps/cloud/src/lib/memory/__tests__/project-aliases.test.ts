@@ -10,12 +10,12 @@ const FIXTURES: [string, string][] = [
   ["dev/membral", "membral"],
   ["surajtripathy07/membral", "membral"],
   ["surajtripathy07/membral-personal", "membralpersonal"],
-  ["acmeaix.com", "acmeaix"],
-  ["Acme AIx", "acmeaix"],
-  ["Acme AIX", "acmeaix"],
-  ["surajtripathy07/surajtripathy07.github.io", "surajtripathy07github"],
+  ["acmewidgets.com", "acmewidgets"],
+  ["Acme Widgets", "acmewidgets"],
+  ["Acme WIDGETS", "acmewidgets"],
+  ["acme/acme.github.io", "acmegithub"],
   ["  Dev/Membral  ", "membral"],
-  ["fleetdm/fleet", "fleet"],
+  ["acme/widgets", "widgets"],
   ["", ""],
 ];
 
@@ -27,10 +27,10 @@ describe("normalizeProjectSlug", () => {
   }
 
   it("strips a trailing TLD suffix BEFORE removing punctuation (not after)", () => {
-    // If punctuation stripping ran first, "acmeaix.com" would become
-    // "acmeaixcom" instead of "acmeaix" — the bug this ordering avoids.
-    expect(normalizeProjectSlug("acmeaix.com")).toBe("acmeaix");
-    expect(normalizeProjectSlug("acmeaix.com")).not.toBe("acmeaixcom");
+    // If punctuation stripping ran first, "acmewidgets.com" would become
+    // "acmewidgetscom" instead of "acmewidgets" — the bug this ordering avoids.
+    expect(normalizeProjectSlug("acmewidgets.com")).toBe("acmewidgets");
+    expect(normalizeProjectSlug("acmewidgets.com")).not.toBe("acmewidgetscom");
   });
 
   it("only strips up to the LAST slash, not every slash", () => {
@@ -49,8 +49,8 @@ const OWNER_FIXTURES: [string, string | null][] = [
   ["dev/membral", "dev"], // deliberately NOT null — see migration 063's header: no special-case for "dev"
   ["acme/web", "acme"],
   ["beta/web", "beta"],
-  ["fleetdm/fleet", "fleetdm"],
-  ["fleet", null], // no slash at all
+  ["acme/widgets", "acme"],
+  ["widgets", null], // no slash at all
   ["", null],
   ["/leading-slash-only", null], // prefix before the last slash is empty
   ["host/owner/repo", null], // 2+ slashes -- ambiguous, treated as ownerless

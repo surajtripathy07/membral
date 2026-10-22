@@ -1,234 +1,47 @@
 -- ============================================================
 -- 069_people_facet_owner_org_exclusion.sql
--- Goal 2026-08-27 W1 (D8, #111): the People facet
--- (`kg_claims_facets(...)->'people'` and
--- `claims_browse_entity_labels(p_kind='person')`, which both `kg_claims_
--- browse`'s p_person filter and the facet share) lists the owner's own
--- name/aliases and, at least one observed case, a company name, as if they
--- were people.
+-- People facet: exclude the owner and the owner's organisation.
 --
--- DIAGNOSIS (verified live, founder-1k): the People facet's label pool
--- (`claims_browse_entity_labels`, migration 055/060/063/064/066) is every
--- DISTINCT `kg_claims.name` for `kind = 'person'`, case-insensitive-prefix-
--- collapsed. Two live rows account for the reported symptoms:
---   - An "owner alias" row: several raw kind='person' names all sharing a
---     first-name prefix (one of them is the owner's own full display name,
---     verbatim) prefix-collapse to the SHORTEST of them — which is exactly
---     the owner's bare first name — and that merged label leads the facet
---     by a wide margin (the vast majority of "person" mentions in this
---     corpus are the owner referring to themselves). The owner-alias set
---     already exists for a DIFFERENT purpose (lib/kg/owner-aliases.ts,
---     resolveOwnerAliases, used by claims.ts's G5 subject-normalization gate
---     at WRITE time) but nothing at READ time ever consulted it — the
---     browse/facet surfaces have no access to that TypeScript module, and
---     no SQL equivalent existed until this migration.
---   - An "org label" row: one real kg_claims row with kind='person', a
---     company's name as `name`, `relation_class = 'unknown'`,
---     `relation_basis = 'none'`, `relation = ''` — an extractor
---     mis-classification (pass1.ts's own prompt says organizations/
---     companies belong under kind='project', not kind='person', but nothing
---     enforces that at extraction time).
+-- The People facet (`kg_claims_facets(...)->'people'` and
+-- `claims_browse_entity_labels(p_kind='person')`, which `kg_claims_browse`'s
+-- p_person filter and the facet share) must not list the owner's own
+-- name/aliases, or the owner's organisation, as if they were people.
 --
--- FRESH ADVERSARIAL REVIEW (round 1, scratchpad W1b_adv_round1.md): verdict
--- SHIP-WITH-FIXES. Findings F1-F4 below are all fixed in THIS revision
--- (069 was not yet applied anywhere, so this is a straight rewrite, not a
--- follow-up migration):
+-- RULE
+--   - The owner's own full display name, and any live, non-superseded,
+--     accepted `kg_user_claims` self-name correction (`kind='self'`,
+--     `subject_key='owner'`, `payload->>'attribute'='name'`), are excluded
+--     from the person label pool. Matching is exact on the normalized label
+--     (`public.kg__normalize_label`), applied BEFORE the prefix-collapse, so
+--     a longer or different name that merely shares the owner's first name
+--     is never touched.
+--   - The owner's bare first-name token is excluded only when no other
+--     currently visible person claim carries the same first token. A
+--     relative who shares the owner's first name must not collide with the
+--     owner: the collision test uses the same visibility predicate as the
+--     facet's own pool (`claim_key is not null` plus grounding via
+--     `kg_claim_lifecycle`), and claims that are themselves the owner's own
+--     aliases do not count as collisions.
+--   - A kind='person' label is also dropped when the same string (case-
+--     insensitive, trimmed) is independently visible as a kind='project'
+--     claim name for the user, which catches an organisation mis-extracted
+--     as a person. The lifecycle/grounding predicate matches the one the
+--     person pool uses.
+--   - When `profiles.display_name` is NULL the full-name and first-token
+--     exclusions are no-ops; only a live self-name correction can still
+--     exclude a label.
 --
---  F1 [MED] — the first draft excluded the owner's bare first-name token
---     unconditionally, on the (FALSE, now corrected) claim that an exact-
---     string match "can never touch a same-first-name-but-otherwise-distinct
---     label". Live counter-example: the ONLY kg_claims row whose name equals
---     the owner's bare first token is `kind='person'`,
---     `relation_class='family_other'`, `subject_key='owner'` — the
---     extractor recorded a RELATIVE referred to by first name only, not the
---     owner. Fixed: the full `display_name` is still excluded
---     UNCONDITIONALLY (an exact match to the owner's own full name is never
---     ambiguous), but the bare first-name token is now gated behind the
---     SAME collision check `resolveOwnerAliases` (lib/kg/owner-aliases.ts,
---     `firstNameCollides`) already applies at write time: if ANY
---     `kind='person'` claim with `reject_reason is null` (not the
---     grounded/inferred filter `named` below uses — this mirrors
---     `firstNameCollides`'s own query exactly) carries that same first
---     token, the bare-token alias is skipped entirely, corpus-wide, same
---     fail-closed direction as the TS module. On this corpus that collision
---     IS live (several other kind='person' rows share the owner's first
---     token), so the bare-token alias is NOT added here — the family_other
---     relative's row survives, and so, as a side effect, does the wider
---     prefix-collapsed group anchored on that bare token (see the evidence
---     file for the honest resulting numbers). The full-name exclusion alone
---     still fires.
---  F2 [MED] — the kind='project' corroboration subquery (069(b) below)
---     checked no lifecycle/grounding predicate at all, unlike `named`'s own
---     pool (`claim_key is not null` + `claim_browse_grounding(...)`
---     grounded/inferred). A rejected/dropped/retired/ungrounded project
---     extraction could have silently dropped a real person label from the
---     facet. Fixed: the corroboration subquery now joins
---     `kg_claim_lifecycle` and applies the exact same
---     `claim_key is not null` + grounding predicate `named` uses.
---  F3 [LOW-MED] — the self-name correction liveness check
---     (`kg_user_claims`, `kind='self'`, `subject_key='owner'`) used
---     `accepted and retires is null` only, unlike `kg_claims_browse`'s own
---     corrections CTE (migration 068), which additionally requires the
---     correction not be superseded by a LATER retirement row
---     (`not exists (select 1 from kg_user_claims r where r.retires =
---     u.correction_id)`). Fixed: the same supersession check is now applied
---     here, so a later-retired self-name correction no longer acts as a
---     live owner alias.
---  F4 [LOW] — undocumented precondition: when `profiles.display_name` is
---     NULL (tusk-demo's actual live state, verified), the owner-alias
---     exclusion is a no-op for the full-name and first-token sources — ONLY
---     a live `kg_user_claims` self-name correction (source 3) can still
---     exclude anything for that user. Documented here and in the function
---     comment; tusk-demo's People facet has no owner-alias pollution today
---     regardless (verified: 2 clean rows), so this is a documentation fix,
---     not a behaviour change.
---
---  Also noted, NOT fixed here (both correctly out of this migration's
---  scope per the review itself):
---   - The org-label row is NOT excluded (069(b) finds no kind='project'
---     corroboration for it in this corpus) — see the header note below,
---     unchanged from the first draft's own honest disclosure.
---   - 3 new low-count residual rows surface from the prefix-collapse side
---     effect of removing the full-name candidate (a possessive relation
---     phrase among them) — flagged as a possible structural follow-up
---     (drop raw labels of the shape "<alias>'s ..."), not implemented here.
---
--- FIX, STRUCTURAL ONLY (no word list, no regex over free text, per this
--- task's explicit instruction and ADR 0023 Q1a's brittleness rule):
---
---  (a) OWNER ALIASES — excluded via the SAME STRUCTURED SOURCES
---      `resolveOwnerAliases` (lib/kg/owner-aliases.ts) uses, read directly
---      in SQL instead of through that TS module: `profiles.display_name`
---      (full string, unconditional) and its first whitespace token, plus
---      any live, non-superseded, accepted `kg_user_claims` self-name
---      correction (`kind='self'`, `subject_key='owner'`,
---      `payload->>'attribute'='name'`). Matched by `public.kg__normalize_
---      label` equality (R2-3) against the raw candidate label, BEFORE the
---      existing prefix-collapse runs — EXACT FULL-STRING equality only,
---      never a prefix/token match, so a longer/different name that merely
---      shares the owner's first token (e.g. a two-word name starting with
---      it) is never touched by this exclusion. The bare first-name token
---      carries a collision guard (see the collision CTE's own comment,
---      round 3 "V2") that is, by construction, provably unable to ever
---      fire — kept for documentation, not because it changes behaviour.
---
---  (b) ORG LABELS — the ONLY structural (non-word-list) signal available
---      given the current schema: cross-kind corroboration, now
---      lifecycle/grounding-matched to `named`'s own pool (F2). A candidate
---      kind='person' label is dropped when the SAME string (case-
---      insensitive/trimmed) was ALSO independently extracted, and is
---      currently VISIBLE (grounded, or inferred when p_include_inferred), as
---      a kind='project' claim's `name` for this user.
---
---      HONEST RESIDUAL, reported per this task's instruction: this does
---      NOT catch the one live "org label" row above — that company name was
---      never independently extracted as kind='project' anywhere in this
---      corpus (verified: 0 matching rows), so no structural signal
---      distinguishes it from a genuine, relation-unstated acquaintance.
---      `relation_class='unknown'`/`relation_basis='none'` was considered and
---      REJECTED as a signal: PersonClaimSchema's own documented behaviour
---      (claims.ts) is that a claim whose relation was simply never stated
---      in that turn ALSO defaults to `relation_class='unknown'`,
---      `relation_basis` degrading to `'none'` on anything not resolvable to
---      "stated"/"inferred" — real, legitimately under-documented
---      acquaintances would be excluded right alongside this one row.
---      Filtering on that combination is not a structural org signal, it is
---      a proxy that happens to correlate on this one row; not applied.
---      Reliably distinguishing this case needs either a schema-level entity-
---      kind field on the extractor's Person schema (an extraction-time
---      change, out of this migration's scope) or a maintainer call to accept
---      a word-list/LLM-classification exception to ADR 0023 Q1a — flagged,
---      not decided here.
---
--- FRESH ADVERSARIAL REVIEW (round 2, scratchpad W1b_adv_round2.md): verdict
--- 068 SOLID/ship (untouched here). 069 one MED before apply, two LOW, all
--- fixed in THIS revision:
---
---  R2-1 [MED] — the collision population counted the OWNER'S OWN person
---     claims. Reproduced live (rolled back): accepting the ONE kg_claims row
---     whose name IS the owner's own full display name flips
---     `owner_first_token_collision` to true, which SKIPS the bare-token
---     alias and puts the owner's own name straight back in the facet at its
---     original ~283-claim count — reintroducing #111's exact symptom the
---     moment any owner-named person claim clears its gate (which #98 is open
---     to make happen). `firstNameCollides`'s own doc says a collision means
---     "some KNOWN PERSON... carries firstToken" — a DIFFERENT person, not
---     the owner's own name recurring. Fixed: `owner_first_token_collision`
---     now excludes any candidate row whose (normalized) name is itself one
---     of the owner's own unconditional aliases (full display_name or the
---     bare token) from counting as a collision — a collision now requires a
---     claim that is NOT already known to be the owner.
---  R2-2 [LOW-MED] — the collision test's visibility predicate
---     (`reject_reason is null`) diverged from the pool it protects (`named`'s
---     `claim_key is not null` + grounding). Reproduced live (rolled back):
---     accepting a DIFFERENT-person row sharing the owner's first token still
---     flipped `collided` to true even when that row can never appear in the
---     facet itself (not grounded) — the guard fired to protect a label the
---     facet cannot show anyway. Fixed: the collision test now joins
---     `kg_claim_lifecycle` and applies the EXACT SAME `claim_key is not
---     null` + grounding predicate `named` uses, so "collision" means "a
---     different, currently-VISIBLE person shares this token" — the read-time
---     question this guard actually needs to answer, a deliberate (and now
---     documented) divergence from `firstNameCollides`'s write-time
---     accepted-only test, which answers a different question (reattribution
---     risk at extraction time).
---  R2-3 [LOW] — the header's "mirrors firstNameCollides's own query exactly"
---     overstated it: normalization diverged from `normalizeLabel`
---     (lib/kg/resolve.ts) — `lower(split_part(btrim(name),' ',1))` treats an
---     apostrophe as part of a token ("Kabir's" first-tokens to "kabir's",
---     not "kabir"), so a punctuation/diacritic difference between the
---     extractor's spelling and `profiles.display_name` could silently miss
---     a real collision or a real alias match. Fixed: every owner-alias /
---     collision comparison now goes through `public.kg__normalize_label`
---     (migration 026) — the SAME SQL function `normalizeLabel` (lib/kg/
---     resolve.ts) is explicitly documented as byte-compatible with (NFKD,
---     diacritic-strip, lowercase, non-alnum runs collapsed to one space,
---     trim). This is IMMUTABLE, no extension dependency, and is structured-
---     label normalization (case/punctuation/diacritic canonicalization of an
---     already-identified name field), not semantic regex over free text —
---     consistent with ADR 0023 Q1a. Header claims below corrected to say
---     "normalizes via kg__normalize_label" rather than "exactly mirrors".
---
--- FRESH ADVERSARIAL REVIEW (round 3, scratchpad W1b_adv_round3.md): verdict
--- SOLID to ship, no blocking finding. Round 2's revision (above) kept
--- `reject_reason is null` as an EXTRA conjunct alongside the visibility
--- predicate, disclosed as a deliberate deviation from R2-2's literal text —
--- round 3 measured that variant against two others on the live corpus and
--- found a strictly better one ("V2"), adopted here, which REMOVES that
--- deviation entirely:
---  R3-1 [LOW-MED, header accuracy] — the round-2 header claimed the guard
---     means "a different real, visible, non-gated person referred to by
---     that same first name is never silently dropped from the facet." False
---     for the one case that matters: a person whose ONLY recorded name is
---     byte-equal to the owner's bare first token is EXCLUDED from the
---     collision-detection population BY R2-1's own fix (it always equals an
---     owner alias), so the guard can never fire to protect exactly that
---     row — proved live (rolled back): accepting that exact row still
---     yields 44 rows / owner absent, that row's own label dropped, guard
---     did not fire. Corrected below (see the collision CTE's own comment):
---     that case is DROPPED BY DESIGN — indistinguishable from the owner
---     without a structural signal this schema doesn't have, and #111 asks
---     for exactly that suppression — not a bug.
---  R3-2 [LOW, simplification, adopted] — "V2": drop `reject_reason is null`
---     entirely and narrow the first-TOKEN match to FULL-NAME equality
---     (`kg__normalize_label(c.name) = t.token`, replacing
---     `split_part(kg__normalize_label(c.name), ' ', 1) = t.token`).
---     Verified live (rolled back) behaviour-identical to round 2's shipped
---     revision on today's corpus (44 People rows, owner absent, facet JSON
---     md5 unchanged; the R2-1 accepted-owner-claim reproduction still keeps
---     the owner excluded). Structurally removes the gate-rejection
---     dependency #98 would otherwise eventually flip (see the collision
---     CTE's own comment for why the narrowed match makes the guard
---     provably inert rather than merely inert-today), so `reject_reason is
---     null` is no longer needed as a compensating conjunct.
+-- No word lists and no regex over free text: only structured sources. An
+-- organisation label with no kind='project' counterpart is not caught;
+-- filtering on `relation_class='unknown'` was rejected because genuine
+-- under-documented acquaintances default to the same values.
 --
 -- SCOPE: only `claims_browse_entity_labels` changes, gated to `p_kind =
 -- 'person'` (the `p_kind = 'project'` call this same function serves is
 -- byte-identical to 066). `kg_claims_facets`'s `people` CTE and
 -- `kg_claims_browse`'s `person_labels`/p_person filter both consume this
--- function's output already — both surfaces pick up the fix with no changes
--- of their own. Signature unchanged (pure CREATE OR REPLACE, no DROP
--- needed).
+-- function's output already. Signature unchanged (pure CREATE OR REPLACE,
+-- no DROP needed).
 -- ============================================================
 
 create or replace function public.claims_browse_entity_labels(
@@ -329,7 +142,7 @@ as $$
   -- explicit `reject_reason is null` conjunct, made the result depend on
   -- today's gate-rejection state (#98 is open to change it). V2 removes
   -- both the false "protects a longer name" appearance and that gate-state
-  -- dependency: verified live (rolled back) behaviour-identical to the
+  -- dependency: behaviour-identical to the
   -- prior revision on today's corpus (44 People rows, owner absent, md5 of
   -- the facet JSON unchanged) while no longer depending on which claims
   -- happen to be gate-rejected today.

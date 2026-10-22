@@ -13,15 +13,15 @@
 -- ITSELF by design (that's what "un-merge" means) — so `nullif(X, X)` is
 -- NULL for a tombstoned label exactly the same as for a label with NO alias
 -- row at all, and the expression falls through to the prefix_canonical
--- fallback, silently ignoring the tombstone. Verified live (rolled back):
--- tombstoning `surajtripathy07/membral-personal` left
--- claims_browse_entity_labels still resolving it to `dev/membral` (via its
+-- fallback, silently ignoring the tombstone. Checked (rolled back):
+-- tombstoning `acme/widgets-app` left
+-- claims_browse_entity_labels still resolving it to `dev/widgets` (via its
 -- prefix sibling's group), while project_alias_resolve() and the TS
 -- /code list both correctly returned the label itself — the Memory browser
 -- and /code disagreed again, the same divergence class NEW-2 (064) fixed
 -- for the general case, relocated to the unmerge path specifically. One
 -- click reachable on the demo account (NEW-3/064 renders an unmerge chip
--- for exactly this label, one of only two seeded rows the founder has).
+-- for exactly this label, one of only two seeded rows).
 --
 -- Fixed per the reviewer's own minimal fix: decide "does this label have
 -- its own alias row" by ROW EXISTENCE in project_aliases, not by whether

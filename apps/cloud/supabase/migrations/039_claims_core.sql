@@ -787,7 +787,7 @@ alter table public.kg_edges
 comment on column public.kg_edges.sensitive is
   'Mirrors kg_nodes.sensitive (ADR 0025 Q9) — same OR-aggregation rule, same enforcement point.';
 comment on column public.kg_edges.assertion_class is
-  'Mirrors kg_nodes.assertion_class (ADR 0030 Delta 16) — same AND-aggregation + contributors rule. This is the column person-portrait relationship edges read to decide whether "Aarti is your wife" renders as stated or inferred.';
+  'Mirrors kg_nodes.assertion_class (ADR 0030 Delta 16) — same AND-aggregation + contributors rule. This is the column person-portrait relationship edges read to decide whether "Aarti is your sibling" renders as stated or inferred.';
 comment on column public.kg_edges.entailment_status is
   'Mirrors kg_nodes.entailment_status (ADR 0030 Delta 16).';
 -- ------------------------------------------------------------

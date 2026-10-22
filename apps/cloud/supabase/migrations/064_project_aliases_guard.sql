@@ -13,7 +13,7 @@
 -- NOT execute the THEN branch — so `if not (a or b) then raise` silently
 -- SKIPS the raise and lets the function body run with NO scoping check at
 -- all whenever both auth.uid() and auth.role() are NULL (a direct
--- superuser/no-JWT connection, verified live by the reviewer as `postgres`
+-- superuser/no-JWT connection, observed as `postgres`
 -- with no claims). 058's own convention (`auth.uid() is null or auth.uid()
 -- <> p_user_id`) is null-safe because `IS NULL` always evaluates to a real
 -- boolean, never NULL — 063's `=` comparisons did not have that property
@@ -32,8 +32,8 @@
 -- NEW-2 (HIGH/MED) — 063's finding-#6 fix (resolve the shared
 -- prefix_canonical instead of each raw label) went too far: a label that
 -- HAS ITS OWN alias row (e.g. a manual merge on
--- `surajtripathy07/membral-personal`, which also happens to have a shorter
--- prefix sibling `surajtripathy07/membral` in the same raw-label pool) had
+-- `acme/widgets-app`, which also happens to have a shorter
+-- prefix sibling `acme/widgets` in the same raw-label pool) had
 -- that alias silently ignored — the facet resolved the group's shared
 -- prefix_canonical instead, disagreeing with the `/code` list's TS
 -- `canonicalize` (which resolves each raw label directly and always did).
@@ -94,7 +94,7 @@ create policy "project_alias_seed_runs: users insert own rows" on public.project
 create policy "project_alias_seed_runs: users update own rows" on public.project_alias_seed_runs
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 -- A service-role caller (POST /api/code-sessions) bypasses RLS entirely
--- (rolbypassrls = true, verified live) — no separate policy needed for it.
+-- (rolbypassrls = true) — no separate policy needed for it.
 
 -- ------------------------------------------------------------
 -- NEW-1 + NEW-4: project_alias_seed — CREATE OR REPLACE, SAME 1-arg
@@ -420,8 +420,8 @@ as $$
   -- migration 064 (NEW-2): a label's OWN alias wins first (resolved
   -- directly on raw_label) -- this is what makes a manual/seeded alias on
   -- ONE specific member of a prefix-group (e.g.
-  -- `surajtripathy07/membral-personal`, which has a shorter prefix sibling
-  -- `surajtripathy07/membral` in the same pool) actually take effect,
+  -- `acme/widgets-app`, which has a shorter prefix sibling
+  -- `acme/widgets` in the same pool) actually take effect,
   -- instead of being silently overridden by the group's shared
   -- prefix_canonical (063's bug). Only a label with NO alias of its own
   -- (project_alias_resolve returns it unchanged) falls back to resolving
