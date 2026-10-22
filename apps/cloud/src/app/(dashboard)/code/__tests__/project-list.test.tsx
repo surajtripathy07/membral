@@ -29,12 +29,12 @@ const NOW = "2026-08-27T00:00:00.000Z";
 describe("ProjectList grouping (migration 060, W7/D8)", () => {
   it("renders one card per project when no canonicalLabels are given (unchanged behaviour)", () => {
     const projects = [
-      project({ id: "p1", display_name: "fleetdm/fleet", session_count: 3 }),
+      project({ id: "p1", display_name: "acme/widgets", session_count: 3 }),
       project({ id: "p2", display_name: "dev/vibe", session_count: 1 }),
     ];
     const html = renderToStaticMarkup(<ProjectList projects={projects} now={NOW} />);
-    expect(html).toContain("fleetdm/");
-    expect(html).toContain(">fleet<");
+    expect(html).toContain("acme/");
+    expect(html).toContain(">widgets<");
     expect(html).toContain("dev/");
     expect(html).toContain(">vibe<");
     expect(html).toContain('href="/code/p1"');
@@ -47,7 +47,7 @@ describe("ProjectList grouping (migration 060, W7/D8)", () => {
       project({ id: "p1", display_name: "dev/membral", session_count: 5, last_active_at: "2026-08-20T00:00:00Z" }),
       project({ id: "p2", display_name: "surajtripathy07/membral", session_count: 2, last_active_at: "2026-08-25T00:00:00Z" }),
       project({ id: "p3", display_name: "surajtripathy07/membral-personal", session_count: 8, last_active_at: "2026-08-10T00:00:00Z" }),
-      project({ id: "p4", display_name: "fleetdm/fleet", session_count: 1 }),
+      project({ id: "p4", display_name: "acme/widgets", session_count: 1 }),
     ];
     const canonicalLabels = { p1: "dev/membral", p2: "dev/membral", p3: "dev/membral" };
     const html = renderToStaticMarkup(<ProjectList projects={projects} now={NOW} canonicalLabels={canonicalLabels} />);
@@ -56,8 +56,8 @@ describe("ProjectList grouping (migration 060, W7/D8)", () => {
     expect(html).toContain("15 sessions");
     expect(html).toContain("3 labels merged");
     // The unaliased project still renders as its own plain card.
-    expect(html).toContain("fleetdm/");
-    expect(html).toContain(">fleet<");
+    expect(html).toContain("acme/");
+    expect(html).toContain(">widgets<");
     expect(html).toContain('href="/code/p4"');
 
     // Primary link goes to the highest session_count member (p3, 8 sessions).
@@ -78,13 +78,13 @@ describe("ProjectList grouping (migration 060, W7/D8)", () => {
   it("keeps client-side search operating over individual project fields before grouping", () => {
     const projects = [
       project({ id: "p1", display_name: "dev/membral", session_count: 1 }),
-      project({ id: "p2", display_name: "fleetdm/fleet", session_count: 1 }),
+      project({ id: "p2", display_name: "acme/widgets", session_count: 1 }),
     ];
     const html = renderToStaticMarkup(<ProjectList projects={projects} now={NOW} />);
     // Both render without a query (sanity check that grouping doesn't drop projects).
     expect(html).toContain("dev/");
     expect(html).toContain(">membral<");
-    expect(html).toContain("fleetdm/");
-    expect(html).toContain(">fleet<");
+    expect(html).toContain("acme/");
+    expect(html).toContain(">widgets<");
   });
 });

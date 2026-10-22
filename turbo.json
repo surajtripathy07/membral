@@ -91,7 +91,7 @@
     },
     "test": {
       // Step 0.7 (architecture refactor programme, V7): tests read fixture
-      // files as INPUTS — the repo-root fixtures/ (persona corpus, opencode
+      // files as INPUTS — the repo-root fixtures/ (opencode and harvest
       // sessions) sits outside every package, so without it here a fixture
       // edit left each package's test cache key unchanged and turbo replayed
       // a stale pass. $TURBO_DEFAULT$ keeps the normal package-file hashing;

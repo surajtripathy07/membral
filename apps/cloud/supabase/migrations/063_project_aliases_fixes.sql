@@ -14,15 +14,15 @@
 -- Finding #1 (HIGH) — no UPDATE policy: the route's `upsert(...,
 -- {onConflict:"user_id,alias"})` is `INSERT ... ON CONFLICT DO UPDATE`,
 -- which requires an UPDATE policy on the conflict path even though the
--- statement is nominally an INSERT (verified live by the reviewer: 42501 on
+-- statement is nominally an INSERT (observed: 42501 on
 -- re-merge). Fixed below with a plain owner-scoped UPDATE policy.
 --
--- Finding #2 (HIGH) — nothing in the repo ever seeds the table: the founder's
+-- Finding #2 (HIGH) — nothing in the repo ever seeds the table: the owner's
 -- two live rows were hand-inserted with a spoofed `request.jwt.claims`
 -- during W7's implementation; no code path calls project_alias_seed. Fixed
 -- by (a) relaxing the guard to accept EITHER an end-user session (auth.uid()
 -- = p_user, unchanged) OR a real service-role caller (auth.role() =
--- 'service_role', verified live to be exactly the claim PostgREST/supabase-js
+-- 'service_role', checked to be exactly the claim PostgREST/supabase-js
 -- sets for a genuine service-role-key request — NOT a spoofed JWT, the same
 -- mechanism every other service-role RPC caller in this codebase already
 -- relies on for RLS bypass) with an explicit p_user, and (b) wiring real
@@ -74,9 +74,9 @@
 -- edge to the conflicting owners") — this closes a hub-transitivity gap a
 -- naive per-pair rule would leave open: an ownerless "dev/web" sitting next
 -- to both "acme/web" and "beta/web" must never let union-find chain
--- acme<->dev<->beta into one component. Verified live: `dev/membral` (no
--- real owner — see below) vs `surajtripathy07/membral` no longer share a
--- SLUG edge at all (they still merge — the founder's real corpus already
+-- acme<->dev<->beta into one component. Checked: `dev/widgets` (no
+-- real owner — see below) vs `acme/widgets` no longer share a
+-- SLUG edge at all (they still merge — an existing corpus already
 -- relied on this, not slug — via the UNCHANGED remote-lineage/repo_path
 -- edge); `acme/web` vs `beta/web` get no edge from either heuristic. Also
 -- guards the "empty remnant" degeneracy (two different non-ASCII-heavy
@@ -87,8 +87,8 @@
 -- Finding #6 (MED) — a manual merge SPLIT an existing prefix-collapsed group
 -- instead of moving it: claims_browse_entity_labels resolved each RAW label
 -- through project_aliases BEFORE building the prefix-collapse pool, so
--- merging just the group's current canonical (e.g. "Acme AIX") left its
--- case-variant/prefix siblings ("Acme AIx", "Acme AIx Chrome extension")
+-- merging just the group's current canonical (e.g. "Acme WIDGETS") left its
+-- case-variant/prefix siblings ("Acme Widgets", "Acme Widgets Chrome extension")
 -- behind as newly-orphaned, newly-canonical rows — the facet list grew
 -- instead of shrinking. Fixed by REVERSING the order: the ORIGINAL 055
 -- prefix-collapse runs FIRST over the raw label pool (unchanged algorithm),
@@ -97,20 +97,20 @@
 -- label individually — an alias on the group's prefix_canonical now moves
 -- the WHOLE group atomically, and the case-variant issue disappears as a
 -- side effect (case variants already collapse to one prefix_canonical
--- before any alias lookup happens). Verified live with the real "Acme AIx"
--- /"Acme AIX"/"Acme AIx Chrome extension" trio: after merging the
+-- before any alias lookup happens). Checked with the "Acme Widgets"
+-- /"Acme WIDGETS"/"Acme Widgets Chrome extension" trio: after merging the
 -- group's canonical into "Acme Hub", the Projects facet has ONE FEWER row,
 -- not one more — see the W7 report.
 --
 -- DEFERRED — finding #5 (MED, repo_path lineage merges anything that ever
 -- shared a directory): the reviewer's own "minimal fix" (require the
 -- normalized last path segment to match the normalized display_name/
--- repo_identity tail) was checked against the founder's own motivating case
--- and BREAKS it — `surajtripathy07/membral-personal`'s bare name
--- ("membralpersonal") does not equal repo_path's last segment ("membral"),
+-- repo_identity tail) was checked against the motivating case
+-- and BREAKS it — `acme/widgets-app`'s bare name
+-- ("widgetsapp") does not equal repo_path's last segment ("widgets"),
 -- so that specific tightening would un-merge the exact three rows this
 -- heuristic exists for. No alternative tightening was found that preserves
--- the founder case while closing the reused-directory risk in the time
+-- the motivating case while closing the reused-directory risk in the time
 -- available; left as a known, documented risk rather than shipping a fix
 -- that regresses the one real case this migration was built against.
 -- Reversibility (finding #3's fix, above) is the mitigation: a wrong
@@ -151,10 +151,10 @@ comment on table public.project_aliases is
 -- identity string — not a confident two-part "owner/repo" shape, so treated
 -- as ownerless, the safe/backward-compatible default). Deliberately no
 -- special-case for a literal "dev" prefix — see this migration's header:
--- `dev/membral` and `surajtripathy07/membral` now correctly get DIFFERENT
+-- `dev/widgets` and `acme/widgets` now correctly get DIFFERENT
 -- owners ("dev" vs "surajtripathy07") and get no SLUG edge from each other;
 -- they still merge, via the unchanged remote-lineage edge, which is what
--- actually did the work for this pair in the live founder run anyway
+-- actually did the work for this pair in the seeding run anyway
 -- (project_alias_seed's own first live run inserted 0 slug rows, 2
 -- remote-lineage rows for this exact trio).
 -- ------------------------------------------------------------
@@ -192,7 +192,7 @@ grant execute on function public.project_alias_owner(text) to service_role;
 -- `seen` path (an array), stopping at the first hop that revisits any
 -- already-seen label — not just an immediate self-hop — giving it the exact
 -- same cycle semantics as lib/memory/project-aliases.ts's canonicalize
--- (which already tracked a Set). Verified live to agree with the TS side on
+-- (which already tracked a Set). checked to agree with the TS side on
 -- 2-, 3-, and 4-member cycles (previously diverged on a 4-cycle: SQL landed
 -- one hop later than TS). Same 5-hop cap, same signature.
 -- ------------------------------------------------------------

@@ -358,6 +358,9 @@ export const defaultClaudeRunner: ClaudeRunner = (args, input, cwd, timeoutMs) =
       clearTimeout(timer);
       resolve(out);
     });
+    // A child that exits before reading stdin (a stub in tests, or claude failing fast) makes this write
+    // EPIPE; without a handler that is an uncaught exception. The close handler already carries the result.
+    child.stdin.on("error", () => {});
     child.stdin.end(input);
   });
 

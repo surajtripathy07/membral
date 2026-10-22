@@ -72,7 +72,7 @@ describe("ProjectList render lock (3D-5, pre/post pure-move)", () => {
 
   it("typical: a mix of singleton and clubbed projects with stats", async () => {
     const projects = [
-      project({ id: "p1", display_name: "fleetdm/fleet", session_count: 3, last_active_at: "2026-08-20T00:00:00Z" }),
+      project({ id: "p1", display_name: "acme/widgets", session_count: 3, last_active_at: "2026-08-20T00:00:00Z" }),
       project({ id: "p2", display_name: "dev/membral", session_count: 5, last_active_at: "2026-08-25T00:00:00Z" }),
       project({ id: "p3", display_name: "surajtripathy07/membral", session_count: 2, last_active_at: "2026-08-10T00:00:00Z" }),
     ];

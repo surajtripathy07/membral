@@ -1,13 +1,12 @@
 # Step 0.8 harvest — redacted session fixtures
 
-14 redacted Claude Code e2e session transcripts, harvested from a local backup of e2e sessions in three batches: A fake
-"CodeHub"-branded forge, C non-coding/edge cases incl. Hindi-language, R re-run.
-Decision M3 (see `docs/design/architecture-refactor-programme.md`) called for a maintainer
-sample review; on 2026-09-28 an automated privacy review replaced it, and its findings were
+10 redacted Claude Code e2e session transcripts, harvested from a local backup of e2e sessions in three batches: A fake
+"CodeHub"-branded forge, C non-coding cases, R re-run.
+Decision M3 (see `docs/design/architecture-refactor-programme.md`) called for a sample review; on 2026-09-28 an automated privacy review replaced it, and its findings were
 fixed by the rule changes listed under "Redaction" below.
 
 Each `<dir>/` holds `transcript.jsonl` (the session), `meta.json` (batch/harness/turn_count/why),
-and — for the two sessions that have one — a `subagents/` sidecar directory copied verbatim from
+and — for the one session that has one — a `subagents/` sidecar directory copied verbatim from
 the source session. Redaction was applied by `redact.mjs` to fresh copies of the source
 transcripts (see that file's header for the exact rule order); see counts below.
 
@@ -26,12 +25,8 @@ were reallocated to two extra Claude Code picks for size variety instead (`r-lar
 | a-gh-pr-merge-1 | A | claude-code | 83 | 250K | `gh pr merge` output present |
 | c-non-coding-notes-1 | C | claude-code | 35 | 178K | non-coding chat session (notes cwd, zero tool_use) |
 | c-non-coding-tiny-1 | C | claude-code | 22 | 163K | non-coding, smallest real session in the corpus |
-| c-hindi-sprachbox-1 | C | claude-code | 73 | 233K | Hindi-language session content |
-| r-hindi-sprachbox-1 | R | claude-code | 103 | 275K | Hindi-language session, re-run batch |
 | a-subagent-sidecar-1 | A | claude-code | 41 | 456K* | has sub-agent sidecar transcript dir |
-| c-subagent-sidecar-1 | C | claude-code | 35 | 484K* | has sub-agent sidecar transcript dir |
 | a-checkout-branch-1 | A | claude-code | 42 | 204K | checkout/branch switch present |
-| c-large-longhaul-1 | C | claude-code | 764 | 992K | size variety: large, long-running edge case |
 | a-nohook-medium-1 | A | claude-code | 66 | 228K | size variety: medium, no-hook persona variant |
 | r-large-billing-1 | R | claude-code | 141 | 360K | size variety: large, re-run batch |
 | r-nohook-medium-1 | R | claude-code | 120 | 308K | size variety: medium, re-run no-hook persona |
@@ -39,14 +34,13 @@ were reallocated to two extra Claude Code picks for size variety instead (`r-lar
 
 \* size includes the `subagents/` sidecar.
 
-Batch coverage: A ×6, C ×5, R ×3. Total on-disk size: 6.3 MB (well under the 25 MB / 2 MB-
+Batch coverage: A ×6, C ×2, R ×2. Total on-disk size: about 2.9 MB (well under the 25 MB / 2 MB-
 per-session caps).
 
 ## Redaction
 
-`redact.mjs` reads the real person name, account handle and repository name from the
-gitignored `.claude/redact-private.json` and refuses to run without it, so no private literal
-sits in this directory. Rule additions from the 2026-09-28 privacy review:
+`redact.mjs` reads the private literals it must remove from a gitignored local config and
+refuses to run without it, so no private literal sits in this directory. Rule additions from the 2026-09-28 privacy review:
 
 - the secret rule now needs a whole-word `sk-` key with at least 20 key characters (the old
   rule also rewrote ordinary words containing `sk-`, such as `<task-id>` markers);

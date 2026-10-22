@@ -58,7 +58,7 @@ import type { ApiClient } from "./lib/api-client.js";
 import { resetInjectedIds } from "./prompt-recall-state.js";
 import { isQuestionnaireRun } from "./questionnaire.js";
 
-// 20s (temporary, 2026-09-25): production answered in ~2-3s from India (functions iad1, DB Singapore) and
+// 20s (temporary, 2026-09-25): production answered in ~2-3s from a client far from the function region (functions iad1, DB Singapore) and
 // a real repo took 18s (sequential DB round trips iad1 -> Singapore); lower
 // this once the preamble route is fast. Old 3s silently dropped the preamble.
 // Claude Code allows SessionStart hooks 60s.

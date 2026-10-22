@@ -24,7 +24,7 @@
 #
 # Deliberately bash 3.2-compatible (no associative arrays, no mapfile) —
 # macOS ships bash 3.2 as /bin/bash and this script is meant to be run
-# with the plain `bash` on the maintainer's own machine, not a Homebrew
+# with the plain `bash` on a developer's machine, not a Homebrew
 # bash 4+/5.
 set -euo pipefail
 

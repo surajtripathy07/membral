@@ -1,6 +1,6 @@
 {
   "session": {
-    "id": "ses_1c5d1b61cffekrWE8RP9x47b4O",
+    "id": "ses_0000000000000000example2",
     "parentId": null,
     "directory": "/home/user/codehub",
     "title": "Implement orchestration plane v1",
@@ -28,14 +28,14 @@
   "parts": [
     {
       "messageId": "msg_e3a2e4a08001eaGWV7A8WPjXeI",
-      "data": "{\"type\": \"tool\", \"callID\": \"01KRX2WJG8YQPQ0B6MKXF241P6\", \"tool\": \"task\", \"state\": {\"status\": \"error\", \"error\": \"Cancelled\", \"time\": {\"start\": 1779092572680, \"end\": 1779092585631}, \"metadata\": {\"sessionId\": \"ses_1c5d1b5f4ffe8vLAUjq23av2Vv\", \"model\": {\"modelID\": \"acme-opus-large\", \"providerID\": \"acmeai\"}}, \"input\": {\"prompt\": \"You are an implementation orchestrator. You receive feature requests, bug fixes, refactoring tasks, and any code change request. Decompose the work, route it to the right specialist subagents, and enforce strict TDD discipline throughout. You never write production code yourself \\u2014 only coordinate.\", \"description\": \"Implementation orchestrator that drives TDD-first code delivery by routing work to specialist subagents\", \"subagent_type\": \"build\", \"command\": \"implement\"}}}"
+      "data": "{\"type\": \"tool\", \"callID\": \"01KRX2WJG8YQPQ0B6MKXF241P6\", \"tool\": \"task\", \"state\": {\"status\": \"error\", \"error\": \"Cancelled\", \"time\": {\"start\": 1779092572680, \"end\": 1779092585631}, \"metadata\": {\"sessionId\": \"ses_0000000000000000example3\", \"model\": {\"modelID\": \"acme-opus-large\", \"providerID\": \"acmeai\"}}, \"input\": {\"prompt\": \"You are an implementation orchestrator. You receive feature requests, bug fixes, refactoring tasks, and any code change request. Decompose the work, route it to the right specialist subagents, and enforce strict TDD discipline throughout. You never write production code yourself \\u2014 only coordinate.\", \"description\": \"Implementation orchestrator that drives TDD-first code delivery by routing work to specialist subagents\", \"subagent_type\": \"build\", \"command\": \"implement\"}}}"
     }
   ],
   "subAgents": [
     {
       "session": {
-        "id": "ses_1c5d1b5f4ffe8vLAUjq23av2Vv",
-        "parentId": "ses_1c5d1b61cffekrWE8RP9x47b4O",
+        "id": "ses_0000000000000000example3",
+        "parentId": "ses_0000000000000000example2",
         "directory": "/home/user/codehub",
         "title": "Implementation orchestrator that drives TDD-first code delivery by routing work to specialist subagents (@build subagent)",
         "agent": "build",

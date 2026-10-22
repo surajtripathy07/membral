@@ -47,7 +47,7 @@ function readSubAgents(name: string): SubAgentFile[] {
   }));
 }
 
-const SUBAGENT_SESSIONS = ["a-subagent-sidecar-1", "c-subagent-sidecar-1"];
+const SUBAGENT_SESSIONS = ["a-subagent-sidecar-1"];
 
 // Tiny stable summary, captured once from claudeCodeParser.parse() on this
 // fixture set (2026-09-28), asserted alongside each snapshot so a reader
@@ -64,7 +64,7 @@ const SUBAGENT_SESSIONS = ["a-subagent-sidecar-1", "c-subagent-sidecar-1"];
 // `<task-notification>`/`<task-id>` tags (task = t-a-s-k), mangling each to
 // `<ta<redacted>>` and costing the parser one extra unrecognized-marker turn
 // per affected session; the fix dropped a-large-billing-1, a-subagent-
-// sidecar-1 and c-subagent-sidecar-1 by exactly one turn each.
+// sidecar-1 by exactly one turn each.
 const EXPECTED_TURN_COUNTS: Record<string, number> = {
   "a-checkout-branch-1": 12,
   "a-forge-ref-commit-1": 21,
@@ -72,12 +72,8 @@ const EXPECTED_TURN_COUNTS: Record<string, number> = {
   "a-large-billing-1": 103,
   "a-nohook-medium-1": 22,
   "a-subagent-sidecar-1": 9,
-  "c-hindi-sprachbox-1": 23,
-  "c-large-longhaul-1": 207,
   "c-non-coding-notes-1": 4,
   "c-non-coding-tiny-1": 2,
-  "c-subagent-sidecar-1": 6,
-  "r-hindi-sprachbox-1": 34,
   "r-large-billing-1": 51,
   "r-nohook-medium-1": 42,
 };

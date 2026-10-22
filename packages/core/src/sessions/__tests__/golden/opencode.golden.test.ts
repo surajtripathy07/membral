@@ -20,11 +20,11 @@ function readFixture(name: string): string {
 }
 
 const FIXTURE_CASES: Array<{ name: string; file: string; sourceSessionId: string }> = [
-  { name: "small-session", file: "small-session.json", sourceSessionId: "ses_1403d271dffeWEmI9XDZ6bdCGT" },
+  { name: "small-session", file: "small-session.json", sourceSessionId: "ses_0000000000000000example1" },
   {
     name: "session-with-subagent",
     file: "session-with-subagent.json",
-    sourceSessionId: "ses_1c5d1b61cffekrWE8RP9x47b4O",
+    sourceSessionId: "ses_0000000000000000example2",
   },
 ];
 

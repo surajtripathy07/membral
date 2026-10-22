@@ -56,7 +56,7 @@ export default defineConfig(({ mode }) => {
   // deployment-derived env contract (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY/
   // VITE_CLOUD_URL passed as real child-process env vars, mirroring
   // NEXT_PUBLIC_*). Vite loads `.env`/`.env.local`/`.env.<mode>(.local)` from
-  // `envDir` in EVERY mode, production included — so the maintainer's own
+  // `envDir` in EVERY mode, production included — so a developer's own
   // untracked packages/extension/.env.local (local Supabase config) would
   // otherwise silently seed or override those values in the packaged zip,
   // regardless of what the packaging script passed in. When

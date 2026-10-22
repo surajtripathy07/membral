@@ -553,7 +553,7 @@ const SPECS: Spec[] = [
   {
     id: "P3",
     set: "pivot",
-    description: "P1 in Hindi",
+    description: "P1 in another language",
     steps: p3,
     candidates: [RETRY, pr(57, "Ledger helper naming cleanup")],
     expected: [{ sha: "c3c3c3c", ref: null }],
@@ -605,7 +605,7 @@ const SPECS: Spec[] = [
   {
     id: "R5",
     set: "return",
-    description: "R1 in Hindi",
+    description: "R1 in another language",
     steps: r5,
     candidates: [RETRY, RETRY_BTN],
     expected: [{ sha: "c9c9c9c", ref: "#41" }],

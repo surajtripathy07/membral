@@ -328,9 +328,9 @@ describe("backfill Q1: a life rule stated in passing is the owner's preference (
   // Shape of the real t34 line (names and details fictional): one sentence of a
   // standing rule inside a longer status update.
   const T34 =
-    "quick update: the bank sanctioned the loan, the broker visit is on Saturday, and we align that we should buy something we would want/be okay to stay in, so skip the rental-only listings";
+    "quick update: the vendor approved the quote, the review is on Saturday, and we agree we should build something we would be okay maintaining, so skip the throwaway prototypes";
   const T36 = "commit quietly with -q";
-  const QUOTE = "we should buy something we would want/be okay to stay in";
+  const QUOTE = "we should build something we would be okay maintaining";
 
   function tables(): Record<string, Row[]> {
     const base = fxTables();
@@ -347,7 +347,7 @@ describe("backfill Q1: a life rule stated in passing is the owner's preference (
       ...base,
       session_memories: [],
       code_session_turns: [
-        turn(33, "assistant", "Noted. Anything else on the flat search?"),
+        turn(33, "assistant", "Noted. Anything else on the vendor search?"),
         turn(34, "user", T34),
         turn(35, "assistant", "Got it. Shall I commit the listing filter?"),
         turn(36, "user", T36),
@@ -386,7 +386,7 @@ describe("backfill Q1: a life rule stated in passing is the owner's preference (
     const prefs = rows.session_memories.filter((r) => r.kind === "preference" && !r.retired_at);
     expect(prefs).toHaveLength(1);
     expect(prefs[0]).toMatchObject({ turn_idx: 34, turn_role: "user" });
-    expect(String(prefs[0].quote)).toContain("buy something we would want/be okay to stay in");
+    expect(String(prefs[0].quote)).toContain("build something we would be okay maintaining");
     expect(rows.session_memories.some((r) => r.turn_idx === 36)).toBe(false);
   });
 });

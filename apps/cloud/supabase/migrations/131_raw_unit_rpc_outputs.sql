@@ -54,6 +54,10 @@ drop function if exists public.memory_raw_term_stats(uuid, text[]);
 -- ------------------------------------------------------------
 -- memory_raw_pools
 -- ------------------------------------------------------------
+-- Load pgvector into this session first: hnsw.* are placeholder GUCs until the library is loaded, and a
+-- non-superuser (the local stack applies migrations as `postgres`) cannot SET a placeholder in CREATE FUNCTION.
+do $$ begin perform '[0]'::vector; end $$;
+
 create function public.memory_raw_pools(
   p_user_id uuid,
   p_query text,

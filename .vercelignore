@@ -4,14 +4,10 @@
 # tracking (unlike a git-push-triggered deploy) — unlike .gitignore, a
 # missing entry here doesn't just skip a commit, it ships whatever's
 # sitting on disk (secrets, real corpus data, PII) straight into the
-# deploy artifact/source viewer. Round-3 review HIGH 18: this file used to
-# drift from .gitignore — apps/cloud/scripts/spike-k89/output (real
-# founder extraction output), apps/cloud/scripts/kg/prompt-lab/transcripts
-# (real conversation exports), handoff_6_april_5.txt (a root-level session
-# transcript, missed by the `handoff` entry below because it matches the
-# `handoff/` DIRECTORY, not this sibling file), and MEMBRAL.md (sweep-
-# generated session context) were all gitignored but NOT vercelignored, so
-# a `vercel --prod` from a maintainer checkout would have shipped them.
+# deploy artifact/source viewer. This file used to
+# drift from .gitignore (local-only artefacts were gitignored but NOT
+# vercelignored), so a `vercel --prod` from a developer checkout could
+# have shipped them.
 #
 # STRUCTURAL FIX: everything below the first section is copied VERBATIM
 # from .gitignore (kept in the same order, one pattern per line) so the
@@ -74,7 +70,6 @@ packages/extension/dist/
 data/
 apps/cloud/scripts/spike-k89/output/
 eval-runs/
-design/uploads/Screenshot 2026-06-16 at 5.12.09 PM.png
 design/screens/01-map.png
 design/screens/03-pulse.png
 design/screens/03-v.png

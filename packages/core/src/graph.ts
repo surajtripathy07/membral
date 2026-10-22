@@ -20,7 +20,7 @@ export const GRAPH_NODE_TYPES = [
 // must be able to change freely) — so MEMORY_KINDS here, not a DB enum,
 // is this taxonomy's source of truth.
 // `insight` is the weakest of the four and is trivially removable: it is
-// gated on the founder-1k 50-memory eval (ADR 0027 §Q3 "Insight, honestly",
+// gated on the 50-memory eval (ADR 0027 §Q3 "Insight, honestly",
 // open question 1) and should be dropped outright if it degenerates into
 // conversation summaries rather than real self-articulated realisations.
 export const MEMORY_KINDS = ["decision", "preference", "pattern", "insight"] as const;
