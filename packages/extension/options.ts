@@ -1,5 +1,5 @@
 import type { Conversation } from "@membral/core";
-import { getAuthState } from "./src/auth/auth.js";
+import { clearApiKey, getApiKey, getAuthState, setApiKey } from "./src/auth/auth.js";
 import {
   daysToOptionValue,
   optionValueToDays,
@@ -8,6 +8,7 @@ import {
   SYNC_WINDOW_PRESETS,
 } from "./src/common/constants.js";
 import { getSettings, saveConversationsBatch, saveSettings, updateProviderSyncState } from "./src/common/storage.js";
+import { applyCloudUrl } from "./src/common/target.js";
 import { DEFAULT_AUTO_EXPORT } from "./src/sync/auto-export.js";
 import { getCloudUrl } from "./src/sync/cloud-push.js";
 
@@ -23,6 +24,10 @@ const syncWindowHintEl = document.getElementById("sync-window-hint") as HTMLDivE
 const providerClaudeEl = document.getElementById("provider-claude") as HTMLInputElement;
 const providerChatgptEl = document.getElementById("provider-chatgpt") as HTMLInputElement;
 const cloudUrlEl = document.getElementById("cloud-url") as HTMLInputElement;
+const cloudUrlSaveBtn = document.getElementById("cloud-url-save-btn") as HTMLButtonElement;
+const apiKeyEl = document.getElementById("api-key") as HTMLInputElement;
+const apiKeySaveBtn = document.getElementById("api-key-save-btn") as HTMLButtonElement;
+const apiKeyClearBtn = document.getElementById("api-key-clear-btn") as HTMLButtonElement;
 const authStatusEl = document.getElementById("auth-status") as HTMLSpanElement;
 const autoExportEnabledEl = document.getElementById("auto-export-enabled") as HTMLInputElement;
 const autoExportFilenameEl = document.getElementById("auto-export-filename") as HTMLInputElement;
@@ -88,7 +93,7 @@ async function loadSettings(): Promise<void> {
   autoExportFilenameEl.value = autoExport.filename;
   updateExportPathHint(autoExport.filename);
 
-  // Cloud URL (issue #12) — the field stays empty when no override is
+  // Membral URL (issue #12) — the field stays empty when no override is
   // stored (an override, not the value itself, is what's persisted), but
   // its placeholder shows the actually-effective URL (the stored override,
   // or the build's default — see getCloudUrl/DEFAULT_CLOUD_URL in
@@ -97,6 +102,10 @@ async function loadSettings(): Promise<void> {
   const storedOverride = (result[STORAGE_KEYS.CLOUD_URL] as string) || "";
   cloudUrlEl.value = storedOverride;
   cloudUrlEl.placeholder = storedOverride || (await getCloudUrl());
+
+  // The key itself is never echoed back into the field once saved.
+  apiKeyEl.value = "";
+  apiKeyEl.placeholder = (await getApiKey()) ? "Key saved (paste a new one to replace it)" : "lls_…";
 }
 
 // --- Save settings from the form (debounced) ---
@@ -122,11 +131,6 @@ async function saveNow(): Promise<void> {
       },
     });
 
-    // Cloud URL is stored separately
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.CLOUD_URL]: cloudUrlEl.value.trim(),
-    });
-
     showStatus("Settings saved");
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -135,13 +139,13 @@ async function saveNow(): Promise<void> {
 }
 
 // --- Auth status ---
-function setAuthStatus(connected: boolean, email?: string): void {
+function setAuthStatus(connected: boolean, label?: string): void {
   authStatusEl.textContent = "";
   const dot = document.createElement("span");
   dot.className = "status-dot";
   dot.style.background = connected ? "#4ade80" : "#888";
   authStatusEl.appendChild(dot);
-  authStatusEl.appendChild(document.createTextNode(connected ? ` Connected (${email})` : " Not connected"));
+  authStatusEl.appendChild(document.createTextNode(connected ? ` ${label}` : " Not connected"));
   authStatusEl.className = connected ? "auth-status auth-connected" : "auth-status auth-disconnected";
 }
 
@@ -149,12 +153,61 @@ async function loadAuthStatus(): Promise<void> {
   try {
     const authState = await getAuthState();
     if (authState.isLoggedIn) {
-      setAuthStatus(true, authState.email);
+      setAuthStatus(
+        true,
+        authState.kind === "api-key" ? "Connected with an API key" : `Connected (${authState.email})`,
+      );
     } else {
       setAuthStatus(false);
     }
   } catch {
     setAuthStatus(false);
+  }
+}
+
+// --- Membral URL (explicit Save: the permission prompt needs a user gesture) ---
+async function handleSaveCloudUrl(): Promise<void> {
+  cloudUrlSaveBtn.disabled = true;
+  try {
+    // Must be the first await in the click handler's call chain so the gesture is still live.
+    const result = await applyCloudUrl(cloudUrlEl.value);
+    if (!result.ok) {
+      showStatus(result.error, true);
+      return;
+    }
+    cloudUrlEl.value = result.url ?? "";
+    cloudUrlEl.placeholder = await getCloudUrl();
+    showStatus(result.url ? `Membral URL saved: ${result.url}` : "Membral URL reset to the default");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    showStatus(`Error saving URL: ${msg}`, true);
+  } finally {
+    cloudUrlSaveBtn.disabled = false;
+  }
+}
+
+// --- API key ---
+async function handleSaveApiKey(): Promise<void> {
+  try {
+    await setApiKey(apiKeyEl.value);
+    await loadSettings();
+    await loadAuthStatus();
+    showStatus("API key saved");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    showStatus(msg, true);
+  }
+}
+
+async function handleClearApiKey(): Promise<void> {
+  try {
+    await clearApiKey();
+    await loadSettings();
+    await loadAuthStatus();
+    showStatus("API key cleared");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    showStatus(`Error: ${msg}`, true);
   }
 }
 
@@ -339,7 +392,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   providerClaudeEl.addEventListener("change", scheduleSave);
   providerChatgptEl.addEventListener("change", scheduleSave);
-  cloudUrlEl.addEventListener("input", scheduleSave);
+  cloudUrlSaveBtn.addEventListener("click", handleSaveCloudUrl);
+  apiKeySaveBtn.addEventListener("click", handleSaveApiKey);
+  apiKeyClearBtn.addEventListener("click", handleClearApiKey);
   autoExportEnabledEl.addEventListener("change", scheduleSave);
   autoExportFilenameEl.addEventListener("input", () => {
     updateExportPathHint(autoExportFilenameEl.value);

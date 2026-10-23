@@ -517,6 +517,134 @@ describe("membral local", () => {
     expect(out()).not.toContain("Extraction is off");
   });
 
+  describe("--embeddings", () => {
+    const withOllama = (models: string[] | "down") => {
+      const base = makeFetch(fstate);
+      const seen: string[] = [];
+      deps.fetchImpl = (async (input: string | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes(":11434/api/tags")) {
+          seen.push(url);
+          if (models === "down") throw new Error("ECONNREFUSED");
+          return new Response(JSON.stringify({ models: models.map((name) => ({ name })) }), { status: 200 });
+        }
+        return base(input, init);
+      }) as typeof fetch;
+      return seen;
+    };
+    const envFile = () => readFileSync(deps.paths!.env, "utf8");
+
+    it("ollama: checks the host, writes the two .env lines (mode 600), passes them to the app, reports it", async () => {
+      const seen = withOllama(["nomic-embed-text:latest"]);
+      await localUp({ embeddings: "ollama" }, deps);
+      expect(process.exitCode).toBeUndefined();
+      expect(seen).toEqual(["http://127.0.0.1:11434/api/tags"]);
+      const env = parseEnv(envFile());
+      expect(env.MEMBRAL_EMBEDDINGS_BASE_URL).toBe("http://host.docker.internal:11434/v1");
+      expect(env.MEMBRAL_EMBEDDING_MODEL).toBe("nomic-embed-text");
+      expect(statSync(deps.paths!.env).mode & 0o777).toBe(0o600);
+      const compose = readFileSync(deps.paths!.compose, "utf8");
+      expect(compose).toContain("MEMBRAL_EMBEDDINGS_BASE_URL");
+      expect(compose).toContain("MEMBRAL_EMBEDDING_MODEL");
+      expect(out()).toContain("Embeddings: nomic-embed-text (Ollama)");
+    });
+
+    it("ollama unreachable: prints how to install and start it, exits 1, starts nothing", async () => {
+      withOllama("down");
+      await localUp({ embeddings: "ollama" }, deps);
+      expect(process.exitCode).toBe(1);
+      expect(out()).toContain("brew install ollama");
+      expect(out()).toContain("ollama serve");
+      expect(verbs().some((v) => v.startsWith("compose up"))).toBe(false);
+    });
+
+    it("model not pulled: prints the pull command, exits 1, starts nothing", async () => {
+      withOllama(["llama3:8b"]);
+      await localUp({ embeddings: "ollama" }, deps);
+      expect(process.exitCode).toBe(1);
+      expect(out()).toContain("ollama pull nomic-embed-text");
+      expect(verbs().some((v) => v.startsWith("compose up"))).toBe(false);
+    });
+
+    it("honours OLLAMA_HOST and --embedding-model", async () => {
+      const seen: string[] = [];
+      const base = makeFetch(fstate);
+      deps.env = { OLLAMA_HOST: "127.0.0.1:11500" };
+      deps.fetchImpl = (async (input: string | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.endsWith("/api/tags")) {
+          seen.push(url);
+          return new Response(JSON.stringify({ models: [{ name: "mxbai-embed-large:latest" }] }), { status: 200 });
+        }
+        return base(input, init);
+      }) as typeof fetch;
+      await localUp({ embeddings: "ollama", embeddingModel: "mxbai-embed-large" }, deps);
+      expect(seen).toEqual(["http://127.0.0.1:11500/api/tags"]);
+      const env = parseEnv(envFile());
+      expect(env.MEMBRAL_EMBEDDING_MODEL).toBe("mxbai-embed-large");
+      expect(env.MEMBRAL_EMBEDDINGS_BASE_URL).toBe("http://host.docker.internal:11500/v1");
+    });
+
+    it("persists: a later plain up keeps the lines and still reports Ollama", async () => {
+      withOllama(["nomic-embed-text"]);
+      await localUp({ embeddings: "ollama" }, deps);
+      const before = envFile();
+      logs.length = 0;
+      withOllama("down"); // a plain up must not need Ollama to be reachable
+      await localUp({}, deps);
+      expect(process.exitCode).toBeUndefined();
+      expect(envFile()).toBe(before);
+      expect(out()).toContain("Embeddings: nomic-embed-text (Ollama)");
+    });
+
+    it("is idempotent and keeps other lines", async () => {
+      await localUp({}, deps);
+      writeFileSync(deps.paths!.env, `${envFile()}OPENAI_API_KEY=sk-test\n`);
+      withOllama(["nomic-embed-text"]);
+      await localUp({ embeddings: "ollama" }, deps);
+      const once = envFile();
+      await localUp({ embeddings: "ollama" }, deps);
+      expect(envFile()).toBe(once);
+      expect(parseEnv(once).OPENAI_API_KEY).toBe("sk-test");
+      expect(once.match(/^MEMBRAL_EMBEDDINGS_BASE_URL=/gm)).toHaveLength(1);
+    });
+
+    it("none: removes the two lines and reports keyword-only search", async () => {
+      withOllama(["nomic-embed-text"]);
+      await localUp({ embeddings: "ollama" }, deps);
+      logs.length = 0;
+      await localUp({ embeddings: "none" }, deps);
+      const env = parseEnv(envFile());
+      expect(env.MEMBRAL_EMBEDDINGS_BASE_URL).toBeUndefined();
+      expect(env.MEMBRAL_EMBEDDING_MODEL).toBeUndefined();
+      expect(env.JWT_SECRET).toBeTruthy();
+      expect(out()).toContain("Embeddings: none — search is keyword only. Run: membral local up --embeddings ollama");
+    });
+
+    it("rejects an unknown mode, and --embedding-model without ollama", async () => {
+      await localUp({ embeddings: "openai" }, deps);
+      expect(process.exitCode).toBe(1);
+      expect(out()).toContain('Invalid --embeddings "openai"');
+      process.exitCode = undefined;
+      errors.length = 0;
+      await localUp({ embeddingModel: "x" }, deps);
+      expect(process.exitCode).toBe(1);
+      expect(out()).toContain("--embedding-model only applies with --embeddings ollama");
+    });
+
+    it("status prints one embeddings line: none by default, Ollama once enabled", async () => {
+      await localUp({}, deps);
+      logs.length = 0;
+      await localStatus({}, deps);
+      expect(out()).toContain("Embeddings: none — search is keyword only. Run: membral local up --embeddings ollama");
+      withOllama(["nomic-embed-text"]);
+      await localUp({ embeddings: "ollama" }, deps);
+      logs.length = 0;
+      await localStatus({}, deps);
+      expect(out()).toContain("Embeddings: nomic-embed-text (Ollama)");
+    });
+  });
+
   it("down keeps the volume; --wipe asks first; --yes skips the question", async () => {
     await localUp({}, deps);
     const downCalls = () => docker.calls.filter((c) => c.args[7] === "down").map((c) => c.args.slice(7));

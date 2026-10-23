@@ -1,18 +1,24 @@
 {
   "name": "membral",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Your coding agent can answer from what your past sessions found. Uploads each Claude Code session to Membral when it ends, adds a short memory preamble when a session starts, and connects the Membral MCP server.",
   "author": {
     "name": "Membral"
   },
-  "homepage": "https://membral.me",
+  "homepage": "https://github.com/surajtripathy07/membral",
   "repository": "https://github.com/surajtripathy07/membral-plugin",
   "license": "MIT",
   "userConfig": {
+    "api_url": {
+      "type": "string",
+      "title": "Membral server URL",
+      "description": "http://localhost:3000 for `membral local up` (no trailing slash).",
+      "required": true
+    },
     "api_key": {
       "type": "string",
       "title": "Membral API key",
-      "description": "Create one at https://membral.me/settings (API key section).",
+      "description": "From `membral local up` output, or your server's Settings → Keys.",
       "sensitive": true,
       "required": true
     }

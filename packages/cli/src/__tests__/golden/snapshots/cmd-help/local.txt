@@ -1,7 +1,8 @@
 EXIT: 0
 --- STDOUT ---
 Usage
-  membral local up [--port <n>] [--gateway-port <n>] [--image <ref>] [--email <addr>] [--yes] [--no-sweep]
+  membral local up [--port <n>] [--gateway-port <n>] [--image <ref>] [--email <addr>]
+                   [--embeddings ollama|none] [--embedding-model <name>] [--yes] [--no-sweep]
   membral local status [--show-password]
   membral local down [--wipe [--yes]]
   membral local logs [db|auth|rest|gateway|app] [-f]
@@ -20,6 +21,16 @@ Flags
   --gateway-port <n>  Auth/data gateway port (default 54421)
   --image <ref>       App image (also MEMBRAL_IMAGE)
   --email <addr>      Local user's email (default you@membral.local)
+  --embeddings ollama Local embeddings through the Ollama on this machine:
+                      checks it answers (OLLAMA_HOST, default 127.0.0.1:11434)
+                      and has the model, then writes
+                      MEMBRAL_EMBEDDINGS_BASE_URL=http://host.docker.internal:11434/v1
+                      and MEMBRAL_EMBEDDING_MODEL to ~/.membral/local/.env.
+                      Kept by later plain `up` runs. The app container must
+                      reach the host's Ollama through host.docker.internal.
+  --embeddings none   Remove those two lines (search is keyword only)
+  --embedding-model <name>
+                      Pulled Ollama model to use (default nomic-embed-text)
   --show-password     status: print the local user's password
   --wipe              down: also delete the database volume and the downloaded
                       Claude Code volume (asks first)

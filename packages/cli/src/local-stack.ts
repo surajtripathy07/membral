@@ -42,6 +42,7 @@ export const LLM_PASSTHROUGH = [
   "MEMBRAL_EMBEDDING_MODEL",
   "MEMBRAL_EMBEDDING_MIN_SIMILARITY",
   "MEMBRAL_LLM_PROVIDER",
+  "MEMBRAL_LLM_TIMEOUT_MS",
   "CLAUDE_CODE_OAUTH_TOKEN",
 ] as const;
 
@@ -134,6 +135,7 @@ const ENV_HEADER = `# Membral local stack — written by \`membral local up\`. K
 # MEMBRAL_MODEL=
 # MEMBRAL_EMBEDDINGS_BASE_URL=http://host.docker.internal:11434/v1
 # MEMBRAL_EMBEDDING_MODEL=nomic-embed-text
+# MEMBRAL_LLM_TIMEOUT_MS=180000
 # Ollama on Linux: set OLLAMA_HOST=172.17.0.1 for the Ollama service (the docker bridge IP that host.docker.internal maps to) so the container can reach it (see README).
 `;
 

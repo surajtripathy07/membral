@@ -1,5 +1,5 @@
 {
-  "status": 401,
+  "status": 200,
   "headers": {
     "access-control-allow-headers": "Authorization, Content-Type",
     "access-control-allow-methods": "GET, OPTIONS",
@@ -9,5 +9,5 @@
     "vary": "Origin"
   },
   "afterCalls": 0,
-  "body": "{\"error\":\"Invalid token\"}"
+  "body": "{\"conversations\":[{\"source\":\"chatgpt\",\"source_id\":\"chat-1\",\"updated_at\":\"2025-12-18T09:30:00.000Z\"}]}"
 }

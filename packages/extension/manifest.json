@@ -14,9 +14,7 @@
     "https://claude.ai/*",
     "https://*.claude.ai/*",
     "https://chatgpt.com/*",
-    "https://chat.openai.com/*",
-    "https://membral.me/*",
-    "http://localhost:3000/*"
+    "https://chat.openai.com/*"
   ],
   "background": {
     "service_worker": "src/background.ts",

@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  DEFAULT_API_URL,
   deleteCredentials,
   describeAuthRejection,
   describeKeySource,
@@ -13,6 +14,7 @@ import {
   resolveApiKey,
   resolveApiUrl,
   resolveCredentials,
+  resolveLoginUrl,
   resolveValidatedCredentials,
   saveCredentials,
   validateApiKey,
@@ -526,5 +528,19 @@ describe("credentials", () => {
       });
       expect(msg).toContain("no working key was found in ~/.membral/credentials.json either");
     });
+  });
+});
+
+describe("default server URL", () => {
+  it("is the local server: nothing resolves to the hosted site unless asked", () => {
+    expect(DEFAULT_API_URL).toBe("http://localhost:3000");
+    expect(resolveLoginUrl(undefined, undefined)).toBe("http://localhost:3000");
+    expect(resolveApiUrl(undefined, undefined, DEFAULT_API_URL, join(tmpdir(), "no-such-membral-creds.json"))).toBe(
+      "http://localhost:3000",
+    );
+  });
+
+  it("an explicit --api-url https://membral.me still reaches the hosted server", () => {
+    expect(resolveLoginUrl("https://membral.me/", undefined)).toBe("https://membral.me");
   });
 });

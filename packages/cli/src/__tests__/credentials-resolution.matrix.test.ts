@@ -224,7 +224,7 @@ describe("credential resolution precedence matrix (3x3x2, locked before refactor
             let expected: string;
             if (flag !== "unset") expected = flagUrl(flag) as string;
             else if (env !== "unset") expected = envUrl(env) as string;
-            else expected = "https://membral.me"; // DEFAULT_API_URL
+            else expected = "http://localhost:3000"; // DEFAULT_API_URL
 
             expect(result).toBe(expected.replace(/\/+$/, ""));
 

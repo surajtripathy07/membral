@@ -1,9 +1,9 @@
 import type { ProviderSyncState } from "@membral/core";
-import { getAuthState, login, logout } from "./src/auth/auth.js";
+import { clearApiKey, getAuthState, login, logout, passwordSignInAvailable } from "./src/auth/auth.js";
 import { isStaleSyncing } from "./src/common/badge.js";
 import { resolveSyncWindowDays, STORAGE_KEYS, SYNC_WINDOW_PRESETS } from "./src/common/constants.js";
 import { getSettings } from "./src/common/storage.js";
-import { type CloudSyncStatus, formatCloudSyncStatus, getCloudSyncStatus } from "./src/sync/cloud-push.js";
+import { type CloudSyncStatus, formatCloudSyncStatus, getCloudSyncStatus, getCloudUrl } from "./src/sync/cloud-push.js";
 
 const PROVIDER_LABELS: Record<string, string> = {
   claude: "Claude.ai",
@@ -329,11 +329,23 @@ function updateCloudSyncStatusEl(el: HTMLElement, status: CloudSyncStatus): void
   el.style.color = color;
 }
 
+const CONNECT_LABEL = "Connect to your Membral \u25b8";
+
+function openOptionsPage(): void {
+  chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+}
+
+// A local-only build has no Supabase project, so there is no password form to expand: the button
+// opens the options page, where the API key lives. Builds with Supabase keep the expanding form.
 function toggleAuthForm(): void {
+  if (!passwordSignInAvailable()) {
+    openOptionsPage();
+    return;
+  }
   const wrapper = document.getElementById("auth-form-wrapper")!;
   const btn = document.getElementById("auth-toggle-btn")!;
   const isOpen = wrapper.classList.toggle("open");
-  btn.textContent = isOpen ? "Cancel" : "Sign in to sync to cloud \u25b8";
+  btn.textContent = isOpen ? "Cancel" : CONNECT_LABEL;
 }
 
 async function renderAuthState(): Promise<void> {
@@ -342,20 +354,30 @@ async function renderAuthState(): Promise<void> {
   const emailEl = document.getElementById("auth-user-email")!;
   const syncStatusEl = document.getElementById("auth-sync-status")!;
 
+  const targetEl = document.getElementById("auth-target")!;
+  const logoutBtnEl = document.getElementById("auth-logout-btn")!;
+  try {
+    targetEl.textContent = `Target: ${await getCloudUrl()}`;
+  } catch {
+    targetEl.textContent = "";
+  }
+
   try {
     const authState = await getAuthState();
 
     if (authState.isLoggedIn) {
       loggedOutEl.style.display = "none";
       loggedInEl.style.display = "block";
-      emailEl.textContent = authState.email || "";
+      const usingKey = authState.kind === "api-key";
+      emailEl.textContent = usingKey ? "Connected with an API key" : authState.email || "";
+      logoutBtnEl.textContent = usingKey ? "Disconnect" : "Sign Out";
       const cloudStatus = await getCloudSyncStatus();
       updateCloudSyncStatusEl(syncStatusEl, cloudStatus);
     } else {
       loggedOutEl.style.display = "block";
       loggedInEl.style.display = "none";
       document.getElementById("auth-form-wrapper")!.classList.remove("open");
-      document.getElementById("auth-toggle-btn")!.textContent = "Sign in to sync to cloud \u25b8";
+      document.getElementById("auth-toggle-btn")!.textContent = CONNECT_LABEL;
       const result = await chrome.storage.local.get(STORAGE_KEYS.FIRST_RUN_HINT_DISMISSED);
       const dismissed = result[STORAGE_KEYS.FIRST_RUN_HINT_DISMISSED] as boolean | undefined;
       const hintEl = document.getElementById("first-run-hint");
@@ -403,7 +425,12 @@ async function handleLogout(): Promise<void> {
   logoutBtn.disabled = true;
 
   try {
-    await logout();
+    // An API key is cleared directly; a Supabase session also signs out remotely.
+    if ((await getAuthState()).kind === "api-key") {
+      await clearApiKey();
+    } else {
+      await logout();
+    }
     await renderAuthState();
   } catch (err) {
     console.error("Logout failed:", err);

@@ -227,8 +227,21 @@
   <div class="section">
     <div class="section-title">Cloud Sync</div>
     <div class="field">
-      <label for="cloud-url">Cloud URL</label>
-      <input type="url" id="cloud-url" placeholder="https://your-instance.vercel.app">
+      <label for="cloud-url">Membral URL</label>
+      <input type="url" id="cloud-url" placeholder="https://your-instance.example.com">
+      <div class="btn-row">
+        <button id="cloud-url-save-btn" class="btn-secondary">Save URL</button>
+      </div>
+      <div class="field-hint">Leave empty to use the default shown above. A different address asks the browser for access to it.</div>
+    </div>
+    <div class="field">
+      <label for="api-key">API key</label>
+      <input type="password" id="api-key" placeholder="lls_…" autocomplete="off" spellcheck="false">
+      <div class="btn-row">
+        <button id="api-key-save-btn" class="btn-primary">Save key</button>
+        <button id="api-key-clear-btn" class="btn-secondary">Clear key</button>
+      </div>
+      <div class="field-hint">The key <code>membral local up</code> prints (or one from Settings). It is stored only in this browser and sent as a bearer token to the URL above.</div>
     </div>
     <div class="field">
       <label>Connection status</label>
@@ -266,7 +279,7 @@
     <div class="section-title">About</div>
     <div id="about-version" class="about-version"></div>
     <div class="about-links">
-      <a href="https://membral.me" target="_blank">membral.me</a>
+      <a href="https://github.com/surajtripathy07/membral" target="_blank">github.com/surajtripathy07/membral</a>
     </div>
   </div>
 

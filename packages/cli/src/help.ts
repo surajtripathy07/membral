@@ -55,7 +55,7 @@ Commands
   setup      Sign in, scan harnesses, choose syncs, and run the first import
   login      Sign in through your browser
   logout     Sign out and forget the saved credentials
-  use        List profiles, or switch server (e.g. local <-> prod)
+  use        List profiles, or switch between servers
   status     Show your account, this device, and what synced last
   import     Import a ChatGPT or Claude.ai export file
   sessions   Upload this machine's coding-session transcripts
@@ -68,7 +68,7 @@ Flags
 
 Run \`membral <command> --help\` for that command's flags.
 Run \`membral help --all\` for hook internals.
-Docs: https://membral.me
+Docs: https://github.com/surajtripathy07/membral
 `;
 
 // `membral help --all` — the escape hatch for the hook internals only
@@ -118,7 +118,7 @@ Set up this machine — sign in, choose what syncs, run the first import.
   6. Configure MCP for any detected AI tools.
 
 Flags
-  --api-url <url>       Overrides the default API URL
+  --api-url <url>       Server URL (default http://localhost:3000)
   --api-key <key>       Skips interactive sign-in
   --yes                 Accept every default without prompting
   --exclude <1,3,...>   Numbers from the scan table to exclude from sync
@@ -151,16 +151,17 @@ a confirmation code, tries to open your browser, polls until you confirm,
 then saves ~/.membral/credentials.json (mode 0600). Ctrl-C cancels cleanly.
 
 Flags
-  --api-url <url>   Overrides the default API URL`,
+  --api-url <url>   Server URL (default http://localhost:3000)`,
 
   use: `Usage
   membral use [<profile>]
 
 Switch which Membral server this machine talks to. Each \`membral login
---api-url <url>\` saves a profile (localhost -> "local", membral.me ->
-"prod"). No argument lists profiles (* = active); a name makes it active
-and re-points Claude Code's and opencode's MCP entry. Hooks, the opencode
-plugin and the sweep follow the active profile — no re-setup.
+--api-url <url>\` saves a profile named for its server (localhost ->
+"local"; any other host keeps its hostname). No argument lists profiles
+(* = active); a name makes it active and re-points Claude Code's and
+opencode's MCP entry. Hooks, the opencode plugin and the sweep follow the
+active profile — no re-setup.
 
   membral login --api-url http://localhost:3000   # once, creates "local"
   membral use local                                # talk to the local server`,
@@ -343,7 +344,8 @@ sets "dogfood": {"issue": <n>, "repo": "owner/name"} and/or
 "dogfood": {"candidatesPath": "<path>"}. Off when unset.`,
 
   local: `Usage
-  membral local up [--port <n>] [--gateway-port <n>] [--image <ref>] [--email <addr>] [--yes] [--no-sweep]
+  membral local up [--port <n>] [--gateway-port <n>] [--image <ref>] [--email <addr>]
+                   [--embeddings ollama|none] [--embedding-model <name>] [--yes] [--no-sweep]
   membral local status [--show-password]
   membral local down [--wipe [--yes]]
   membral local logs [db|auth|rest|gateway|app] [-f]
@@ -362,6 +364,16 @@ Flags
   --gateway-port <n>  Auth/data gateway port (default 54421)
   --image <ref>       App image (also MEMBRAL_IMAGE)
   --email <addr>      Local user's email (default you@membral.local)
+  --embeddings ollama Local embeddings through the Ollama on this machine:
+                      checks it answers (OLLAMA_HOST, default 127.0.0.1:11434)
+                      and has the model, then writes
+                      MEMBRAL_EMBEDDINGS_BASE_URL=http://host.docker.internal:11434/v1
+                      and MEMBRAL_EMBEDDING_MODEL to ~/.membral/local/.env.
+                      Kept by later plain \`up\` runs. The app container must
+                      reach the host's Ollama through host.docker.internal.
+  --embeddings none   Remove those two lines (search is keyword only)
+  --embedding-model <name>
+                      Pulled Ollama model to use (default nomic-embed-text)
   --show-password     status: print the local user's password
   --wipe              down: also delete the database volume and the downloaded
                       Claude Code volume (asks first)

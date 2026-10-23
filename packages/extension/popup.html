@@ -134,6 +134,12 @@
       padding: 10px 12px;
       margin-top: 12px;
     }
+    .auth-target {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 6px;
+      word-break: break-all;
+    }
     .auth-bar {
       display: flex;
       justify-content: space-between;
@@ -343,13 +349,14 @@
 
   <!-- Auth Section — compact bar, form expands on click -->
   <div id="auth-section" class="auth-section">
+    <div id="auth-target" class="auth-target"></div>
     <div id="auth-logged-out" style="display:none;">
       <div class="auth-bar">
         <div class="auth-bar-left">
           <span class="status-dot" style="background:#4ade80;"></span>
           <span style="color:#aaa;">Local sync active</span>
         </div>
-        <button id="auth-toggle-btn" class="auth-toggle-btn">Sign in to sync to cloud &#9658;</button>
+        <button id="auth-toggle-btn" class="auth-toggle-btn">Connect to your Membral &#9658;</button>
       </div>
       <div id="auth-form-wrapper" class="auth-form-wrapper">
         <div class="auth-form">

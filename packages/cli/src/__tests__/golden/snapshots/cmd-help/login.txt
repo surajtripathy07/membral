@@ -8,6 +8,6 @@ a confirmation code, tries to open your browser, polls until you confirm,
 then saves ~/.membral/credentials.json (mode 0600). Ctrl-C cancels cleanly.
 
 Flags
-  --api-url <url>   Overrides the default API URL
+  --api-url <url>   Server URL (default http://localhost:3000)
 
 --- STDERR ---

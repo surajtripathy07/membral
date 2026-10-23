@@ -5,19 +5,17 @@ import { fetchWithTimeout } from "../common/fetch.js";
 import { RateController } from "../common/rate-controller.js";
 import { getCloudIdMap } from "./cloud-manifest.js";
 
-// issue #12: a production build (npm run build, no --mode flag => Vite mode
-// "production", import.meta.env.DEV === false) defaults to the hosted cloud;
-// a dev build (npm run dev => --mode development, see package.json) keeps
-// defaulting to the local dev server, matching how the maintainer actually
-// runs this (packages/extension loaded unpacked against localhost:3000 per
-// your local launch script). VITE_CLOUD_URL always overrides both.
-// Production default. The dev-only localhost default is assigned inside an `if (import.meta.env.DEV)`
-// block (not a ternary) so the bundler drops the literal from production builds entirely — the
-// packaging script (apps/cloud/scripts/package-extension.mjs) refuses any zip that still contains it.
+// Default target. A hosted build (VITE_MEMBRAL_PROD=1, see build-manifest.ts) points at
+// https://membral.me; every other build points at a local Membral (`membral local up`, port 3000).
+// VITE_CLOUD_URL overrides both at build time, and the Cloud URL saved in options overrides at runtime.
+// The localhost default is assigned inside an `if` block (not a ternary) so the bundler drops the
+// literal from builds that set VITE_CLOUD_URL or VITE_MEMBRAL_PROD — the packaging script
+// (apps/cloud/scripts/package-extension.mjs) refuses any zip that still contains it.
 let DEFAULT_CLOUD_URL: string = import.meta.env.VITE_CLOUD_URL ?? "https://membral.me";
-if (import.meta.env.DEV && !import.meta.env.VITE_CLOUD_URL) {
+if (import.meta.env.VITE_MEMBRAL_PROD !== "1" && !import.meta.env.VITE_CLOUD_URL) {
   DEFAULT_CLOUD_URL = "http://localhost:3000";
 }
+export const API_KEY_REJECTED_MESSAGE = "API key rejected: check the key in the extension options";
 const LAST_CLOUD_PUSH_KEY = "membral_last_cloud_push_at";
 // Round-2 review MED 9: a permanently-over-quota account (e.g. a new user
 // with 1,500 conversations against the default conversation_limit=100)
@@ -172,6 +170,7 @@ async function postSyncBatch(
   batchConversations: Conversation[],
   batchSources: string[],
   rateController: RateController,
+  usingApiKey = false,
 ): Promise<BatchOutcome> {
   for (let attempt = 0; attempt <= rateController.maxRetries; attempt++) {
     let response: Response;
@@ -187,6 +186,12 @@ async function postSyncBatch(
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return { kind: "error", message: `Cloud push error: ${message}` };
+    }
+
+    // A stored API key that the server refuses (revoked, mistyped, other stack) will not start
+    // working on a retry: report it once and stop; the next scheduled sync tries again.
+    if (response.status === 401 && usingApiKey) {
+      return { kind: "error", message: API_KEY_REJECTED_MESSAGE };
     }
 
     if (response.status === 429) {
@@ -312,7 +317,14 @@ export async function pushToCloud(
     // but there's no reason to repeat it).
     const batchSources = i === batches.length - 1 ? syncedProviderIds : [];
 
-    const outcome = await postSyncBatch(cloudUrl, token, batchConversations, batchSources, rateController);
+    const outcome = await postSyncBatch(
+      cloudUrl,
+      token,
+      batchConversations,
+      batchSources,
+      rateController,
+      authState.kind === "api-key",
+    );
 
     if (outcome.kind === "error") {
       await setCloudSyncStatus({ state: "error", error: outcome.message, at: new Date().toISOString() });

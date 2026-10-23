@@ -111,6 +111,7 @@ export const STORAGE_KEYS = {
   SYNC_STATE: "membral_state",
   SETTINGS: "membral_settings",
   AUTH_STATE: "membral_auth",
+  API_KEY: "membral_api_key",
   CLOUD_URL: "membral_cloud_url",
   CLOUD_MANIFEST: "membral_cloud_manifest",
   CLOUD_SYNC_STATUS: "membral_cloud_sync_status",

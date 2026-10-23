@@ -33,7 +33,7 @@ export interface UseCommandDeps {
 }
 
 function loginHint(name: string): string {
-  const url = name === "local" ? "http://localhost:3000" : name === "prod" ? "https://membral.me" : "<url>";
+  const url = name === "local" ? "http://localhost:3000" : "<url>";
   return `membral login --api-url ${url}`;
 }
 
@@ -43,7 +43,9 @@ export async function useCommand(name: string | undefined, deps: UseCommandDeps 
 
   if (!name) {
     if (!state) {
-      console.log("No profiles yet — run `membral login` (prod) or `membral login --api-url http://localhost:3000`.");
+      console.log(
+        "No profiles yet — run `membral local up`, or `membral login --api-url <url>` for a server you run elsewhere.",
+      );
       return;
     }
     console.log("Profiles:");

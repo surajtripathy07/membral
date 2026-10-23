@@ -419,7 +419,6 @@ export function Privacy() {
         <SectionHeading id="privacy-h">What is uploaded, and where it lives</SectionHeading>
         <div className="max-w-3xl space-y-3">
           {group("What is uploaded", PRIVACY.uploaded)}
-          {group("On membral.me", PRIVACY.hosted)}
           <div id="local" className="scroll-mt-6 space-y-3">
             {group("On your machine", PRIVACY.local)}
             <p className="text-body text-ink-2">
@@ -533,7 +532,7 @@ export function LandingFooter({ tagline }: { tagline?: string }) {
     <footer className="border-t border-line-soft py-8">
       {tagline ? <p className={`${wrap} mb-3 text-body-sm text-muted`}>{tagline}</p> : null}
       <div className={`${wrap} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
-        <span className="text-body text-ink-2">Membral · membral.me · MIT</span>
+        <span className="text-body text-ink-2">Membral · MIT</span>
         <div className="flex items-center gap-6">
           <a href="/proof" className={link}>
             Proof

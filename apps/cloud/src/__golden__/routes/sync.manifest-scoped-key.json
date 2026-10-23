@@ -1,0 +1,13 @@
+{
+  "status": 403,
+  "headers": {
+    "access-control-allow-headers": "Authorization, Content-Type",
+    "access-control-allow-methods": "GET, OPTIONS",
+    "access-control-allow-origin": "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "access-control-max-age": "86400",
+    "content-type": "application/json",
+    "vary": "Origin"
+  },
+  "afterCalls": 0,
+  "body": "{\"error\":\"Scoped API keys cannot read the conversation manifest\"}"
+}

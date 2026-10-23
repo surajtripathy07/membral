@@ -1,3 +1,5 @@
+> Sign-ups at membral.me are closed. This file is the maintainer's runbook for the hosted deployment, not an install path for users; to run Membral, see [SELF-HOSTING.md](SELF-HOSTING.md).
+
 # Deploying Membral Cloud (Vercel + hosted Supabase)
 
 Issue #12. Cross-links: #31 (membral.me domain/landing — depends on this guide). Only the

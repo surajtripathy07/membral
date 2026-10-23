@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { corsPreflight } from "@/lib/api/cors";
 import { withRoute } from "@/lib/api/route";
 import { listConversationManifestPage } from "@/lib/conversations/queries";
+import { getServiceClient } from "@/lib/db/clients";
 
 const MANIFEST_CORS_METHODS = "GET, OPTIONS";
 
@@ -13,10 +14,19 @@ export async function OPTIONS(req: NextRequest) {
 // failure, handler response), as withCors did by hand.
 export const GET = withRoute(
   {
-    auth: { kind: "bearer", missing: "Missing authorization", invalid: "Invalid token" },
+    // Supabase JWT or an unscoped lls_ key (the manifest is the extension's dedup read; a scoped key is
+    // a narrowed read lens, so it is refused here to keep the extension's pair of routes consistent).
+    auth: {
+      kind: "dual",
+      missing: "Missing authorization",
+      invalidToken: "Invalid token",
+      invalidKey: "Invalid API key",
+      scoped: { reject: "Scoped API keys cannot read the conversation manifest" },
+    },
     cors: { methods: MANIFEST_CORS_METHODS },
   },
-  async ({ req, user, supabase }) => {
+  async ({ req, userId }) => {
+    const supabase = getServiceClient();
     // Optional ?source filter
     const { searchParams } = new URL(req.url);
     const sourceFilter = searchParams.get("source");
@@ -30,7 +40,7 @@ export const GET = withRoute(
     for (let offset = 0; ; offset += PAGE_SIZE) {
       const { data, error: dbError } = await listConversationManifestPage(
         supabase,
-        user.id,
+        userId,
         sourceFilter,
         offset,
         offset + PAGE_SIZE - 1,

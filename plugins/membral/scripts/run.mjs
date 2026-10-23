@@ -4,7 +4,8 @@
 // Claude Code runs this in exec form (hooks/hooks.json) with the hook's JSON
 // on stdin. It runs the bundled CLI (./membral.mjs) as a child process, with
 // the plugin's api_key option (CLAUDE_PLUGIN_OPTION_API_KEY) passed as
-// MEMBRAL_API_KEY and the server pinned to https://membral.me, so the plugin
+// MEMBRAL_API_KEY and the server from the plugin's api_url option
+// (CLAUDE_PLUGIN_OPTION_API_URL, default http://localhost:3000), so the plugin
 // never depends on `membral login`, a profile, or a CLI on PATH. The CLI
 // runs as its own process so its argv[1] is the bundle: session-end-hook
 // re-spawns `node <argv[1]> session-end-hook --deferred-path …` detached.
@@ -43,7 +44,7 @@ import { fileURLToPath } from "node:url";
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 const SELF = fileURLToPath(import.meta.url);
 const CLI = join(HERE, "membral.mjs");
-const DEFAULT_API_URL = "https://membral.me";
+const DEFAULT_API_URL = "http://localhost:3000";
 const LOCAL_URL = /^http:\/\/(127\.0\.0\.1|localhost)(:\d{1,5})?\/?$/;
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -287,12 +288,24 @@ function importWorker(kind, dataDir, env) {
 
 // ---- main -----------------------------------------------------------------
 
-function cliEnv(apiKey) {
+// The server the user chose: the loopback test override, else the plugin's api_url option
+// (any http(s) URL: a self-hosted server need not be local), else undefined.
+function explicitApiUrl() {
   const override = process.env.MEMBRAL_PLUGIN_API_URL;
+  if (override && LOCAL_URL.test(override)) return override.replace(/\/$/, "");
+  const option = (process.env.CLAUDE_PLUGIN_OPTION_API_URL || "").trim();
+  try {
+    const u = new URL(option);
+    if (u.protocol === "http:" || u.protocol === "https:") return option.replace(/\/+$/, "");
+  } catch {}
+  return undefined;
+}
+
+function cliEnv(apiKey) {
   return {
     ...process.env,
     MEMBRAL_API_KEY: apiKey,
-    MEMBRAL_API_URL: override && LOCAL_URL.test(override) ? override.replace(/\/$/, "") : DEFAULT_API_URL,
+    MEMBRAL_API_URL: explicitApiUrl() ?? DEFAULT_API_URL,
     MEMBRAL_PREAMBLE_TIMEOUT_MS: String(PREAMBLE_FETCH_MS),
   };
 }
@@ -328,14 +341,18 @@ function main() {
     // No key in the environment: the CLI resolves ~/.membral/credentials.json itself.
     spawnSync(process.execPath, [CLI, ...mode.sub], {
       stdio: "inherit",
-      env: { ...process.env, MEMBRAL_API_URL: DEFAULT_API_URL, MEMBRAL_PREAMBLE_TIMEOUT_MS: String(PREAMBLE_FETCH_MS) },
+      env: {
+        ...process.env,
+        ...(explicitApiUrl() ? { MEMBRAL_API_URL: explicitApiUrl() } : {}),
+        MEMBRAL_PREAMBLE_TIMEOUT_MS: String(PREAMBLE_FETCH_MS),
+      },
       timeout: mode.timeoutMs,
     });
     process.exit(0);
   }
 
   if (!apiKey) {
-    console.error("membral plugin: no API key set; run /plugin, open membral, and add your key from membral.me/settings");
+    console.error("membral plugin: no API key set; run /plugin, open membral, and add your server URL and API key (from `membral local up`)");
     process.exit(0);
   }
   const env = cliEnv(apiKey);

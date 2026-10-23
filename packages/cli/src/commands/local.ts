@@ -17,6 +17,8 @@ export const localCommand: Command = {
           image: stringFlag(flags, "image"),
           email: stringFlag(flags, "email"),
           yes: boolFlag(flags, "yes"),
+          embeddings: flags.embeddings === true ? "" : stringFlag(flags, "embeddings"),
+          embeddingModel: stringFlag(flags, "embedding-model"),
           noSweep: boolFlag(flags, "no-sweep"),
         });
         return;
