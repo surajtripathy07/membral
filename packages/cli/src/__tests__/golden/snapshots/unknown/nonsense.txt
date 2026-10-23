@@ -12,7 +12,7 @@ Commands
   setup      Sign in, scan harnesses, choose syncs, and run the first import
   login      Sign in through your browser
   logout     Sign out and forget the saved credentials
-  use        List profiles, or switch server (e.g. local <-> prod)
+  use        List profiles, or switch between servers
   status     Show your account, this device, and what synced last
   import     Import a ChatGPT or Claude.ai export file
   sessions   Upload this machine's coding-session transcripts
@@ -25,7 +25,7 @@ Flags
 
 Run `membral <command> --help` for that command's flags.
 Run `membral help --all` for hook internals.
-Docs: https://membral.me
+Docs: https://github.com/surajtripathy07/membral
 
 
 --- STDERR ---

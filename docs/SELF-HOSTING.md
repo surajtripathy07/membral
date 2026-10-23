@@ -19,8 +19,10 @@ shows up there, while the message points at the auth log.
 ## 1. Install the CLI
 
 ```
-npm i -g https://membral.me/membral-cli.tgz
+git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install
 ```
+
+This builds the CLI and installs it globally. Node 22.5 or newer is required.
 
 ## 2. Pick how extraction runs (before the first `up`)
 
@@ -56,14 +58,12 @@ Claude Code runs only on your machine, with your own
 reason, and extraction with this provider is off; fix the network and run
 `docker restart membral-app-1` to retry.
 
-Ollama, offline. Run `ollama pull qwen2.5:7b` and `ollama pull nomic-embed-text` first, then make sure Ollama
-runs with a context window of at least 16k tokens (see below).
+Ollama, offline. Run `ollama pull qwen2.5:7b` first, then make sure Ollama runs with a context window of at
+least 16k tokens (see below). Embeddings are set up separately, see [Embeddings with Ollama](#embeddings-with-ollama).
 
 ```
 MEMBRAL_MODEL_BASE_URL=http://host.docker.internal:11434/v1
 MEMBRAL_MODEL=qwen2.5:7b
-MEMBRAL_EMBEDDINGS_BASE_URL=http://host.docker.internal:11434/v1
-MEMBRAL_EMBEDDING_MODEL=nomic-embed-text
 ```
 
 Ollama's default context of 4,096 tokens cuts off the start of the extraction prompt (about 4,300 tokens), and
@@ -71,6 +71,8 @@ the model then answers in the wrong JSON shape, so no memories are saved. Nothin
 the only trace is `json_parse_failed` in `membral local logs app`. Model size matters: qwen2.5:7b stored
 the planted decision as a lasting memory and found it again; qwen2.5:3b extracted it but marked it session-only, so
 search returned nothing, with no warning. Use a 7B or larger model, or the `claude-code` provider above. Calls to a model on this machine are recorded at $0.
+
+One extraction call gets 180 seconds on the local stack (60 hosted). If a slow model still times out ("Request timed out" in the logs), set `MEMBRAL_LLM_TIMEOUT_MS` in `.env`, for example `MEMBRAL_LLM_TIMEOUT_MS=300000`, and run `membral local up` again; the cap is 600000.
 
 - **Ollama not running yet (macOS):** `OLLAMA_CONTEXT_LENGTH=16384 ollama serve`.
 - **Ollama already running (the macOS app, or a service):** it keeps the context it started with, and a second
@@ -84,8 +86,10 @@ search returned nothing, with no warning. Use a 7B or larger model, or the `clau
 ## 3. Start it
 
 ```
-membral local up
+membral local up --embeddings ollama
 ```
+
+Leave out `--embeddings ollama` to start without embeddings (keyword search only).
 
 `up` starts the stack (Postgres, auth, data API, a gateway, the app), makes its keys, applies the migrations,
 creates one local user and an API key, saves and activates the `local` profile, and sets up the hooks and MCP.
@@ -145,13 +149,58 @@ Environment="OLLAMA_CONTEXT_LENGTH=16384"
   `sudo loginctl enable-linger $USER`. With cron, the cron daemon must be running
   (`sudo service cron start`).
 
-## Embeddings
+## Embeddings with Ollama
 
-Vector columns are 1,536 wide. Smaller models get zero-padded, and cosine similarity stays the same. Any model
-of 1,536 dimensions or fewer fits: `nomic-embed-text` (768), `mxbai-embed-large` (1024),
-`text-embedding-3-small` (1536). A store holds one embedding model. Switching later needs a re-embed, and that
-is not built yet, so pick before you import much. The relevance floor is off for non-OpenAI models unless you
-set `MEMBRAL_EMBEDDING_MIN_SIMILARITY`.
+Search compares meaning, so a question worded differently from the saved text still finds it. That needs an
+embedding model. Without one, `memory_search` works on keywords only and says so ("SEARCH DEGRADED ...
+keyword-only results"), and the relevance floor that drops weak matches is off. The `claude-code` extraction
+provider does no embeddings.
+
+`nomic-embed-text` is the model whose thresholds are calibrated in this repo
+(`apps/cloud/src/lib/memory/similarity.ts`). It runs on Ollama on your machine, so record text never leaves it.
+
+1. Install [Ollama](https://ollama.com) and run `ollama pull nomic-embed-text`.
+2. Run `membral local up --embeddings ollama`. It checks that Ollama answers on `http://127.0.0.1:11434`
+   (`OLLAMA_HOST` is honoured) and that `nomic-embed-text` is pulled. It then writes the two lines below into
+   `~/.membral/local/.env`. A later plain `up` keeps them.
+3. Run `membral local status`. It prints one `Embeddings: ...` line, or a keyword-only hint.
+
+```
+MEMBRAL_EMBEDDINGS_BASE_URL=http://host.docker.internal:11434/v1
+MEMBRAL_EMBEDDING_MODEL=nomic-embed-text
+```
+
+You can write those lines by hand instead; the flag only does that and the checks. `--embedding-model <name>` picks
+another pulled Ollama model, and `--embeddings none` removes the lines.
+
+The app runs in a container, so `host.docker.internal` must reach port 11434 on the host, whether you use Docker
+Desktop or Colima. Test it from a container:
+`docker run --rm curlimages/curl -s http://host.docker.internal:11434/api/tags`. It should list your models. On
+Linux Docker Engine the name maps to the docker bridge, so bind Ollama there (see "On Linux" above). If `status`
+says keyword-only, check this path first: Ollama can answer in your shell and still be out of reach of the container.
+
+Vector columns are 1,536 wide. Smaller models are zero-padded, and cosine similarity stays the same. Any model of
+1,536 dimensions or fewer fits: `nomic-embed-text` (768), `mxbai-embed-large` (1024), `text-embedding-3-small`
+(1536). A store holds one embedding model. Switching later needs a re-embed, and that is not built yet, so pick
+before you import much. Only `nomic-embed-text` has calibrated thresholds; other models run without the
+calibrated floors unless you set `MEMBRAL_EMBEDDING_MIN_SIMILARITY`.
+
+## Chrome extension on a local stack
+
+The extension syncs ChatGPT and Claude.ai chats to your stack.
+
+1. `npm run build --workspace=@membral/extension`. It targets `http://localhost:3000` by default. For another
+   port, build with `VITE_CLOUD_URL=http://localhost:<port>`, or save a Server URL in the extension's options page,
+   where Chrome asks for permission.
+2. Open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick `packages/extension/dist`.
+3. In the options page, paste the API key that `membral local up` printed (it starts `lls_`) and Save. The popup
+   shows the server and "Connected with an API key".
+
+
+## Claude Code plugin
+
+Instead of the CLI hooks, inside Claude Code run `/plugin marketplace add surajtripathy07/membral-plugin` and
+`/plugin install membral@membral`. It asks for the server URL (default `http://localhost:3000`) and the API key.
 
 ## Every day
 

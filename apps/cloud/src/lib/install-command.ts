@@ -1,16 +1,9 @@
-// The one CLI install command every page shows. Built from the app's own
-// public URL (getAppUrl) so a self-managed install shows its own address.
-// The CLI is served as a tarball at /membral-cli.tgz; it is not on npm.
-//
-// A fresh `membral setup` signs in to https://membral.me unless told
-// otherwise (DEFAULT_API_URL, packages/cli/src/credentials.ts), so any other
-// origin needs `--api-url`. Kept as a local constant: cloud does not depend
-// on the CLI package.
-const CLI_DEFAULT_API_URL = "https://membral.me";
+// The one CLI install command every page shows. The CLI is installed from a
+// clone of the repository (`npm run cli:install` builds it and installs it
+// globally); it is not on npm and no hosted tarball is promised. Starting the
+// local stack is the next command, shown beside it on the pages that need it.
+export const START_COMMAND = "membral local up --embeddings ollama";
 
-export function installCommand(appUrl: string): string {
-  const base = appUrl.trim().replace(/\/+$/, "");
-  const install = `npm i -g ${base}/membral-cli.tgz`;
-  const setup = base === CLI_DEFAULT_API_URL ? "membral setup" : `membral setup --api-url ${base}`;
-  return `${install} && ${setup}`;
+export function installCommand(_appUrl?: string): string {
+  return "git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install";
 }

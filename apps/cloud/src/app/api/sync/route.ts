@@ -6,6 +6,7 @@ import { chunkMissingConversations, embedMissingChunks } from "@/lib/conversatio
 import { embedMissingConversations } from "@/lib/conversation-embeddings";
 import { upsertConversations } from "@/lib/conversations/queries";
 import type { ConversationInsert } from "@/lib/database.types";
+import { getServiceClient } from "@/lib/db/clients";
 import { readTextBodyWithLimit } from "@/lib/http-body";
 import { findExistingConversationKeys } from "@/lib/import/ingest";
 import { embeddingsConfigured } from "@/lib/llm/embedding-client";
@@ -16,8 +17,8 @@ import { CHAT_SOURCES, conversationCountCapMessage, validateConversations } from
 
 // Issue #127 abuse-hardening audit (B3): a body-size ceiling — no default
 // Next.js app-router body-size cap exists (that's a Pages-Router-only
-// config knob), so an authenticated caller (a stolen JWT; this route is
-// JWT-only and rejects lls_ keys) could otherwise POST an arbitrarily large
+// config knob), so an authenticated caller (a stolen JWT or lls_ key; this
+// route takes a Supabase JWT or an unscoped lls_ key) could otherwise POST an arbitrarily large
 // payload. 25MB is comfortably
 // above one extension sync batch (MAX_CONVERSATIONS_PER_REQUEST = 500
 // conversations, cloud-push.ts chunks to the same number) while bounding a
@@ -36,12 +37,21 @@ export async function OPTIONS(req: NextRequest) {
 // SYNC_CORS_METHODS CORS headers on every exit, as withCors did by hand.
 export const POST = withRoute(
   {
-    auth: { kind: "bearer", missing: "Missing authorization", invalid: "Invalid token" },
-    rateLimit: { name: "sync", bucket: ({ user }) => userBucket("sync", user.id) },
+    // Supabase JWT (the hosted extension sign-in) or an unscoped lls_ key (the local stack's key, pasted into
+    // the extension's options page). A scoped key is a read lens, never a write grant: 403.
+    auth: {
+      kind: "dual",
+      missing: "Missing authorization",
+      invalidToken: "Invalid token",
+      invalidKey: "Invalid API key",
+      scoped: { reject: "Scoped API keys cannot sync conversations" },
+    },
+    rateLimit: { name: "sync", bucket: ({ userId }) => userBucket("sync", userId) },
     cors: { methods: SYNC_CORS_METHODS },
   },
-  async ({ req, user, supabase }) => {
-    const rlog = log.withContext({ request_id: requestId(req), route: "/api/sync" }).withContext({ user_id: user.id });
+  async ({ req, userId }) => {
+    const supabase = getServiceClient();
+    const rlog = log.withContext({ request_id: requestId(req), route: "/api/sync" }).withContext({ user_id: userId });
 
     // 1c. Body-size ceiling — issue #127, hardened round-2 review MED 7:
     // readTextBodyWithLimit counts bytes across STREAM CHUNKS as they arrive
@@ -107,13 +117,8 @@ export const POST = withRoute(
     let skippedCount = 0;
     let quota: { limit: number; count: number } | undefined;
     if (validatedAll.length > 0) {
-      quota = await getConversationQuota(user.id);
-      const { keys: existingKeys, degraded } = await findExistingConversationKeys(
-        supabase,
-        user.id,
-        validatedAll,
-        rlog,
-      );
+      quota = await getConversationQuota(userId);
+      const { keys: existingKeys, degraded } = await findExistingConversationKeys(supabase, userId, validatedAll, rlog);
       // Round-2 review MED 11: a degraded lookup can't be trusted to tell
       // updates from new rows — skip the pre-partition rather than risk
       // misclassifying a pure-update batch as brand-new and 402ing it.
@@ -143,7 +148,7 @@ export const POST = withRoute(
       if (declaredSources.length > 0) {
         await recordChatHeartbeats(
           supabase,
-          user.id,
+          userId,
           declaredSources.map((source) => ({ source, itemAt: null })),
         );
       }
@@ -159,7 +164,7 @@ export const POST = withRoute(
 
     // 5. Upsert conversations
     const rows: ConversationInsert[] = valid.map((c) => ({
-      user_id: user.id,
+      user_id: userId,
       source: c.source,
       source_id: c.source_id,
       title: c.title || "Untitled",
@@ -234,7 +239,7 @@ export const POST = withRoute(
       }
     }
     if (heartbeatItems.length > 0) {
-      await recordChatHeartbeats(supabase, user.id, heartbeatItems);
+      await recordChatHeartbeats(supabase, userId, heartbeatItems);
     }
 
     // Issue #132 (hosted extraction engine): every post-response step below
@@ -267,7 +272,7 @@ export const POST = withRoute(
           // permanently-failing rows on every large sync; the cap bounds that
           // too.
           try {
-            const { processed, errors } = await embedMissingConversations(supabase, user.id, Math.min(synced, 50));
+            const { processed, errors } = await embedMissingConversations(supabase, userId, Math.min(synced, 50));
             if (errors.length > 0) {
               rlog.warn("embedding errors", { processed, errorCount: errors.length, errors: errors.slice(0, 3) });
             }
@@ -284,7 +289,7 @@ export const POST = withRoute(
         // must exist before they can be embedded). Capped at 50 for the same
         // reason embedMissingConversations is.
         try {
-          const { processed, errors } = await chunkMissingConversations(supabase, user.id, Math.min(synced, 50));
+          const { processed, errors } = await chunkMissingConversations(supabase, userId, Math.min(synced, 50));
           if (errors.length > 0) {
             rlog.warn("chunking errors", { processed, errorCount: errors.length, errors: errors.slice(0, 3) });
           }
@@ -302,7 +307,7 @@ export const POST = withRoute(
           // an embedding failure never fails the request.
           if (embeddingsConfigured()) {
             try {
-              const { processed: embedded, errors: embedErrors } = await embedMissingChunks(supabase, user.id, 50);
+              const { processed: embedded, errors: embedErrors } = await embedMissingChunks(supabase, userId, 50);
               if (embedErrors.length > 0) {
                 rlog.warn("chunk embedding errors", {
                   embedded,

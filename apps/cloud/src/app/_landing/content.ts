@@ -126,7 +126,7 @@
 //   with their own account: README.md "Install in detail".
 // - Open source, MIT: LICENSE.
 // Start
-// - The command installs the CLI from membral.me and runs setup: the command; setup steps (sign in, scan agents,
+// - The command clones the repository and installs the CLI (apps/cloud/src/lib/install-command.ts); `membral local up` runs setup: setup steps (sign in, scan agents,
 //   choose projects, first import, MCP): packages/cli/src/help.ts "membral setup".
 // - Node 22.5 or newer: packages/cli/package.json "engines". Built from packages/cli: apps/cloud/package.json
 //   "prebuild" (packages/cli/scripts/pack.mjs --out public/membral-cli.tgz). MIT: LICENSE.
@@ -144,7 +144,7 @@
 // - Claude Code plugin alternative (two /plugin commands, needs an API key from Settings): README.md "Install".
 
 export const REPO_URL = "https://github.com/surajtripathy07/membral";
-export const README_INSTALL_URL = `${REPO_URL}#install`;
+export const README_INSTALL_URL = `${REPO_URL}#run-it-locally`;
 export const PROOF_URL = `${REPO_URL}#proof`;
 export const PROOF_LABEL = "README, Proof";
 export const SELF_HOSTING_DOC_URL = `${REPO_URL}/blob/main/docs/SELF-HOSTING.md`;
@@ -391,13 +391,8 @@ export const PRIVACY = {
     "Text shaped like a key, token or password is replaced with [REDACTED] before it is stored, and writes to files like .env or private keys keep no text. This works by known patterns, so a secret in an unusual shape can get through.",
     "At setup you choose which projects to sync; a project you leave out stays on your machine.",
   ],
-  hosted: [
-    "Stored in a hosted Postgres database (Supabase) where each account can read only its own rows. We run the service and hold the database's admin key, so we can technically read stored data.",
-    "Extraction is on for every account: to pull out decisions and findings, our server sends session text from your last 30 days to a hosted model provider under our key.",
-    "Deleting your account in Settings deletes everything stored for it. Deleting one session on its own is not there yet.",
-  ],
   local: [
-    "Or run all of it in Docker on your machine with membral local up. Nothing leaves it except the calls extraction makes to the model you choose. With your own Claude Code login (it needs a token from claude setup-token), that includes Claude Code's own traffic to Anthropic, and the first start downloads Claude Code from npm onto your machine; the image does not include it. With a local Ollama model, nothing leaves your machine at all.",
+    "All of it runs in Docker on your machine with membral local up. Nothing leaves it except the calls extraction makes to the model you choose. With your own Claude Code login (it needs a token from claude setup-token), that includes Claude Code's own traffic to Anthropic, and the first start downloads Claude Code from npm onto your machine; the image does not include it. With a local Ollama model, nothing leaves your machine at all.",
     "You need Docker (Compose 2.23 or newer) and Node 22.5 or newer.",
   ],
 };
@@ -412,7 +407,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Which model reads the sessions?",
-    a: "On membral.me, our server sends session text to a hosted model under our own key; you set up no key. On your machine you pick: your Claude Code login, a hosted model with your key, or a local Ollama model. With none, import, session pages and search still work; nothing is extracted.",
+    a: "You pick, when you start the stack on your machine: your Claude Code login, a hosted model with your key, or a local Ollama model. With none, import, session pages and search still work; nothing is extracted.",
   },
   {
     q: "Can my team use it?",
@@ -424,7 +419,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Do my chats leave my machine?",
-    a: "The extension sends them to the Membral you sign in to, which today is the hosted one at membral.me. Pointing the extension at a local install is not supported yet.",
+    a: "The extension sends them to your own local Membral, at http://localhost:3000 by default. They stay on your machine.",
   },
   {
     q: "Is it open source?",
@@ -449,12 +444,12 @@ export const START: {
   title: "Start",
   steps: [
     {
-      text: "In a terminal with Node 22.5 or newer, run the install command.",
+      text: "In a terminal with Node 22.5 or newer and Git, run the install command. Then start the local stack with membral local up --embeddings ollama (Ollama and the nomic-embed-text model first).",
       command: "install",
-      note: "It installs the membral command-line tool, built from packages/cli in the MIT repository, and starts setup.",
+      note: "It clones the MIT repository, then builds the membral command-line tool from packages/cli and installs it globally.",
     },
     {
-      text: "Your browser opens to sign in. Back in the terminal, setup lists the projects it found (all checked; uncheck any to keep them local) and connects the coding agents it finds.",
+      text: "membral local up runs setup for you: it signs in to your local Membral, lists the projects it found (all checked; uncheck any to keep them local) and connects the coding agents it finds.",
     },
     {
       text: "To check that it worked, run:",
@@ -462,7 +457,7 @@ export const START: {
       note: "It shows your account, this device and what synced last.",
     },
     {
-      text: "Then work as usual. Your sessions are listed at membral.me, and in Claude Code each past decision that comes with a request names the session it came from.",
+      text: "Then work as usual. Your sessions are listed in your local dashboard, and in Claude Code each past decision that comes with a request names the session it came from.",
     },
   ],
   /** The shape of one line the agent receives with a request (format of renderPromptRecallLine); the text is the example's decision. */

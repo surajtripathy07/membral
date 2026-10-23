@@ -4,10 +4,11 @@ Usage
   membral use [<profile>]
 
 Switch which Membral server this machine talks to. Each `membral login
---api-url <url>` saves a profile (localhost -> "local", membral.me ->
-"prod"). No argument lists profiles (* = active); a name makes it active
-and re-points Claude Code's and opencode's MCP entry. Hooks, the opencode
-plugin and the sweep follow the active profile — no re-setup.
+--api-url <url>` saves a profile named for its server (localhost ->
+"local"; any other host keeps its hostname). No argument lists profiles
+(* = active); a name makes it active and re-points Claude Code's and
+opencode's MCP entry. Hooks, the opencode plugin and the sweep follow the
+active profile — no re-setup.
 
   membral login --api-url http://localhost:3000   # once, creates "local"
   membral use local                                # talk to the local server

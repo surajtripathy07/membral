@@ -10,10 +10,10 @@
     {
       "name": "membral",
       "description": "Your coding agent can answer from what your past sessions found. Uploads each Claude Code session to Membral when it ends, adds a short memory preamble when a session starts, and connects the Membral MCP server. It remembers what sessions did, not current forge state; the agent checks that live.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "source": "./plugins/membral",
       "category": "productivity",
-      "homepage": "https://membral.me",
+      "homepage": "https://github.com/surajtripathy07/membral",
       "repository": "https://github.com/surajtripathy07/membral-plugin"
     }
   ]

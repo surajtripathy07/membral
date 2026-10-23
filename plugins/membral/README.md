@@ -2,6 +2,9 @@
 
 Your coding agent can answer from what your past sessions found.
 
+This plugin connects Claude Code and Antigravity to a Membral server you run yourself (`membral local up`; see the
+[repository README](https://github.com/surajtripathy07/membral)). Nothing is hosted for you.
+
 This plugin connects Claude Code and Antigravity to Membral. It carries its own copy of the Membral CLI, so there is nothing else to
 install. It adds:
 
@@ -12,7 +15,8 @@ install. It adds:
 - **SessionEnd:** hands the transcript of the session that just ended to a background child process, which uploads
   it after Claude Code exits, and returns in well under a second. The entry sets `"timeout": 10` because Claude Code
   otherwise cancels SessionEnd hooks after 1.5 s.
-- **MCP server `membral`** at `https://membral.me/api/mcp`, so Claude can search and recall your past sessions.
+- **MCP server `membral`** at `<your server URL>/api/mcp` (for `membral local up`: `http://localhost:3000/api/mcp`), so
+  Claude can search and recall your past sessions.
 
 The hooks run `node`. Without Node on the `PATH` Claude Code sees, every session shows a hook error: install Node.js
 22.5 or newer.
@@ -24,7 +28,8 @@ Antigravity's files; Claude Code reads only `.claude-plugin/`, `hooks/hooks.json
 hooks run on `PreInvocation` (preamble) and `Stop` (session upload) and call the same bundled CLI. Antigravity has no
 plugin options, so the key comes from `MEMBRAL_API_KEY` in your environment, or, if unset, from
 `~/.membral/credentials.json` (`membral login`). Antigravity's MCP file documents only stdio and bare-URL servers, so
-`mcp_config.json` bridges through `mcp-remote` and reads the bearer from `MEMBRAL_AUTH_HEADER`
+`mcp_config.json` bridges through `mcp-remote` to `http://localhost:3000/api/mcp` (it has no URL option; for another
+server use `membral setup --agy --api-url <url>`) and reads the bearer from `MEMBRAL_AUTH_HEADER`
 (`export MEMBRAL_AUTH_HEADER="Bearer <your key>"`). Antigravity's docs define no header or variable substitution for plugin MCP entries,
 so the plugin cannot supply that variable itself, and the key must not be written into this tracked file. Without it the MCP server
 fails to authenticate (the PreInvocation hook prints a warning to stderr when it is unset). `membral setup --agy` avoids the
@@ -37,27 +42,29 @@ Membral remembers what your sessions did, decided and found, even a few hours ag
 
 ## Install
 
-Create an API key at [membral.me/settings](https://membral.me/settings). Then, inside Claude Code:
+Start your server first (`membral local up` prints the URL and your API key; `membral local status` shows the URL again).
+Then, inside Claude Code:
 
 ```
 /plugin marketplace add surajtripathy07/membral-plugin
 /plugin install membral@membral
 ```
 
-The install dialog asks for your API key and masks it as you paste.
+The install dialog asks for the server URL (`http://localhost:3000` for `membral local up`, no trailing slash) and your
+API key, and masks the key as you paste.
 
 From a shell instead (this puts the key in your shell history):
 
 ```sh
 claude plugin marketplace add surajtripathy07/membral-plugin
-claude plugin install membral@membral --config api_key=<your key from membral.me/settings>
+claude plugin install membral@membral --config api_url=http://localhost:3000 --config api_key=<your key>
 ```
 
 Restart Claude Code. Check with `claude plugin list` and `claude mcp list` (the server shows as
-`plugin:membral:membral`). To change the key later: `claude plugin configure membral@membral`.
+`plugin:membral:membral`). To change the URL or key later: `claude plugin configure membral@membral`.
 
 The key is stored by Claude Code as a sensitive plugin option. The hooks pass it to the bundled CLI as
-`MEMBRAL_API_KEY` and always talk to `https://membral.me`. If no key is set, both hooks print one line to stderr and
+`MEMBRAL_API_KEY` and talk to the server URL you configured (default `http://localhost:3000`). If no key is set, both hooks print one line to stderr and
 exit 0, so your session is never blocked.
 
 Background uploads log to `import.log` in the plugin's data directory. Delete `first-import.done` and
@@ -82,8 +89,9 @@ claude mcp remove membral --scope user
 Install the CLI and let it configure Claude Code (and Antigravity, Codex, opencode and Copilot) for you:
 
 ```sh
-npm i -g https://membral.me/membral-cli.tgz
-membral setup
+git clone https://github.com/surajtripathy07/membral && cd membral
+npm ci && npm run cli:install
+membral local up
 ```
 
 ## Uninstall
@@ -93,4 +101,4 @@ claude plugin uninstall membral@membral
 claude plugin marketplace remove membral
 ```
 
-This removes the hooks and the MCP server. Your uploaded sessions stay in your Membral account.
+This removes the hooks and the MCP server. Your uploaded sessions stay in your Membral server's database.

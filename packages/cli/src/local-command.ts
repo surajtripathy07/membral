@@ -30,6 +30,15 @@ import {
 } from "./credentials.js";
 import { createDockerRunner, DOCKER_NOT_FOUND, type DockerResult, type DockerRunner } from "./docker-runner.js";
 import {
+  checkOllama,
+  DEFAULT_EMBEDDING_MODEL,
+  EMBEDDINGS_BASE_KEY,
+  EMBEDDINGS_MODEL_KEY,
+  embeddingsLine,
+  parseEmbeddingsMode,
+  removeEnvKeys,
+} from "./local-embeddings.js";
+import {
   appUrl,
   COMPOSE_PROJECT,
   DB_VOLUME,
@@ -85,6 +94,10 @@ export interface UpOptions {
   image?: string;
   email?: string;
   yes?: boolean;
+  /** "ollama": local embeddings through the host's Ollama; "none": remove them. Persists in .env. */
+  embeddings?: string;
+  /** Ollama model for --embeddings ollama (default nomic-embed-text). */
+  embeddingModel?: string;
   /** Passed to setup: don't schedule the backstop sweep (CI, throwaway HOMEs). */
   noSweep?: boolean;
 }
@@ -506,6 +519,22 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   const email = opts.email || stored.MEMBRAL_LOCAL_EMAIL || DEFAULT_EMAIL;
   if (!validEmail(email)) return fail(`Invalid email "${email}" (--email).`);
 
+  // Embeddings first: a missing Ollama or model should fail before anything starts.
+  const mode = parseEmbeddingsMode(opts.embeddings);
+  if (mode !== undefined && mode !== "ollama" && mode !== "none") return fail(mode);
+  if (opts.embeddingModel !== undefined && mode !== "ollama") {
+    return fail("--embedding-model only applies with --embeddings ollama.");
+  }
+  const embeddingSettings: EnvMap = {};
+  if (mode === "ollama") {
+    const model = opts.embeddingModel?.trim() || DEFAULT_EMBEDDING_MODEL;
+    if (!/^[A-Za-z0-9][A-Za-z0-9._\-/:]*$/.test(model)) return fail(`Invalid --embedding-model "${model}".`);
+    const check = await checkOllama(model, ctx.fetchImpl, env.OLLAMA_HOST);
+    if (!check.ok) return fail(check.message);
+    embeddingSettings[EMBEDDINGS_BASE_KEY] = check.baseUrl;
+    embeddingSettings[EMBEDDINGS_MODEL_KEY] = model;
+  }
+
   // A port held by our own running stack is not "busy".
   const ours = new Set<number>();
   for (const e of await composePs(ctx)) {
@@ -544,10 +573,15 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
       MEMBRAL_GATEWAY_PORT: String(gwPort),
       MEMBRAL_IMAGE: image,
       MEMBRAL_LOCAL_EMAIL: email,
+      ...embeddingSettings,
     },
     undefined,
     { keepPasswordAbsent: passwordUnknown },
   );
+  if (mode === "none" && removeEnvKeys(ctx.paths, [EMBEDDINGS_BASE_KEY, EMBEDDINGS_MODEL_KEY])) {
+    delete localEnv[EMBEDDINGS_BASE_KEY];
+    delete localEnv[EMBEDDINGS_MODEL_KEY];
+  }
   // Provisioning needs some password even for an existing user (it is ignored then).
   const provisionPassword = localEnv.MEMBRAL_LOCAL_PASSWORD ?? randomBytes(18).toString("base64url");
   const llmKeys = LLM_PASSTHROUGH.filter((k) => (localEnv[k] ?? "") !== "");
@@ -693,6 +727,7 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
     console.log(`  Profile: "local" is active`);
   }
 
+  console.log(`  ${embeddingsLine(localEnv)}`);
   const line = extractionLine(health.llm);
   if (line?.startsWith("Extraction is off")) console.log(line);
 }
@@ -740,6 +775,7 @@ export async function localStatus(opts: { showPassword?: boolean } = {}, deps: L
         : `  Sign in: ${email} (password: \`membral local status --show-password\`)`,
     );
   }
+  console.log(`  ${embeddingsLine(env)}`);
   const line = extractionLine(health.llm);
   if (line) console.log(line.startsWith("Extraction is off") ? line : `  ${line}`);
   if (!healthy) process.exitCode = 1;

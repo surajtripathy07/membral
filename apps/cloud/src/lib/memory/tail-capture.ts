@@ -1146,7 +1146,7 @@ async function leasePhase(state: RunState, deps: TailCaptureDeps): Promise<Lease
 
   // step2d finding 3: from here on this run WILL either write props (via
   // updateSessionMemoryProps, which always clears the lock again) or throw
-  // (leaving the lock for staleness to reclaim) — so this is the right
+  // (runTailCaptureInner releases the lock before rethrowing), so this is the right
   // place to check/acquire it, never earlier (a no-op run above never locks
   // anything) and never later (every remaining path below does real work).
   if (isMemoryExtractionLockHeld(props)) {
@@ -2398,16 +2398,36 @@ async function runTailCaptureInner(
   const lease = await leasePhase(state, deps);
   if (lease.kind === "skip") return lease.result;
 
-  const main = await mainPassPhase(state, deps);
-  if (main.kind === "skip") return withFailure(main.result);
+  // The lease lock is held from here. Every normal completion clears it via
+  // updateSessionMemoryProps; a THROW would leave it for the 15-minute stale
+  // window, and every kick in that window then answers session_locked on the
+  // same queue head. Release it (compare-and-delete: only this run's lock)
+  // before rethrowing, so the failure counts as a normal attempt and the
+  // retry/backoff state, not the lock, decides when it runs again.
+  try {
+    const main = await mainPassPhase(state, deps);
+    if (main.kind === "skip") return withFailure(main.result);
 
-  await userPassPhase(state, deps);
-  await blockerChecksPhase(state, deps);
+    await userPassPhase(state, deps);
+    await blockerChecksPhase(state, deps);
 
-  const persist = await persistPhase(state, deps);
-  if (persist.kind === "skip") return withFailure(persist.result);
+    const persist = await persistPhase(state, deps);
+    if (persist.kind === "skip") return withFailure(persist.result);
 
-  await issuesPhase(state, deps);
+    await issuesPhase(state, deps);
 
-  return withFailure(await finalizePhase(state, deps));
+    return withFailure(await finalizePhase(state, deps));
+  } catch (err) {
+    try {
+      await releaseMemoryExtractionLock(deps.supabase, userId, sessionId, opts.runId);
+    } catch (releaseErr) {
+      // Staleness still reclaims it; the original error is the one that matters.
+      log.warn("memory: could not release the extraction lock after a failed run", {
+        user_id: userId,
+        session_id: sessionId,
+        err: releaseErr instanceof Error ? releaseErr.message : String(releaseErr),
+      });
+    }
+    throw err;
+  }
 }

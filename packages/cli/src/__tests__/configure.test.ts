@@ -98,7 +98,13 @@ describe("configureMCPServer", () => {
       expect(entry.url).toBeUndefined();
       expect(entry).toEqual({
         command: "npx",
-        args: ["-y", "mcp-remote", "https://membral.me/api/mcp", "--header", `Authorization:\${MEMBRAL_AUTH_HEADER}`],
+        args: [
+          "-y",
+          "mcp-remote",
+          "http://localhost:3000/api/mcp",
+          "--header",
+          `Authorization:\${MEMBRAL_AUTH_HEADER}`,
+        ],
         env: { MEMBRAL_AUTH_HEADER: "Bearer lls_test-123" },
       });
     });
@@ -329,7 +335,7 @@ describe("configureMCPServer", () => {
       const [, written] = mainWrite();
       const config = JSON.parse(written);
       expect(config.mcpServers.membral).toEqual({
-        url: "https://membral.me/api/mcp",
+        url: "http://localhost:3000/api/mcp",
         headers: { Authorization: "Bearer lls_test-123" },
       });
     });
@@ -353,7 +359,7 @@ describe("configureMCPServer", () => {
       expect(result.message).toContain("Migrated");
       const [, written] = mainWrite();
       const config = JSON.parse(written);
-      expect(config.mcpServers.membral.url).toBe("https://membral.me/api/mcp");
+      expect(config.mcpServers.membral.url).toBe("http://localhost:3000/api/mcp");
     });
 
     it("is a no-op when already configured with the current shape", async () => {
@@ -513,7 +519,7 @@ describe("configureMCPServer", () => {
           "membral",
           JSON.stringify({
             type: "http",
-            url: "https://membral.me/api/mcp",
+            url: "http://localhost:3000/api/mcp",
             headers: { Authorization: "Bearer lls_test-123" },
             alwaysLoad: true,
           }),
@@ -556,7 +562,7 @@ describe("configureMCPServer", () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain("not found on PATH");
       expect(result.message).toContain(
-        `claude mcp add-json membral '{"type":"http","url":"https://membral.me/api/mcp","headers":{"Authorization":"Bearer lls_test-123"},"alwaysLoad":true}' --scope user`,
+        `claude mcp add-json membral '{"type":"http","url":"http://localhost:3000/api/mcp","headers":{"Authorization":"Bearer lls_test-123"},"alwaysLoad":true}' --scope user`,
       );
     });
 
@@ -614,7 +620,7 @@ describe("configureMCPServer", () => {
         "--transport",
         "http",
         "membral",
-        "https://membral.me/api/mcp",
+        "http://localhost:3000/api/mcp",
         "--header",
         "Authorization: Bearer lls_real-key",
         "--scope",

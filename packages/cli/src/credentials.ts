@@ -47,7 +47,7 @@ import { createApiClient } from "./lib/api-client.js";
 
 /** Moved here from the upload module (3C-3) to break an import cycle; that
  * module re-exports it so existing importers are unaffected. */
-export const DEFAULT_API_URL = "https://membral.me";
+export const DEFAULT_API_URL = "http://localhost:3000";
 
 export interface Credentials {
   apiUrl: string;

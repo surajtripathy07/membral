@@ -613,7 +613,7 @@ function normalizeUrl(url: string | undefined): string | undefined {
 
 /**
  * An entry is stale when the URL or Authorization it carries differs from
- * what this run would write (e.g. still on https://membral.me while the
+ * what this run would write (e.g. still on another server while the
  * active profile is http://localhost:3000). An entry we can't read either
  * field from is a hand-written custom shape — left alone.
  */

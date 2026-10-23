@@ -27,6 +27,8 @@ import {
   MEMORY_FINISH_MARGIN_MS,
   MEMORY_LEASE_SECONDS,
   MEMORY_LLM_MAX_RETRIES,
+  MEMORY_LLM_TIMEOUT_LOCAL_MS,
+  MEMORY_LLM_TIMEOUT_MAX_MS,
   MEMORY_LLM_TIMEOUT_MS,
   MEMORY_MAX_ATTEMPTS,
   MEMORY_MAX_DURATION_MS,
@@ -41,6 +43,7 @@ import {
   resetNoModelLogForTests,
   resolveMemoryBackfillMaxAgeDays,
   resolveMemoryBackfillSessions,
+  resolveMemoryLlmTimeoutMs,
   sessionGrewSinceExtraction,
   startOfUtcMonthIso,
 } from "../extraction-queue";
@@ -731,6 +734,101 @@ describe("processNextMemoryExtraction — one session per invocation", () => {
     const step = await processNextMemoryExtraction("u1", { now: NOW });
     expect(step).toMatchObject({ outcome: "released", reason: "session_locked", continueChain: false });
     expect(queue(world, "s1")).toMatchObject({ status: "pending", attempts: 0 });
+  });
+});
+
+describe("MEMBRAL_LLM_TIMEOUT_MS: the extraction LLM timeout per environment", () => {
+  it("hosted (no MEMBRAL_LOCAL, no local base URL) keeps 60s", () => {
+    expect(resolveMemoryLlmTimeoutMs({})).toBe(60_000);
+    expect(resolveMemoryLlmTimeoutMs({ MEMBRAL_MODEL_BASE_URL: "https://openrouter.ai/api/v1" })).toBe(60_000);
+  });
+
+  it("the local stack (MEMBRAL_LOCAL=1) gets 180s", () => {
+    expect(resolveMemoryLlmTimeoutMs({ MEMBRAL_LOCAL: "1" })).toBe(MEMORY_LLM_TIMEOUT_LOCAL_MS);
+    expect(MEMORY_LLM_TIMEOUT_LOCAL_MS).toBe(180_000);
+    // claude-code only runs with MEMBRAL_LOCAL=1, so it takes the same branch.
+    expect(resolveMemoryLlmTimeoutMs({ MEMBRAL_LOCAL: "1", MEMBRAL_LLM_PROVIDER: "claude-code" })).toBe(180_000);
+  });
+
+  it("a loopback or host.docker.internal model base URL gets 180s even without MEMBRAL_LOCAL", () => {
+    for (const url of [
+      "http://host.docker.internal:11434/v1",
+      "http://localhost:11434/v1",
+      "http://127.0.0.1:11434/v1",
+    ]) {
+      expect(resolveMemoryLlmTimeoutMs({ MEMBRAL_MODEL_BASE_URL: url })).toBe(180_000);
+    }
+  });
+
+  it("on Vercel a stray MEMBRAL_LOCAL or local base URL never raises the default", () => {
+    expect(resolveMemoryLlmTimeoutMs({ VERCEL: "1", MEMBRAL_LOCAL: "1" })).toBe(60_000);
+    expect(resolveMemoryLlmTimeoutMs({ VERCEL: "1", MEMBRAL_MODEL_BASE_URL: "http://localhost:11434/v1" })).toBe(
+      60_000,
+    );
+  });
+
+  it("MEMBRAL_LLM_TIMEOUT_MS wins on both, ignores junk, and is clamped to 10 minutes", () => {
+    expect(resolveMemoryLlmTimeoutMs({ MEMBRAL_LLM_TIMEOUT_MS: "90000" })).toBe(90_000);
+    expect(resolveMemoryLlmTimeoutMs({ MEMBRAL_LOCAL: "1", MEMBRAL_LLM_TIMEOUT_MS: "300000" })).toBe(300_000);
+    expect(resolveMemoryLlmTimeoutMs({ MEMBRAL_LLM_TIMEOUT_MS: "abc" })).toBe(60_000);
+    expect(resolveMemoryLlmTimeoutMs({ MEMBRAL_LOCAL: "1", MEMBRAL_LLM_TIMEOUT_MS: "-5" })).toBe(180_000);
+    expect(resolveMemoryLlmTimeoutMs({ MEMBRAL_LLM_TIMEOUT_MS: "99999999" })).toBe(MEMORY_LLM_TIMEOUT_MAX_MS);
+  });
+
+  it("the chain fits: latest chat start + the largest timeout stays under the lock stale window and the queue lease", () => {
+    const latestChatStart = MEMORY_PASS_DEADLINE_SHARE.reask * MEMORY_RUN_DEADLINE_MS; // 170s
+    for (const t of [MEMORY_LLM_TIMEOUT_LOCAL_MS, MEMORY_LLM_TIMEOUT_MAX_MS]) {
+      expect((latestChatStart + t * (MEMORY_LLM_MAX_RETRIES + 1)) / 1000).toBeLessThan(MEMORY_LEASE_SECONDS - 60);
+    }
+  });
+
+  it("processNextMemoryExtraction hands the resolved timeout to the client", async () => {
+    makeWorld(["s1"]);
+    guardOk();
+    await processNextMemoryExtraction("u1", { now: NOW, env: { MEMBRAL_LOCAL: "1" } });
+    expect(mockCreateCostGuardedLlm.mock.calls[0][2]).toMatchObject({ timeoutMs: 180_000 });
+    mockCreateCostGuardedLlm.mockClear();
+    makeWorld(["s1"]);
+    guardOk();
+    await processNextMemoryExtraction("u1", { now: NOW, env: {} });
+    expect(mockCreateCostGuardedLlm.mock.calls[0][2]).toMatchObject({ timeoutMs: 60_000 });
+  });
+});
+
+describe("a failed attempt releases the session lock; the queue moves on", () => {
+  it("a thrown failure on the head clears its lock each time (session_error, never session_locked) and, once its attempts are used up, the next session runs", async () => {
+    const world = makeWorld(["s1", "s2"]);
+    let armed = false;
+    mockCreateCostGuardedLlm.mockImplementation(async (_s: unknown, _u: unknown, opts: { capUsdOverride?: number }) => {
+      const guarded = makeGuardedLlm(opts.capUsdOverride);
+      const reply = guarded.chatCreate.getMockImplementation() as (...a: unknown[]) => Promise<unknown>;
+      guarded.chatCreate.mockImplementation(async (...a: unknown[]) => {
+        armed = true; // the props lock is held by now
+        return reply(...a);
+      });
+      return { ok: true, llm: guarded.llm, flushSpend: vi.fn().mockResolvedValue(undefined) };
+    });
+    // Persisting s1's records throws (a DB error mid-run); s2 is unaffected.
+    const realFrom = fakeSupabase.from.bind(fakeSupabase);
+    fakeSupabase.from = ((table: string) => {
+      if (armed && table === "session_memories" && world.rows.memory_extraction_queue[0].status === "running") {
+        throw new Error("db down");
+      }
+      return realFrom(table);
+    }) as typeof fakeSupabase.from;
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      armed = false;
+      const step = await processNextMemoryExtraction("u1", { now: NOW });
+      expect(step).toMatchObject({ sessionId: "s1", reason: "session_error" });
+      expect(world.rows.code_sessions[0].props.memory_extraction_lock).toBeUndefined();
+      expect(queue(world, "s1")).toMatchObject({ attempts: attempt, status: attempt < 3 ? "pending" : "failed" });
+    }
+
+    armed = false;
+    const next = await processNextMemoryExtraction("u1", { now: NOW });
+    expect(next).toMatchObject({ outcome: "done", sessionId: "s2" });
+    expect(queue(world, "s2").status).toBe("done");
   });
 });
 

@@ -36,6 +36,7 @@ import { getServiceClient, SUPABASE_ENV_MISSING_MESSAGE } from "@/lib/db/clients
 import type { Db } from "@/lib/db/types";
 import { checkFeature, getAppMode, parseUsdEnv, resolveMemoryMonthlyBudgetUsd } from "@/lib/feature-flags";
 import { resolveCostCapConfig } from "@/lib/llm/config";
+import { isLocalModelBaseURL } from "@/lib/llm/embedding-client";
 import { createCostGuardedLlm } from "@/lib/llm/spend-ledger";
 import { isLocalMode } from "@/lib/local/mode";
 import { log } from "@/lib/log";
@@ -414,8 +415,36 @@ export type MemoryStepOutcome = "none_claimed" | "done" | "skipped" | "skipped_b
 
 /** extract-next's maxDuration (route.ts must export the same literal — Next needs a literal there). */
 export const MEMORY_MAX_DURATION_MS = 300_000;
-/** P10 re-review N2: per-request LLM timeout for memory extraction (the SDK default is 10 minutes). */
+/** P10 re-review N2: per-request LLM timeout for memory extraction on hosted (the SDK default is 10 minutes). */
 export const MEMORY_LLM_TIMEOUT_MS = 60_000;
+/**
+ * Local-stack default per chat call. A 7B model on a laptop does not finish
+ * an extraction window in 60s (observed: Ollama qwen2.5:7b, 500 after 60s).
+ * With 0 retries the worst run is the latest call start (reask cutoff, 170s)
+ * + this = 350s, far under the session lock's stale window (15 min) and the
+ * queue lease (16 min); the kicker's fetch only waits for extract-next's 202.
+ */
+export const MEMORY_LLM_TIMEOUT_LOCAL_MS = 180_000;
+/** Upper clamp for MEMBRAL_LLM_TIMEOUT_MS: 170s (latest chat start) + 600s stays under the 15 min lock stale window. */
+export const MEMORY_LLM_TIMEOUT_MAX_MS = 600_000;
+
+/**
+ * Per-request timeout for memory extraction's chat calls. MEMBRAL_LLM_TIMEOUT_MS
+ * (a positive number of ms, clamped to MEMORY_LLM_TIMEOUT_MAX_MS) wins. Otherwise
+ * ONE rule picks the default: the local stack gets MEMORY_LLM_TIMEOUT_LOCAL_MS
+ * when it is not on Vercel and either MEMBRAL_LOCAL=1 or MEMBRAL_MODEL_BASE_URL
+ * is loopback / host.docker.internal; everything else keeps the hosted 60s.
+ * (MEMBRAL_LLM_PROVIDER=claude-code only runs with MEMBRAL_LOCAL=1, so it is covered.)
+ */
+export function resolveMemoryLlmTimeoutMs(env: Record<string, string | undefined> = process.env): number {
+  const raw = env.MEMBRAL_LLM_TIMEOUT_MS?.trim();
+  if (raw) {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return Math.min(Math.round(n), MEMORY_LLM_TIMEOUT_MAX_MS);
+  }
+  const local = !env.VERCEL && (isLocalMode(env) || isLocalModelBaseURL(env.MEMBRAL_MODEL_BASE_URL?.trim()));
+  return local ? MEMORY_LLM_TIMEOUT_LOCAL_MS : MEMORY_LLM_TIMEOUT_MS;
+}
 /**
  * No SDK retries for memory extraction's chat calls: the queue's attempts are
  * the retry. A 429 or provider error fails that window, the run stops
@@ -690,7 +719,7 @@ export async function processNextMemoryExtraction(
         capUsdOverride: capUsd,
         // P10 re-review N2: every LLM call's spend is written as it lands.
         flushEvery: 1,
-        timeoutMs: MEMORY_LLM_TIMEOUT_MS,
+        timeoutMs: resolveMemoryLlmTimeoutMs(env),
         maxRetries: MEMORY_LLM_MAX_RETRIES,
         embedTimeoutMs: MEMORY_EMBED_TIMEOUT_MS,
         embedMaxRetries: MEMORY_EMBED_MAX_RETRIES,

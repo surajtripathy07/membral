@@ -73,7 +73,7 @@ import {
 } from "./sync-allowlist.js";
 
 export interface SetupOptions {
-  /** Overrides MEMBRAL_API_URL / the https://membral.me default. */
+  /** Overrides MEMBRAL_API_URL / the http://localhost:3000 default. */
   apiUrl?: string;
   /** Overrides MEMBRAL_API_KEY — also skips interactive sign-in when given. */
   apiKey?: string;

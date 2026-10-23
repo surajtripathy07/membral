@@ -15,6 +15,36 @@ export interface AuthState {
   isLoggedIn: boolean;
   email?: string;
   accessToken?: string;
+  /** "api-key" when an lls_ key is stored (it wins over any Supabase session); "password" for a Supabase session. */
+  kind?: "api-key" | "password";
+}
+
+/** Password sign-in needs a Supabase project baked in at build time; a local-only build has none. */
+export function passwordSignInAvailable(): boolean {
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
+
+/** What the options page accepts as an API key: the local stack and `membral login` issue `lls_` keys. */
+export function isValidApiKeyFormat(key: string): boolean {
+  return /^lls_\S{8,}$/.test(key);
+}
+
+export async function getApiKey(): Promise<string | null> {
+  const result = await chrome.storage.local.get(STORAGE_KEYS.API_KEY);
+  const key = result?.[STORAGE_KEYS.API_KEY];
+  return typeof key === "string" && key ? key : null;
+}
+
+export async function setApiKey(key: string): Promise<void> {
+  const trimmed = key.trim();
+  if (!isValidApiKeyFormat(trimmed)) {
+    throw new Error("That does not look like a Membral API key (it starts with lls_)");
+  }
+  await chrome.storage.local.set({ [STORAGE_KEYS.API_KEY]: trimmed });
+}
+
+export async function clearApiKey(): Promise<void> {
+  await chrome.storage.local.remove(STORAGE_KEYS.API_KEY);
 }
 
 let supabaseClient: SupabaseClient | null = null;
@@ -46,6 +76,10 @@ function isTokenExpired(expiresAt: number): boolean {
 }
 
 export async function getAuthState(): Promise<AuthState> {
+  // A stored API key wins and never touches Supabase: it is sent as the bearer token as-is.
+  const apiKey = await getApiKey();
+  if (apiKey) return { isLoggedIn: true, accessToken: apiKey, kind: "api-key" };
+
   const stored = await getStoredAuth();
 
   if (!stored || !stored.accessToken) {
@@ -71,6 +105,7 @@ export async function getAuthState(): Promise<AuthState> {
             isLoggedIn: true,
             email: refreshed.email,
             accessToken: refreshed.accessToken,
+            kind: "password",
           };
         }
       } catch {}
@@ -82,6 +117,7 @@ export async function getAuthState(): Promise<AuthState> {
     isLoggedIn: true,
     email: stored.email,
     accessToken: stored.accessToken,
+    kind: "password",
   };
 }
 
@@ -108,10 +144,12 @@ export async function login(email: string, password: string): Promise<void> {
 }
 
 export async function logout(): Promise<void> {
-  const client = getSupabaseClient();
-
-  // Best-effort remote sign out
-  await client.auth.signOut().catch(() => {});
+  // Best-effort remote sign out (a local-only build has no Supabase project to sign out of)
+  if (passwordSignInAvailable()) {
+    await getSupabaseClient()
+      .auth.signOut()
+      .catch(() => {});
+  }
 
   // Always clear local auth data
   await chrome.storage.local.remove(STORAGE_KEYS.AUTH_STATE);

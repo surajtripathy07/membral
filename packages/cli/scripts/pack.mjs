@@ -150,7 +150,7 @@ function main() {
     license: pkgSrc.license,
     private: true,
     type: "module",
-    engines: { node: ">=20" },
+    engines: { node: pkgSrc.engines?.node ?? ">=22.5.0" },
     bin: pkgSrc.bin,
     main: pkgSrc.main,
     files: ["dist"],

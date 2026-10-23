@@ -990,9 +990,9 @@ export async function mergeSemanticDuplicates(
  * without `runId`, whatever lock is there (the older behaviour) — every completion path (empty-session stamp, no_prose skip, a full
  * extraction) calls this exactly once at the end, so "call
  * updateSessionMemoryProps" and "release the lease lock" are the same
- * event. A run that throws before reaching here never calls this, so its
- * lock is released only by staleness (see `isMemoryExtractionLockHeld`) —
- * matching the design's own "or older than 15 min" fallback.
+ * event. A run that throws before reaching here is released by
+ * runTailCaptureInner's catch; a killed process still leaves its lock to
+ * staleness (see `isMemoryExtractionLockHeld`, the "or older than 15 min" fallback).
  */
 export async function updateSessionMemoryProps(
   supabase: Db,

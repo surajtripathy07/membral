@@ -176,6 +176,59 @@ describe("runTailCaptureForSession (step2d finding 11)", () => {
     expect(rows.code_sessions[0].props.memory_extraction_lock).toBeUndefined(); // released at the end
   });
 
+  it("lock release: a returned failure (every window replies non-JSON) still clears this run's lock", async () => {
+    const rows = { code_sessions: [sessionRow()], code_session_turns: [...TWO_TURNS], session_memories: [] as Row[] };
+    const supabase = makeFakeSupabase(rows);
+    const chatCreate = vi.fn().mockResolvedValue({
+      choices: [{ message: { content: "sorry, I cannot produce that" } }],
+      usage: { prompt_tokens: 50, completion_tokens: 20 },
+    });
+    const embedCreate = vi.fn();
+    const llm = new LlmClient(CONFIG, {
+      client: { chat: { completions: { create: chatCreate } }, embeddings: { create: embedCreate } },
+    });
+
+    const summary = await runTailCaptureForSession({ supabase, llm }, "u1", "s1", { runId: "r1" });
+
+    expect(summary.windowsFailed).toBeGreaterThan(0);
+    expect(rows.code_sessions[0].props.memory_extraction_lock).toBeUndefined();
+  });
+
+  it("lock release: a THROW after the lock was taken clears this run's lock and rethrows, so the next kick is not session_locked", async () => {
+    const rows = { code_sessions: [sessionRow()], code_session_turns: [...TWO_TURNS], session_memories: [] as Row[] };
+    const supabase = makeFakeSupabase(rows);
+    let armed = false;
+    const chatCreate = vi.fn().mockImplementation(async () => {
+      armed = true; // the lock is already held here (the lease phase ran before any LLM call)
+      return {
+        choices: [{ message: { content: JSON.stringify({ records: [DECISION_RECORD] }) } }],
+        usage: { prompt_tokens: 50, completion_tokens: 20 },
+      };
+    });
+    const embedCreate = vi.fn().mockResolvedValue({ data: [{ embedding: [1, 0, 0] }], usage: { prompt_tokens: 5 } });
+    const llm = new LlmClient(CONFIG, {
+      client: { chat: { completions: { create: chatCreate } }, embeddings: { create: embedCreate } },
+    });
+    const realFrom = supabase.from.bind(supabase);
+    supabase.from = ((table: string) => {
+      if (armed && table === "session_memories") throw new Error("db down");
+      return realFrom(table);
+    }) as typeof supabase.from;
+
+    await expect(runTailCaptureForSession({ supabase, llm }, "u1", "s1", { runId: "r1" })).rejects.toThrow("db down");
+    expect(chatCreate).toHaveBeenCalled();
+    expect(rows.code_sessions[0].props.memory_extraction_lock).toBeUndefined();
+
+    // Another run's lock is never removed by the failing run's release (compare-and-delete on run_id).
+    const other = { at: new Date().toISOString(), run_id: "other-run" };
+    rows.code_sessions[0].props = { memory_extraction_lock: other };
+    const again = await runTailCaptureForSession({ supabase: makeFakeSupabase(rows), llm }, "u1", "s1", {
+      runId: "r2",
+    });
+    expect(again.lockHeld).toBe(true);
+    expect(rows.code_sessions[0].props.memory_extraction_lock).toEqual(other);
+  });
+
   it("G2 2.3b lease phase: a session with no turns at all is stamped once, never locked, no LLM call", async () => {
     const rows = { code_sessions: [sessionRow()], code_session_turns: [] as Row[], session_memories: [] as Row[] };
     const supabase = makeFakeSupabase(rows);

@@ -87,14 +87,13 @@ describe("/setup page", () => {
     expect(text).toContain("Download not available on this deployment");
   });
 
-  it("shows the shared install command and what happens next, with no clone-and-build steps", async () => {
+  it("shows the shared install command and what happens next", async () => {
     manifestExists = false;
     const result = await SetupPage();
     const text = collectText(result).join(" ");
     expect(text).toContain(installCommand(getAppUrl()));
     expect(text).toContain("What happens next");
     expect(text).toContain("membral status");
-    expect(text).not.toMatch(/git\s+clone/);
     expect(text).not.toContain("isn't on npm yet");
   });
 
@@ -107,7 +106,7 @@ describe("/setup page", () => {
     expect(text).toContain(".vscode/mcp.json");
   });
 
-  it("leads with the plugin path, then the CLI tarball fallback", async () => {
+  it("leads with the plugin path, then the CLI install from a clone", async () => {
     manifestExists = false;
     const text = collectText(await SetupPage()).join(" ");
     expect(text).toContain("/plugin marketplace add surajtripathy07/membral-plugin");
@@ -120,7 +119,7 @@ describe("/setup page", () => {
     expect(text).toContain("/settings#keys");
     expect(text).toContain("Generate API Key");
     expect(text).toContain("last 30 days");
-    expect(text.indexOf("/plugin marketplace add")).toBeLessThan(text.indexOf("membral-cli.tgz"));
+    expect(text.indexOf("/plugin marketplace add")).toBeLessThan(text.indexOf("npm run cli:install"));
     expect(text).not.toMatch(new RegExp(`npm i -g ${"membral"}(?![-./\\w])`));
   });
 

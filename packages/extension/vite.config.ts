@@ -1,55 +1,26 @@
 import { crx } from "@crxjs/vite-plugin";
 import { resolve } from "path";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
+import { buildManifest } from "./build-manifest";
 import baseManifest from "./manifest.json";
 
-// Issue #126 verification finding 16: the single committed manifest.json
-// lists BOTH `https://membral.me/*` and `http://localhost:3000/*` in
-// host_permissions, so a published production build used to request
-// localhost access it never uses (an unnecessary permission, and a routine
-// Chrome Web Store review question). `manifest.json` stays the dev-complete
-// source of truth (local dev — `npm run dev`, mode "development" — needs
-// localhost so the options page / background worker can reach a local
-// `next dev` cloud instance); a normal `npm run build` (mode "production",
-// vite's default with no --mode flag) strips the localhost origin here,
-// before crx ever sees it — never in the checked-in JSON itself.
-// Fresh-clone report gotcha (issue #128 self-hosting audit, #130): a
-// self-hoster running `apps/cloud`'s dev server on a non-default port (their
-// own 3000 already taken, `next dev -p <other>`, etc.) needs the dev
-// manifest's localhost host_permission to match — the checked-in
-// manifest.json hardcodes `http://localhost:3000/*`, which silently fails
-// (no host permission for their actual origin, no console error either —
-// chrome.runtime.sendMessage just never reaches a background page that
-// never registered the right origin) if their cloud app isn't ALSO on 3000.
-// Derives the port from VITE_CLOUD_URL when set (the same var
-// package-extension.mjs already threads through for a packaged build's
-// manifest — see that script), defaulting to 3000 (this repo's own
-// documented default, CLAUDE.md) when unset or unparseable.
-function localhostOriginFromCloudUrl(): string {
-  const DEFAULT_PORT = "3000";
-  const raw = process.env.VITE_CLOUD_URL;
-  if (!raw) return `http://localhost:${DEFAULT_PORT}/*`;
-  try {
-    const port = new URL(raw).port || DEFAULT_PORT;
-    return `http://localhost:${port}/*`;
-  } catch {
-    return `http://localhost:${DEFAULT_PORT}/*`;
-  }
-}
+// Which Membral the build talks to is decided in build-manifest.ts (VITE_MEMBRAL_PROD=1 -> hosted,
+// anything else -> a local Membral on :3000, VITE_CLOUD_URL overrides). manifest.json carries only the
+// ChatGPT and Claude.ai origins; the target origins are added below, so a hosted build never requests
+// localhost access and a local build never requests membral.me (Issue #126 finding 16). The default
+// build also keeps the original port-rewrite behaviour: VITE_CLOUD_URL on a different port (for
+// example `next dev -p 3005`, issue #130) yields a host permission for that port.
 
 export default defineConfig(({ mode }) => {
-  const manifest =
-    mode === "development"
-      ? {
-          ...baseManifest,
-          host_permissions: baseManifest.host_permissions.map((origin) =>
-            origin === "http://localhost:3000/*" ? localhostOriginFromCloudUrl() : origin,
-          ),
-        }
-      : {
-          ...baseManifest,
-          host_permissions: baseManifest.host_permissions.filter((origin) => origin !== "http://localhost:3000/*"),
-        };
+  // The packaging script's isolated envDir (see below) must also isolate the manifest's view of
+  // VITE_* values, so both read through loadEnv with the same directory.
+  const envDirOverride = process.env.MEMBRAL_PACKAGE_ENV_DIR ? resolve(process.env.MEMBRAL_PACKAGE_ENV_DIR) : undefined;
+  const fileEnv = loadEnv(mode, envDirOverride ?? __dirname, "VITE_");
+  const buildEnv = {
+    VITE_MEMBRAL_PROD: process.env.VITE_MEMBRAL_PROD ?? fileEnv.VITE_MEMBRAL_PROD,
+    VITE_CLOUD_URL: process.env.VITE_CLOUD_URL ?? fileEnv.VITE_CLOUD_URL,
+  };
+  const manifest = buildManifest(baseManifest, buildEnv);
 
   // Issue #127 round-2 review, BLOCKER 1: apps/cloud/scripts/package-extension.mjs
   // builds this extension for the public /setup download with an explicit,
@@ -65,7 +36,7 @@ export default defineConfig(({ mode }) => {
   // directory instead — a fresh, empty temp dir the script creates and
   // deletes per run — so no .env* file in this package's own root is ever
   // read for that build.
-  const envDir = process.env.MEMBRAL_PACKAGE_ENV_DIR ? resolve(process.env.MEMBRAL_PACKAGE_ENV_DIR) : undefined;
+  const envDir = envDirOverride;
 
   return {
     envDir,

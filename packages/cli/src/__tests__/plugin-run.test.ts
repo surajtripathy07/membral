@@ -108,13 +108,13 @@ describe("plugin run.mjs", () => {
     expect(run("agy-session-start", noKey).stdout).not.toBe("");
   });
 
-  it("runs the preamble with the plugin key, membral.me and a 4 s fetch budget, and imports once", async () => {
+  it("runs the preamble with the plugin key, the default local URL and a 4 s fetch budget, and imports once", async () => {
     const first = run("session-start");
     expect(first.status).toBe(0);
     expect(JSON.parse(first.stdout)).toEqual({
       argv: ["preamble", "--hook"],
       key: "test-key",
-      url: "https://membral.me",
+      url: "http://localhost:3000",
       timeout: "4000",
     });
     await settle();
@@ -229,7 +229,7 @@ describe("plugin run.mjs", () => {
   it("ignores a MEMBRAL_PLUGIN_API_URL that is not a loopback http URL", () => {
     for (const url of ["https://evil.example", "http://127.0.0.1.evil.example", "http://localhost.evil:1"]) {
       const res = run("session-end", { MEMBRAL_PLUGIN_API_URL: url });
-      expect(JSON.parse(res.stdout).url).toBe("https://membral.me");
+      expect(JSON.parse(res.stdout).url).toBe("http://localhost:3000");
     }
     expect(JSON.parse(run("session-end", { MEMBRAL_PLUGIN_API_URL: "http://localhost:3000" }).stdout).url).toBe(
       "http://localhost:3000",

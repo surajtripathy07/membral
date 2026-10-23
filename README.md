@@ -2,160 +2,128 @@
 
 Your coding agent can answer from what your past sessions found, including what nobody wrote down.
 
-In short: your coding agent can look up what past sessions found. A session is one conversation with Claude
-Code, Codex, opencode or Copilot. Membral saves each one, so the next session can check what was already
-decided instead of guessing, or redoing work that was settled ([Proof](#proof)).
-
-For the outage question "how was production brought back after the database stopped responding", no run without
-Membral said the database was restarted rather than restored, and every run with Membral did: 5 of 5 in each of
-four recorded sets (one repository, one developer, hand-recounted answers).
-
-Also measured: a power-user setup (an opus session that delegates to sub-agents) on six frozen tasks, five runs each. Membral helped where the answer lives only in past sessions and did not help where the code or your own notes already answer, or when resuming from a summary that holds the facts. Work on serving less stale and duplicate material is in progress and not yet at target.
-
-Membral remembers what your sessions did, decided and found, even a few hours ago. It is not a live view of your forge: it hands your agent the PR or issue, and the agent checks its current state live.
+Membral saves your coding-agent sessions (Claude Code, Codex, opencode, Copilot, Antigravity) in one store on your
+machine, extracts the decisions, learnings and outcomes, and lets your agents search them.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Install
+## How it fits together
 
-Needs Node 22.5 or newer. Membral runs on your own machine ([Run it locally](#run-it-locally) starts the app); the hosted service at membral.me stays up for existing accounts. Install the CLI, then:
+```mermaid
+flowchart LR
+  you([You])
 
+  subgraph inputs["Where your work happens"]
+    direction TB
+    subgraph agents["Coding agents"]
+      direction TB
+      cc[Claude Code]
+      cx[Codex CLI]
+      oc[opencode]
+      cp["GitHub Copilot<br/>CLI and VS Code"]
+      ag[Antigravity]
+    end
+    subgraph chats["Chat apps"]
+      direction TB
+      gpt[ChatGPT]
+      cai[Claude.ai]
+    end
+  end
+
+  cli["membral CLI<br/>hooks · 20-min sweep · import"]
+  ext["Chrome extension"]
+
+  subgraph stack["Your machine · membral local up (Docker)"]
+    direction TB
+    api["Membral app<br/>API · dashboard"]
+    mcp["MCP server<br/>memory_search · get_code_session · …"]
+    extract["Extraction<br/>runs on a timer"]
+    db[("Postgres + pgvector<br/>sessions · turns · memories")]
+  end
+
+  llm["Extraction model<br/>Claude login · Ollama 7B+ · API key"]
+  emb["Ollama on your machine<br/>nomic-embed-text"]
+
+  you -->|prompts| agents
+  you -->|chats| chats
+  agents -->|transcripts on disk| cli
+  chats -->|export file| cli
+  chats -->|open chat pages| ext
+  cli -->|upload sessions| api
+  ext -->|sync chats| api
+  api -->|store| db
+  db -->|new sessions| extract
+  extract <-->|turns in, records out| llm
+  extract -->|decisions · learnings · outcomes| db
+  api <-->|text in, vectors out| emb
+  agents <-->|MCP tool calls| mcp
+  mcp <-->|search| db
+  api -->|preamble · prompt lookup| cli
+  cli -->|added to the agent's context| agents
+  api -->|dashboard| you
+
+  style stack stroke-dasharray: 6 4
 ```
-npm i -g https://membral.me/membral-cli.tgz && membral setup
-```
 
-`membral setup` signs in to the server you point it at (nothing to paste), finds the coding agents on this machine,
-asks which projects may sync, imports the last 30 days of sessions, and installs the hooks that save every
-later session when it ends.
+**In.** The `membral` CLI reads each agent's transcripts from disk (end-of-session hooks and a 20-minute sweep) and
+uploads them. Chats come in through the Chrome extension or an export file.
 
-Using only Claude Code and happy to paste an API key? There is a two-line plugin alternative under
-[Install in detail](#install-in-detail).
+**Stored and processed.** The app keeps sessions, turns and memories in Postgres with pgvector. A timed job sends
+new turns to an extraction model and stores the decisions, learnings and outcomes that come back. A local embedding
+model turns text into vectors so search can compare meaning.
 
-**What you see afterwards.** In Claude Code, on your next prompt, matching records from earlier sessions are
-added to what your agent reads, each with the quote it came from and a link to the session. That lookup at
-prompt time is Claude Code only. Sessions from Codex, opencode, Copilot and Antigravity are saved and searchable too, and
-those agents can search them through the MCP tools, but they were not evaluated. The agent can also search for
-more itself (`memory_search`, `memory_recall`; they reach it over MCP, the standard plug-in format agents use
-for outside tools). `membral status` shows your account and what synced last (trimmed example):
-
-```
-$ membral status
-Account:
-  signed in as you@example.com (https://membral.me)
-Sync:
-  claude-code: 1/1 project(s) enabled
-Last sweep:
-  last success: 2026-01-01T00:00:00Z
-```
-
-The sessions are listed at membral.me, under Code.
-
-## Proof
-
-On one repository, with one developer and Claude Code only, five runs each way across four recorded sets: all five runs with Membral recovered an outage fact that no run without it did (the database was restarted, not restored), and Membral did not help where the code or your own notes already hold the answer. The runs were hand-recounted, and the harness is not part of this repository.
+**Back to your agent.** Agents search over MCP. The CLI adds a preamble at session start and, in Claude Code,
+matching records at each prompt. The dashboard shows everything stored.
 
 ## What it does
 
-Each coding agent (Claude Code, opencode, GitHub Copilot, Codex CLI, Antigravity) keeps its own transcripts in its own
-format, on one machine, until it prunes them. Membral is the store underneath all of them: every session in
-one shape, kept as long as you want, with its turns in order, the models, token usage, tools called, files
-touched and sub-agent tree. Decisions, learnings and outcomes are extracted from them, each with a link back
-to the session and the quote. Your ChatGPT and Claude.ai chats come in as a second input.
+- One store for sessions from every agent, in one shape: turns, models, token usage, tools, files and sub-agents.
+- Extracts decisions, learnings and outcomes, each with its quote and a link to the session.
+- Searches by meaning, with keyword search as the fallback.
+- MCP tools (`memory_search`, `memory_recall`, `get_code_session`) for any MCP-capable agent.
+- A session-start preamble and, in Claude Code only, prompt-time lookup.
+- ChatGPT and Claude.ai chats saved next to your coding sessions, and a dashboard to browse it all.
 
-**Good uses:** decisions and settled designs; issues and PRs you created or worked on; outcomes and
-measurements; mistakes and dead ends; what a parallel session did today.
-
-**Not for:** whether a PR is merged, CI status, merge conflicts, issue status, or what is deployed.
-Membral remembers what your sessions did, decided and found, even a few hours ago; it is not a live view of
-your forge. It hands your agent the PR or issue and the agent checks its state live.
-
-**Not yet:** team or admin controls, or one shared store for a team. Each developer installs it with their
-own account, and their agent looks up their own sessions.
-
-## Where your data goes
-
-On the hosted service (membral.me) your sessions are stored in a Postgres database with row-level
-security, hosted on Supabase and Vercel ([privacy page](https://membral.me/privacy)). What is saved: your
-prompts, the agent's replies, which tools it called, which files it touched, and text it wrote to files
-(capped). Tool output is not kept; secrets are redacted by pattern, and files such as `.env` keep no text.
-
-Memory extraction is on by default: the server sends your session turns to a language model under the
-operator's key (OpenAI, OpenRouter, Anthropic or Gemini, whichever the server is set to). The operator can
-technically read stored data. You choose which projects sync during setup (`~/.membral/sync.json`; new
-projects sync by default). Deleting means deleting the whole account; single sessions cannot be deleted yet.
-The account export covers chats and accepted chat memories, not coding sessions. To keep everything on your
-machine, see [Run it locally](#run-it-locally).
-
-## Install in detail
-
-Claude Code plugin instead of the CLI. Create an API key on your Membral server (or, with an existing hosted account, at membral.me) under Settings, Keys, then inside
-Claude Code (it asks for the key and masks it):
-
-```
-/plugin marketplace add surajtripathy07/membral-plugin
-/plugin install membral@membral
-```
-
-The plugin imports the last 30 days of Claude Code and opencode sessions in the background on your next
-session. Without Node 22.5+ on your PATH, every session shows a hook error. If a session's upload fails, the plugin
-catches up once a day.
-
-`membral setup` installs capture for each agent found: Claude Code hooks, an opencode plugin, Copilot CLI hooks, Codex CLI
-config, Antigravity hooks, MCP, and a 20-minute backstop sweep (launchd on macOS, a systemd user timer or cron on Linux;
-`--no-sweep` skips it).
-
-GitHub Copilot: plain `membral setup` covers it whenever the Copilot CLI or VS Code is installed (the
-`~/.copilot` hooks, MCP server and `~/.copilot/instructions/membral.instructions.md`, for every repo).
-`membral setup --copilot` inside a repo also commits `.vscode/mcp.json` and `.github/copilot-instructions.md`
-for teammates.
-
-Codex CLI: plain `membral setup` writes the Membral MCP server into `~/.codex/config.toml` (no key in the
-file), a SessionStart hook for the preamble, and a short marked block in `~/.codex/AGENTS.md` that tells
-Codex to call `memory_search` first. Codex asks you to approve the hook once; until then the AGENTS.md rule
-still gives recall. Codex inside the ChatGPT app is not yet confirmed (#413).
-
-opencode: the plugin injects the preamble into the system prompt at session start.
+It is not live state: whether a PR is merged or what is deployed is checked in your forge. One store per person;
+no team or admin controls yet.
 
 ## Run it locally
 
-Membral on your machine, in Docker. Nothing leaves the machine unless you set an LLM key or use your Claude
-login, and then only model calls go to that provider (with the Claude login, the first start also downloads
-Claude Code from npm once).
+You need Node 22.5+ with Git, Docker with Compose 2.23+ (40 GiB of VM disk), [Ollama](https://ollama.com) for
+embeddings, and one extraction model (step 3).
 
-You need, in this order:
+1. Install the CLI from a clone. This builds it and installs it globally:
+   `git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install`
+2. Pull the embedding model: `ollama pull nomic-embed-text`
+3. Pick an extraction model by putting one choice in `~/.membral/local/.env` (`mkdir -p ~/.membral/local` first):
+   - Claude subscription: `MEMBRAL_LLM_PROVIDER=claude-code` and `CLAUDE_CODE_OAUTH_TOKEN=<from claude setup-token>`
+   - API key: `OPENAI_API_KEY=...` (or `OPENROUTER_API_KEY`)
+   - Ollama: a 7B+ model such as `qwen2.5:7b`, run with `OLLAMA_CONTEXT_LENGTH=16384 ollama serve`
+4. Start it: `membral local up --embeddings ollama`
+5. Check it: `membral local status` (it prints an `Embeddings: ...` line).
 
-1. Node 22.5 or newer.
-2. Docker with Compose 2.23 or newer, and at least 40 GiB of VM disk (a 20 GiB Colima VM ran out during the
-   image build).
-3. One way to run extraction: a Claude subscription (a token from `claude setup-token`, provider
-   `claude-code`), an OpenAI or OpenRouter API key, or Ollama with a 7B or larger model (a 3B model did not
-   store decisions durably).
-4. Optional: an embedding model (Ollama or an API key). Without one, search is keyword only. The
-   `claude-code` provider does not do embeddings.
+`up` prints a sign-in URL and password and an API key; treat that output as a secret. The app is at
+`http://localhost:3000`. Image source builds, extraction setup, disk, logs, Linux notes and what works without an
+extraction model are in [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
 
-The image does not include Claude Code: with `claude-code`, the first start downloads it from npm onto your
-machine, unmodified, under Anthropic's terms, and it runs only locally with your own login (Claude Code's own
-traffic to Anthropic applies). Membral is not affiliated with or endorsed by Anthropic. That first start
-downloads about 110 MB (about 235 MB on disk) and gives it 4 minutes; if it does not finish, the app starts
-with extraction off, `membral local status` says why, and `docker restart membral-app-1` tries again. Then
-start:
+## Why embeddings
 
-```
-npm i -g https://membral.me/membral-cli.tgz
-mkdir -p ~/.membral/local && echo 'MEMBRAL_LLM_PROVIDER=claude-code' >> ~/.membral/local/.env   # or an API key, or Ollama
-membral local up
-```
+Search compares meaning, so a question worded differently from the saved text still finds it. Without an embedder,
+`memory_search` works on keywords only and says so ("SEARCH DEGRADED ... keyword-only results"), and the relevance
+floor that drops weak matches is off. `nomic-embed-text` is the model whose thresholds are calibrated in this repo
+(`apps/cloud/src/lib/memory/similarity.ts`). It runs on Ollama on your machine, so record text never leaves it.
+Vectors are 1,536 wide, and smaller models are zero-padded. Chat and session-text search (`search_conversations`) is calibrated only for `text-embedding-3-small`, so with
+`nomic-embed-text` it stays keyword-only and says so. The `claude-code` provider does no embeddings.
 
-Without any LLM, import, session pages, keyword search and MCP still work, but no memories are extracted.
-`up` pulls the app image from `ghcr.io/surajtripathy07/membral-cloud:main`. To run from source instead, clone
-the repo, then `docker build -f apps/cloud/Dockerfile -t membral-cloud:dev .` and
-`membral local up --image membral-cloud:dev`. If `up` says the database is unhealthy, run
-`membral local logs db` first (a full disk shows up there). Ollama setup, the image build, disk size, Linux
-notes, embeddings and day-to-day commands: [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
+## Chrome extension
 
-The Chrome extension syncs ChatGPT and Claude.ai chats to the hosted membral.me today; pointing it at a local stack is not supported yet.
+It syncs ChatGPT and Claude.ai chats to your local stack.
 
-`up` prints a sign-in URL and password, and an API key (treat that output as a secret). Sign in at that URL with the printed account (`you@membral.local`); to use a different local account, create one from the local server's sign-up page, or pass `--api-url http://localhost:3000` to `membral login`.
+1. `npm run build --workspace=@membral/extension` (targets `http://localhost:3000`; for another port build with
+   `VITE_CLOUD_URL=http://localhost:<port>`, or save a Server URL in the options page, where Chrome asks permission).
+2. In `chrome://extensions`, turn on Developer mode, choose Load unpacked, pick `packages/extension/dist`.
+3. In the options page, paste the API key `membral local up` printed (it starts `lls_`) and Save. The popup shows
+   the server and "Connected with an API key".
 
 ## Supported agents
 
@@ -167,29 +135,28 @@ The Chrome extension syncs ChatGPT and Claude.ai chats to the hosted membral.me 
 | Codex CLI | yes | yes | yes | yes |
 | Antigravity | yes | yes | yes | yes |
 
-Capture is the parser; sync is `membral sessions` plus the background sweep; MCP is recall; the
-preamble is injected at session start. The lookup that arrives with each prompt is Claude Code only, and only
-Claude Code was evaluated.
+Capture reads the agent's transcripts. Sync is `membral sessions` plus the sweep. MCP is search by the agent. The
+preamble is added at session start. The per-prompt lookup is Claude Code only. A Claude Code plugin is an
+alternative to the CLI hooks ([docs/SELF-HOSTING.md](docs/SELF-HOSTING.md#claude-code-plugin)).
 
-Each server you sign in to is a profile (`localhost` → `local`, `membral.me` → `prod`; `prod` is for people who already have a hosted account). Switch
-with one command, no re-setup; hooks and the sweep follow the active profile:
+## Where your data goes
 
-```bash
-membral login --api-url http://localhost:3000   # once
-membral use local    # no argument lists profiles; an existing hosted account is `membral use prod`
-```
+The local stack keeps everything on your machine. The exceptions are model calls: with an API key, session text
+goes to that provider, and with a Claude login, to Anthropic through Claude Code. Saved: prompts, replies, tools
+called, files touched and text written to files (capped). Tool output is not kept. Secrets are redacted by
+pattern, and files such as `.env` keep no text. You choose which projects sync (`~/.membral/sync.json`).
+
+## Commands
+
+- `membral local up | status | logs <service> | down` runs the stack (`down --wipe` deletes the data).
+- `membral setup`, `login` (default `http://localhost:3000`), `use`, `sessions`, `import <export.json>` and `status`.
+- `membral --help` lists every command. `npm run smoke` checks the dashboard renders the fixtures.
 
 ## More
 
-Coding sessions are primary; chats (ChatGPT, Claude.ai) come in through the Chrome extension
-(`packages/extension`) or `membral import <export.json>`, ranked second.
-
-- `npm run smoke` imports the Claude Code and opencode fixtures through the built CLI and checks the dashboard renders them
-- `membral --help` lists every command; `membral <command> --help` gives its flags
-- [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md) — the whole stack on your machine in Docker
-- [CONTRIBUTING.md](CONTRIBUTING.md) — clone to green gate to PR, in five commands
-- [docs/DEPLOY.md](docs/DEPLOY.md) — hosted deployment walkthrough
+[docs/SELF-HOSTING.md](docs/SELF-HOSTING.md) covers the stack in depth. [CONTRIBUTING.md](CONTRIBUTING.md) goes
+from clone to green gate to PR.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Source: [github.com/surajtripathy07/membral](https://github.com/surajtripathy07/membral).
+MIT, see [LICENSE](LICENSE). Source: [github.com/surajtripathy07/membral](https://github.com/surajtripathy07/membral).
