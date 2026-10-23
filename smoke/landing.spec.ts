@@ -27,7 +27,7 @@ test("signed-out landing renders the headline and the install command", async ({
   // Primary CTA: the install command and its copy button (the hero and the closing Start section each have one).
   const copyButtons = page.getByRole("button", { name: "Copy the install command" });
   await expect(copyButtons.first()).toBeVisible();
-  await expect(page.locator("code", { hasText: "npm i -g" }).first()).toBeVisible();
+  await expect(page.locator("code", { hasText: "npm run cli:install" }).first()).toBeVisible();
 
   // Proof: the compact block and the hero line both link to the full recorded runs on /proof.
   await expect(page.locator("#proof-h")).toBeVisible();
