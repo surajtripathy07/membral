@@ -10,6 +10,9 @@
 # binfmt and buildkit are the images docker/setup-qemu-action and
 # docker/setup-buildx-action pull from Docker Hub.
 #
+# Tags are not digest-pinned (a follow-up): the weekly mirror run follows
+# upstream tag moves.
+#
 # Changing an image: edit it here and at its upstream use in the same PR
 # (`scripts/ci/base-images.sh check` fails CI when they drift).
 node      public.ecr.aws/docker/library/node:20-bookworm-slim  docker.io/library/node:20-bookworm-slim

@@ -3,8 +3,9 @@
 # CI and the image publish pull from there, logged in, so a 429 from
 # public.ecr.aws or Docker Hub on the shared runner IPs does not fail them.
 # Weekly, so moving tags (node:20-bookworm-slim) pick up upstream fixes; an
-# image whose mirror already has the upstream digest is skipped. Runs on a
-# same-repo PR that changes the list, so the mirror exists before merge.
+# image whose mirror already has the upstream digest is skipped. A PR that
+# changes the list runs only the read-only `check` job; nothing is written to
+# the mirror until the change reaches main.
 name: mirror base images
 
 on:
@@ -31,16 +32,43 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # PRs: read-only. The list must cover every image in use, and each listed
+  # image must answer from the mirror or an upstream source.
+  check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        continue-on-error: true
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check the list covers every image in use
+        run: bash scripts/ci/base-images.sh check
+      - name: Resolve every listed image (read-only)
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          grep -vE '^[[:space:]]*(#|$)' .github/base-images.txt | awk '{print $1}' | while read -r name; do
+            echo "$name: $(bash scripts/ci/base-images.sh resolve "$name")"
+          done
+
+  # main, the weekly schedule and manual runs on main: the only writers.
   mirror:
-    # A fork PR's token cannot write packages.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # No setup-buildx: imagetools runs on the default builder, so this job
       # pulls no buildkit image from Docker Hub.
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3

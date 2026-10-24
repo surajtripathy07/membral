@@ -24,7 +24,13 @@ OWNER="${MIRROR_OWNER:-surajtripathy07}"
 ATTEMPTS="${RETRY_ATTEMPTS:-3}"
 DELAY="${RETRY_DELAY_S:-15}"
 # Errors that mean "this source will not work": move on without retrying.
-PERMANENT='denied|unauthorized|not found|manifest unknown|no such|invalid reference'
+# Only access and manifest-not-found wording; network errors such as
+# "no such host" stay transient and are retried.
+NOT_FOUND='manifest unknown|manifest for [^ ]+ not found|: not found$|repository does not exist|invalid reference'
+PERMANENT="denied|unauthorized|$NOT_FOUND"
+
+# is_permanent: reads error text on stdin; exit 0 when it is permanent.
+is_permanent() { grep -qiE "$PERMANENT"; }
 
 rows() { grep -vE '^[[:space:]]*(#|$)' "$LIST"; }
 
@@ -38,7 +44,7 @@ try() {
       return 0
     fi
     printf '%s\n' "$out" | tail -n 3 | sed 's/^/    /' >&2
-    if grep -qiE "$PERMANENT" <<<"$out"; then
+    if is_permanent <<<"$out"; then
       return 1
     fi
     if ((n >= ATTEMPTS)); then return 1; fi
@@ -76,7 +82,7 @@ cmd_mirror() {
       echo "> $src -> $dst"
       # GHCR answers a push to a package it is still creating with a transient
       # "denied", so only a missing source is permanent here.
-      if PERMANENT='not found|manifest unknown|invalid reference' try docker buildx imagetools create -t "$dst" "$src"; then
+      if PERMANENT="$NOT_FOUND" try docker buildx imagetools create -t "$dst" "$src"; then
         ok=1
         break
       fi
@@ -157,5 +163,6 @@ case "${1:-}" in
   prepare) shift; cmd_prepare "$@" ;;
   resolve) shift; cmd_resolve "$@" ;;
   check) cmd_check ;;
-  *) echo "usage: $0 mirror | prepare [name...] | resolve <name> | check" >&2; exit 2 ;;
+  is-permanent) is_permanent ;;
+  *) echo "usage: $0 mirror | prepare [name...] | resolve <name> | check | is-permanent < error-text" >&2; exit 2 ;;
 esac

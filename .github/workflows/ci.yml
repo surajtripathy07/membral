@@ -8,6 +8,12 @@ on:
   push:
     branches: [main]
 
+# Read-only token; packages: read lets the linux local stack job pull the GHCR
+# base-image mirror (mirror-base-images.yml).
+permissions:
+  contents: read
+  packages: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
