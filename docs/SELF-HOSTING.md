@@ -114,6 +114,9 @@ docker build -f apps/cloud/Dockerfile -t membral-cloud:dev .
 membral local up --image membral-cloud:dev
 ```
 
+The published image is multi-arch (linux/amd64 and linux/arm64). If a pull still fails with "no matching manifest", build it
+locally as above and pass `--image`.
+
 `MEMBRAL_IMAGE` works the same way as `--image`, and `up` remembers the last one in `~/.membral/local/.env`.
 
 The image contains no Claude Code; the `claude-code` provider downloads it on first start (section 2).

@@ -457,6 +457,20 @@ describe("membral local", () => {
     expect(verbs().some((s) => s.startsWith("compose up"))).toBe(false);
   });
 
+  it("explains a platform mismatch when the image pull finds no matching manifest", async () => {
+    const run = docker.runner.run.bind(docker.runner);
+    docker.runner.run = async (args, o) =>
+      args[0] === "pull"
+        ? { code: 1, stdout: "", stderr: "no matching manifest for linux/arm64/v8 in the manifest list entries" }
+        : args[0] === "image"
+          ? { code: 1, stdout: "", stderr: "No such image" }
+          : run(args, o);
+    await localUp({}, deps);
+    expect(process.exitCode).toBe(1);
+    expect(errors.some((e) => e.includes("no build for this platform") && e.includes("--image"))).toBe(true);
+    expect(verbs().some((s) => s.startsWith("compose up"))).toBe(false);
+  });
+
   it("does not call its own running stack's port busy", async () => {
     await localUp({}, deps);
     deps.isPortFree = async () => false; // 3000 and 54421 are held by our containers
