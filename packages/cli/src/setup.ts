@@ -403,7 +403,7 @@ export async function setup(opts: SetupOptions = {}): Promise<void> {
         `  Sync selection already saved (${totalEnabled}/${numbered.length} enabled) — no new projects found.`,
       );
     } else if (opts.dryRun) {
-      allowlist = existingSync ?? buildSyncAllowlist(numbered, new Set());
+      allowlist = existingSync ?? buildSyncAllowlist(numbered, new Set(), existingSync);
       console.log(`  [dry-run] would write ${defaultSyncAllowlistPath()}.`);
     } else {
       const excluded = parseExcludeList(opts.exclude);
@@ -426,7 +426,7 @@ export async function setup(opts: SetupOptions = {}): Promise<void> {
           for (const n of parseSyncAnswer(answer, numbered.length)) excluded.add(n);
         }
       }
-      allowlist = buildSyncAllowlist(numbered, excluded);
+      allowlist = buildSyncAllowlist(numbered, excluded, existingSync);
       saveSyncAllowlist(allowlist);
       console.log(
         `  Wrote ${defaultSyncAllowlistPath()} (${numbered.length - excluded.size}/${numbered.length} project(s) enabled).`,

@@ -759,6 +759,30 @@ describe("setup", () => {
     });
   });
 
+  it("--yes rewrite preserves excludePathPatterns from the existing sync.json", async () => {
+    scanHarnessesMock.mockResolvedValue([
+      {
+        harness: "claude-code",
+        projectPath: "/home/dev/app",
+        displayName: "app",
+        sessions: 1,
+        lastActiveAt: null,
+        importable: true,
+      },
+    ]);
+    loadSyncAllowlistMock.mockReturnValue({
+      version: 1,
+      updatedAt: "2026-09-01T00:00:00.000Z",
+      excludePathPatterns: ["/var/T/codehub-lab-*"],
+      harnesses: {},
+    });
+
+    await setup({ yes: true });
+
+    const [written] = saveSyncAllowlistMock.mock.calls[0];
+    expect(written.excludePathPatterns).toEqual(["/var/T/codehub-lab-*"]);
+  });
+
   it("--yes writes sync.json with every scanned project enabled", async () => {
     scanHarnessesMock.mockResolvedValue([
       {

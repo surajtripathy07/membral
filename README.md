@@ -150,6 +150,8 @@ The local stack keeps everything on your machine. The exceptions are model calls
 goes to that provider, and with a Claude login, to Anthropic through Claude Code. Saved: prompts, replies, tools
 called, files touched and text written to files (capped). Tool output is not kept. Secrets are redacted by
 pattern, and files such as `.env` keep no text. You choose which projects sync (`~/.membral/sync.json`).
+To skip throwaway scratch directories, add path patterns to that file (`*` matches any characters):
+`{"excludePathPatterns":["/private/var/folders/*/membral-lab-*"]}`. A project listed with `enabled: true` still syncs.
 
 ## Commands
 

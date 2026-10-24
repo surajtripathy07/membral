@@ -9,6 +9,7 @@ import {
   hasNewProjects,
   isProjectEnabled,
   loadSyncAllowlist,
+  matchesPathPattern,
   saveSyncAllowlist,
   validateSyncAllowlist,
 } from "../sync-allowlist.js";
@@ -119,6 +120,69 @@ describe("sync-allowlist", () => {
     it("false when every scanned project is already listed", () => {
       const allowlist = buildSyncAllowlist([project({ projectPath: "/a" })], new Set());
       expect(hasNewProjects(allowlist, [project({ projectPath: "/a" })])).toBe(false);
+    });
+  });
+
+  describe("excludePathPatterns", () => {
+    const base = (patterns?: unknown) => ({ version: 1, harnesses: {}, excludePathPatterns: patterns });
+
+    it("matches with * across slashes, anchored to the whole path", () => {
+      expect(matchesPathPattern("/tmp/*/codehub-lab-*", "/tmp/a/b/codehub-lab-claude-1")).toBe(true);
+      expect(matchesPathPattern("/tmp/codehub-*", "/x/tmp/codehub-1")).toBe(false);
+      expect(matchesPathPattern("/tmp/codehub-*", "/tmp/codehub-1/extra")).toBe(true);
+      expect(matchesPathPattern("codehub", "codehub-2")).toBe(false);
+    });
+
+    it("treats a pattern without * as an exact match and escapes regex metacharacters", () => {
+      expect(matchesPathPattern("/home/dev/app", "/home/dev/app")).toBe(true);
+      expect(matchesPathPattern("/home/dev/a.p", "/home/dev/axp")).toBe(false);
+      expect(matchesPathPattern("/w/(codehub)+[1]", "/w/(codehub)+[1]")).toBe(true);
+      expect(matchesPathPattern("/w/(codehub)+[1]*", "/w/(codehub)+[1]-x")).toBe(true);
+    });
+
+    it("disables matching projects, leaves others on the default", () => {
+      const a = validateSyncAllowlist(base(["/var/T/codehub-lab-*"]));
+      expect(isProjectEnabled(a, "claude-code", "/var/T/codehub-lab-claude-9")).toBe(false);
+      expect(isProjectEnabled(a, "claude-code", "/home/dev/app")).toBe(true);
+    });
+
+    it("lets an explicit enabled:true entry win, and enabled:false still disables", () => {
+      const a = validateSyncAllowlist({
+        version: 1,
+        excludePathPatterns: ["/var/T/*"],
+        harnesses: {
+          "claude-code": {
+            projects: [
+              { path: "/var/T/keep", enabled: true },
+              { path: "/home/dev/off", enabled: false },
+            ],
+          },
+        },
+      });
+      expect(isProjectEnabled(a, "claude-code", "/var/T/keep")).toBe(true);
+      expect(isProjectEnabled(a, "claude-code", "/var/T/other")).toBe(false);
+      expect(isProjectEnabled(a, "claude-code", "/home/dev/off")).toBe(false);
+    });
+
+    it("ignores invalid patterns without rejecting the file", () => {
+      for (const bad of ["x", [""], [1], ["ok", null], Array.from({ length: 101 }, () => "a"), {}]) {
+        const a = validateSyncAllowlist(base(bad));
+        expect(a).not.toBeNull();
+        expect(a?.excludePathPatterns).toBeUndefined();
+      }
+      expect(validateSyncAllowlist({ version: 1, harnesses: {} })?.excludePathPatterns).toBeUndefined();
+    });
+
+    it("buildSyncAllowlist carries previous patterns over (wizard rewrite)", () => {
+      const prev = validateSyncAllowlist(base(["/var/T/codehub-*"]));
+      const built = buildSyncAllowlist([project()], new Set(), prev);
+      expect(built.excludePathPatterns).toEqual(["/var/T/codehub-*"]);
+      expect(buildSyncAllowlist([project()], new Set()).excludePathPatterns).toBeUndefined();
+    });
+
+    it("round-trips through save and load", () => {
+      saveSyncAllowlist({ ...emptySyncAllowlist(), excludePathPatterns: ["/var/T/codehub-*"] }, path);
+      expect(loadSyncAllowlist(path)?.excludePathPatterns).toEqual(["/var/T/codehub-*"]);
     });
   });
 });
