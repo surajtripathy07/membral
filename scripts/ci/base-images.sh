@@ -23,6 +23,8 @@ LIST="$ROOT/.github/base-images.txt"
 OWNER="${MIRROR_OWNER:-surajtripathy07}"
 ATTEMPTS="${RETRY_ATTEMPTS:-3}"
 DELAY="${RETRY_DELAY_S:-15}"
+# Errors that mean "this source will not work": move on without retrying.
+PERMANENT='denied|unauthorized|not found|manifest unknown|no such|invalid reference'
 
 rows() { grep -vE '^[[:space:]]*(#|$)' "$LIST"; }
 
@@ -36,7 +38,7 @@ try() {
       return 0
     fi
     printf '%s\n' "$out" | tail -n 3 | sed 's/^/    /' >&2
-    if grep -qiE 'denied|unauthorized|not found|manifest unknown|no such|invalid reference' <<<"$out"; then
+    if grep -qiE "$PERMANENT" <<<"$out"; then
       return 1
     fi
     if ((n >= ATTEMPTS)); then return 1; fi
@@ -58,8 +60,13 @@ cmd_mirror() {
   while read -r name up rest; do
     dst=$(mirror_ref "$name" "$up")
     have=$(digest "$dst" || true)
-    want=$(digest "$up" || true)
-    if [[ -n "$want" && "$have" == "$want" ]]; then
+    want=""
+    # shellcheck disable=SC2086
+    for src in "$up" $rest; do
+      want=$(digest "$src" || true)
+      [[ -z "$want" ]] || break
+    done
+    if [[ -n "$have" && "$have" == "$want" ]]; then
       echo "= $dst is current"
       continue
     fi
@@ -67,7 +74,9 @@ cmd_mirror() {
     # shellcheck disable=SC2086 # rest is a space-separated list of sources
     for src in "$up" $rest; do
       echo "> $src -> $dst"
-      if try docker buildx imagetools create -t "$dst" "$src"; then
+      # GHCR answers a push to a package it is still creating with a transient
+      # "denied", so only a missing source is permanent here.
+      if PERMANENT='not found|manifest unknown|invalid reference' try docker buildx imagetools create -t "$dst" "$src"; then
         ok=1
         break
       fi
