@@ -103,7 +103,7 @@ embeddings, and one extraction model (step 3).
 5. Check it: `membral local status` (it prints an `Embeddings: ...` line).
 
 `up` prints a sign-in URL and password and an API key; treat that output as a secret. The app is at
-`http://localhost:3000`. Image source builds, extraction setup, disk, logs, Linux notes and what works without an
+`http://localhost:3000`. The image is multi-arch (amd64 and arm64); if a pull fails, build it locally and pass `--image`. Image source builds, extraction setup, disk, logs, Linux notes and what works without an
 extraction model are in [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
 
 ## Why embeddings

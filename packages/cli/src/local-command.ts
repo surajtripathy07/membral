@@ -593,7 +593,14 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   const pull = await ctx.runner.run(["pull", image]);
   if (pull.code !== 0) {
     const have = await ctx.runner.run(["image", "inspect", image]);
-    if (have.code !== 0) return fail(`Could not pull ${image}: ${lastLine(pull)}`);
+    if (have.code !== 0) {
+      if (/no matching manifest/i.test(`${pull.stderr}\n${pull.stdout}`)) {
+        console.error(
+          `${image} has no build for this platform. Build it here with \`docker build -f apps/cloud/Dockerfile -t membral-cloud:dev .\` from a clone, then run \`membral local up --image membral-cloud:dev\`.`,
+        );
+      }
+      return fail(`Could not pull ${image}: ${lastLine(pull)}`);
+    }
     console.log(`  Image: ${image} (pull failed, using the local copy)`);
   } else {
     console.log(`  Image: ${image}`);
