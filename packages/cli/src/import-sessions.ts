@@ -41,6 +41,7 @@ import {
   RateTracker,
 } from "./import-progress.js";
 import { parseChildSessions } from "./import-session.js";
+import { parseSince } from "./import-window.js";
 import { fetchKnownSessions } from "./known-sessions.js";
 import type { ApiClient } from "./lib/api-client.js";
 import { discoverOpencodeSessions } from "./opencode-export.js";
@@ -314,9 +315,11 @@ export async function importSessions(opts: ImportSessionsOptions, client?: ApiCl
 
   let sinceMs: number | undefined;
   if (opts.since) {
-    sinceMs = Date.parse(opts.since);
+    sinceMs = parseSince(opts.since);
     if (Number.isNaN(sinceMs)) {
-      logError(`Invalid --since date: "${opts.since}" (expected an ISO date, e.g. 2026-01-01)`);
+      logError(
+        `Invalid --since date: "${opts.since}" (expected an ISO date such as 2026-01-01, or a relative value such as 7d, 12h or 2w)`,
+      );
       process.exitCode = 1;
       return failureResult();
     }

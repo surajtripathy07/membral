@@ -1,8 +1,8 @@
 EXIT: 0
 --- STDOUT ---
 Usage
-  membral sessions [--root <dir>] [--since <ISO date>] [--all]
-                   [--dry-run] [--source claude-code] [--force] [--full] [--api-url <url>]
+  membral sessions [--root <dir>] [--since <date|7d>] [--all]
+                   [--dry-run] [--source <name>] [--force] [--full] [--api-url <url>]
                    [--api-key <key>]
 
 Upload this machine's coding-agent session transcripts — walks
@@ -11,7 +11,7 @@ Honors ~/.membral/sync.json: a project marked enabled:false there is
 skipped, same as the always-on agent's sweep and the SessionEnd hook.
 
 Only the last 30 days are uploaded by default (older sessions yield no
-memories and cost storage); pass --all or --since <date> for older history.
+memories and cost storage); pass --all or --since <date> for older history (--since also takes 12h, 7d, 2w).
 
 Resumes automatically: before uploading, asks the server which sessions it
 already has unchanged (same turn count and end time) and skips them, so a
@@ -20,8 +20,8 @@ sends what the server is missing.
 
 Flags
   --root <dir>      Overrides the source's default root (requires --source)
-  --since <date>    Only sessions active since this ISO date (overrides the
-                     30-day default window)
+  --since <date>    Only sessions active since this ISO date or relative
+                     value (12h, 7d, 2w); overrides the 30-day default window
   --all             Upload all history, not just the last 30 days
   --dry-run         Preview without uploading
   --source <name>   claude-code, opencode, copilot-cli, codex or agy (default: all)
