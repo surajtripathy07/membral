@@ -16,7 +16,13 @@ import { MCP_SERVER_INFO, MCP_TOOL_MANIFEST, MCP_TOOL_MANIFEST_INSTRUCTIONS } fr
 
 export const NO_STACK_MESSAGE = "no Membral stack configured; run membral local up";
 
-const SUPPORTED_PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
+// Same set as the MCP SDK's SUPPORTED_PROTOCOL_VERSIONS.
+const SUPPORTED_PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"];
+export const KEY_REJECTED_MESSAGE =
+  "Membral rejected the API key; check the key, or run membral login or membral local up";
+/** initialize, ping and tools/list must answer fast, so a host that accepts but never replies falls back. */
+const QUICK_TIMEOUT_MS = 4_000;
+const CALL_TIMEOUT_MS = 30_000;
 
 type Json = Record<string, unknown>;
 type Rpc = { jsonrpc?: string; id?: string | number | null; method?: string; params?: Json };
@@ -29,7 +35,9 @@ export interface McpStdioOptions {
   apiUrl: string;
   apiKey: string;
   fetchImpl?: typeof fetch;
-  timeoutMs?: number;
+  /** Test hooks; defaults are 4 s for initialize/ping/tools/list and 30 s for tools/call. */
+  quickTimeoutMs?: number;
+  callTimeoutMs?: number;
 }
 
 function ok(id: Rpc["id"], result: unknown): Json {
@@ -42,6 +50,8 @@ function err(id: Rpc["id"], code: number, message: string): Json {
 /** Answer from the built-in manifest. Returns null for notifications. */
 export function offlineReply(msg: Rpc, reason: string = NO_STACK_MESSAGE): Json | null {
   const isNotification = msg.id === undefined || msg.id === null;
+  // A request without an id is a notification: it never gets a reply.
+  if (isNotification) return null;
   switch (msg.method) {
     case "initialize": {
       const asked = typeof msg.params?.protocolVersion === "string" ? msg.params.protocolVersion : "";
@@ -59,7 +69,7 @@ export function offlineReply(msg: Rpc, reason: string = NO_STACK_MESSAGE): Json 
     case "tools/call":
       return ok(msg.id, { content: [{ type: "text", text: reason }], isError: true });
     default:
-      return isNotification ? null : err(msg.id, -32601, `Method not found: ${msg.method ?? ""}`);
+      return err(msg.id, -32601, `Method not found: ${msg.method ?? ""}`);
   }
 }
 
@@ -92,8 +102,11 @@ export async function runMcpStdio(opts: McpStdioOptions): Promise<void> {
 
   const emit = (m: Json) => opts.write(`${JSON.stringify(m)}\n`);
 
-  /** Forward one message. Returns the replies, or a reason string when the stack could not serve it. */
-  async function proxy(msg: Rpc): Promise<{ replies: Json[] } | { failed: string }> {
+  /** Forward one message. Returns the replies, or why the stack could not serve it. */
+  async function proxy(
+    msg: Rpc,
+  ): Promise<{ replies: Json[] } | { failed: "unreachable" | "rejected" | "http"; status?: number }> {
+    const isCall = msg.method === "tools/call";
     try {
       const res = await doFetch(endpoint, {
         method: "POST",
@@ -103,23 +116,36 @@ export async function runMcpStdio(opts: McpStdioOptions): Promise<void> {
           authorization: `Bearer ${opts.apiKey}`,
         },
         body: JSON.stringify(msg),
-        signal: AbortSignal.timeout(opts.timeoutMs ?? 30_000),
+        signal: AbortSignal.timeout(
+          isCall ? (opts.callTimeoutMs ?? CALL_TIMEOUT_MS) : (opts.quickTimeoutMs ?? QUICK_TIMEOUT_MS),
+        ),
       });
       if (res.status === 202 || res.status === 204) return { replies: [] };
-      if (res.status === 401 || res.status === 403) {
-        return { failed: "Membral rejected the API key; run membral login or membral local up" };
-      }
-      if (!res.ok) return { failed: `Membral stack answered HTTP ${res.status}; ${NO_STACK_MESSAGE}` };
+      if (res.status === 401 || res.status === 403) return { failed: "rejected", status: res.status };
+      if (res.status >= 500) return { failed: "unreachable", status: res.status };
       const text = await res.text();
-      if ((res.headers.get("content-type") ?? "").includes("text/event-stream")) {
-        return { replies: parseSse(text) };
+      if (res.ok) {
+        if ((res.headers.get("content-type") ?? "").includes("text/event-stream")) {
+          return { replies: parseSse(text) };
+        }
+        if (!text.trim()) return { replies: [] };
+        const v = JSON.parse(text);
+        return { replies: Array.isArray(v) ? v : [v] };
       }
-      if (!text.trim()) return { replies: [] };
-      const v = JSON.parse(text);
-      return { replies: Array.isArray(v) ? v : [v] };
+      // Other 4xx (400, 429, ...): surface the stack's own JSON-RPC error unchanged.
+      try {
+        const v = JSON.parse(text);
+        const list: Json[] = Array.isArray(v) ? v : [v];
+        if (list.length > 0 && list.every((m) => m && typeof m === "object" && m.jsonrpc === "2.0")) {
+          return { replies: list };
+        }
+      } catch {
+        /* not JSON */
+      }
+      return { failed: "http", status: res.status };
     } catch (e) {
       opts.log(`membral mcp: stack unreachable (${e instanceof Error ? e.name : "error"})`);
-      return { failed: NO_STACK_MESSAGE };
+      return { failed: "unreachable" };
     }
   }
 
@@ -137,7 +163,32 @@ export async function runMcpStdio(opts: McpStdioOptions): Promise<void> {
         for (const m of r.replies) emit(m);
         return;
       }
-      const reply = offlineReply(msg, r.failed);
+      const isCall = msg.method === "tools/call";
+      const hasId = msg.id !== undefined && msg.id !== null;
+      if (r.failed === "rejected") {
+        opts.log(`membral mcp: stack answered HTTP ${r.status}; the API key was rejected`);
+        const reply = offlineReply(msg, KEY_REJECTED_MESSAGE);
+        if (reply) emit(reply);
+        return;
+      }
+      if (r.failed === "http") {
+        // A non-JSON-RPC 4xx: do not claim there is no stack.
+        opts.log(`membral mcp: stack answered HTTP ${r.status}`);
+        if (hasId) {
+          if (isCall) {
+            emit(
+              ok(msg.id, {
+                content: [{ type: "text", text: `Membral stack answered HTTP ${r.status}` }],
+                isError: true,
+              }),
+            );
+          } else {
+            emit(err(msg.id, -32603, `Membral stack answered HTTP ${r.status}`));
+          }
+        }
+        return;
+      }
+      const reply = offlineReply(msg);
       if (reply) emit(reply);
       return;
     }
@@ -153,6 +204,10 @@ export async function runMcpStdio(opts: McpStdioOptions): Promise<void> {
       parsed = JSON.parse(line);
     } catch {
       emit(err(null, -32700, "Parse error"));
+      return;
+    }
+    if (Array.isArray(parsed) && parsed.length === 0) {
+      emit(err(null, -32600, "Invalid Request"));
       return;
     }
     for (const msg of Array.isArray(parsed) ? parsed : [parsed]) {

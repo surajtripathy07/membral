@@ -16,6 +16,12 @@ export const mcpCommand: Command = {
       envUrl: process.env.MEMBRAL_API_URL,
       defaultUrl: DEFAULT_API_URL,
     });
+    // A client that closes our stdout mid-write is a normal shutdown.
+    process.stdout.on("error", (e: NodeJS.ErrnoException) => {
+      if (e.code === "EPIPE") process.exit(0);
+      process.stderr.write(`membral mcp: ${e.message}\n`);
+      process.exit(1);
+    });
     await runMcpStdio({
       input: process.stdin,
       write: (line) => process.stdout.write(line),

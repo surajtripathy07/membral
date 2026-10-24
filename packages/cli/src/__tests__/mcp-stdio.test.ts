@@ -12,7 +12,13 @@ const INIT = {
 
 async function run(
   messages: unknown[],
-  extra: { apiUrl?: string; apiKey?: string; fetchImpl?: typeof fetch; rawLines?: string[] } = {},
+  extra: {
+    apiUrl?: string;
+    apiKey?: string;
+    fetchImpl?: typeof fetch;
+    rawLines?: string[];
+    quickTimeoutMs?: number;
+  } = {},
 ) {
   const input = new PassThrough();
   const out: string[] = [];
@@ -24,6 +30,7 @@ async function run(
     apiUrl: extra.apiUrl ?? "",
     apiKey: extra.apiKey ?? "",
     fetchImpl: extra.fetchImpl,
+    quickTimeoutMs: extra.quickTimeoutMs,
   });
   for (const l of extra.rawLines ?? messages.map((m) => JSON.stringify(m))) input.write(`${l}\n`);
   input.end();
@@ -65,6 +72,22 @@ describe("membral mcp offline (no profile, no key)", () => {
     expect(byId[4].result).toEqual({});
     expect(byId[5].error.code).toBe(-32601);
     expect(replies).toHaveLength(3);
+  });
+
+  it("gives no reply to id-less initialize/ping/tools/list, and rejects an empty batch", async () => {
+    const { replies } = await run([
+      { jsonrpc: "2.0", method: "initialize", params: INIT.params },
+      { jsonrpc: "2.0", method: "ping" },
+      { jsonrpc: "2.0", method: "tools/list" },
+      [],
+    ]);
+    expect(replies).toHaveLength(1);
+    expect(replies[0].error.code).toBe(-32600);
+  });
+
+  it("accepts the oldest SDK protocol version", async () => {
+    const { replies } = await run([{ ...INIT, params: { ...INIT.params, protocolVersion: "2024-10-07" } }]);
+    expect(replies[0].result.protocolVersion).toBe("2024-10-07");
   });
 
   it("reports malformed JSON as -32700 and never writes non-protocol text to stdout", async () => {
@@ -132,15 +155,69 @@ describe("membral mcp proxy", () => {
     expect(logs.length).toBeGreaterThan(0);
   });
 
-  it("turns a 401 into an actionable tools/call error", async () => {
+  it("401 on tools/call is a key-rejected error (not the no-stack text); on tools/list it falls back and logs the status only", async () => {
     const f = vi.fn(async () => new Response("no", { status: 401 }));
-    const { replies } = await run([{ jsonrpc: "2.0", id: 1, method: "tools/call", params: {} }], {
+    const { replies, logs } = await run(
+      [
+        { jsonrpc: "2.0", id: 1, method: "tools/call", params: {} },
+        { jsonrpc: "2.0", id: 2, method: "tools/list" },
+      ],
+      { apiUrl: "http://stack.test", apiKey: "lls_secret", fetchImpl: f as unknown as typeof fetch },
+    );
+    const byId = Object.fromEntries(replies.map((r) => [r.id, r]));
+    expect(byId[1].result.isError).toBe(true);
+    expect(byId[1].result.content[0].text).toContain("rejected the API key");
+    expect(byId[1].result.content[0].text).not.toContain("no Membral stack");
+    expect(byId[2].result.tools).toHaveLength(9);
+    expect(logs.some((l) => l.includes("401"))).toBe(true);
+    expect(logs.join("\n")).not.toContain("lls_secret");
+  });
+
+  it("passes a JSON-RPC error body from a 429/400 through unchanged", async () => {
+    const body = { jsonrpc: "2.0", id: 9, error: { code: -32000, message: "Too many requests" } };
+    const f = vi.fn(
+      async () => new Response(JSON.stringify(body), { status: 429, headers: { "content-type": "application/json" } }),
+    );
+    const { replies } = await run([{ jsonrpc: "2.0", id: 9, method: "tools/call", params: {} }], {
       apiUrl: "http://stack.test",
       apiKey: "k",
       fetchImpl: f as unknown as typeof fetch,
     });
-    expect(replies[0].result.isError).toBe(true);
-    expect(replies[0].result.content[0].text).toContain("rejected the API key");
+    expect(replies).toEqual([body]);
+  });
+
+  it("a non-JSON 4xx is reported as that HTTP status, a 5xx falls back to the no-stack text", async () => {
+    const f = vi.fn(async (_u: unknown, init?: RequestInit) =>
+      JSON.parse(init?.body as string).id === 1
+        ? new Response("<html>", { status: 400 })
+        : new Response("boom", { status: 503 }),
+    );
+    const { replies } = await run(
+      [
+        { jsonrpc: "2.0", id: 1, method: "tools/call", params: {} },
+        { jsonrpc: "2.0", id: 2, method: "tools/call", params: {} },
+      ],
+      { apiUrl: "http://stack.test", apiKey: "k", fetchImpl: f as unknown as typeof fetch },
+    );
+    const byId = Object.fromEntries(replies.map((r) => [r.id, r]));
+    expect(byId[1].result.content[0].text).toBe("Membral stack answered HTTP 400");
+    expect(byId[2].result.content[0].text).toBe(NO_STACK_MESSAGE);
+  });
+
+  it("a host that accepts but never answers falls back for tools/list after the quick timeout", async () => {
+    const f = vi.fn(
+      (_u: unknown, init?: RequestInit) =>
+        new Promise<Response>((_res, rej) => {
+          init?.signal?.addEventListener("abort", () => rej(new DOMException("timeout", "TimeoutError")));
+        }),
+    );
+    const { replies } = await run([{ jsonrpc: "2.0", id: 1, method: "tools/list" }], {
+      apiUrl: "http://stack.test",
+      apiKey: "k",
+      fetchImpl: f as unknown as typeof fetch,
+      quickTimeoutMs: 20,
+    });
+    expect(replies[0].result.tools).toHaveLength(9);
   });
 });
 

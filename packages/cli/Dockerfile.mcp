@@ -3,20 +3,35 @@
 # needed), so it also works when pasted into a UI with no build context.
 # With no Membral stack configured the server still answers `initialize` and
 # `tools/list`; `tools/call` reports that no stack is configured.
-FROM node:22-slim
+#
+# node:22-slim is a floating tag (it tracks the newest 22.x); pin a digest if
+# you need reproducible builds.
 
-# REF is only overridden to test a branch; the shipped default is main.
+# --- build stage ---
+FROM node:22-slim AS build
+# REF is a branch, tag or commit sha; the shipped default is main.
 ARG REF=main
 WORKDIR /app
 RUN node -e 'fetch(process.argv[1]).then(r=>{if(!r.ok)throw new Error(r.status);return r.arrayBuffer()}).then(b=>require("fs").writeFileSync("/tmp/src.tgz",Buffer.from(b)))' \
-    "https://codeload.github.com/surajtripathy07/membral/tar.gz/refs/heads/${REF}" \
+    "https://codeload.github.com/surajtripathy07/membral/tar.gz/${REF}" \
   && tar -xzf /tmp/src.tgz --strip-components=1 \
   && rm /tmp/src.tgz
-
 # Only the CLI and core workspaces: skips the Next.js app and the extension.
 RUN npm ci --workspace=@membral/core --workspace=@membral/cli --include-workspace-root --ignore-scripts \
   && npm run build -w @membral/core \
   && npm run build -w @membral/cli \
-  && npm link -w @membral/cli
+  && npm prune --omit=dev --workspace=@membral/core --workspace=@membral/cli --include-workspace-root
 
+# --- runtime stage: built output and production dependencies only ---
+FROM node:22-slim
+WORKDIR /app
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/core/package.json ./packages/core/package.json
+COPY --from=build /app/packages/core/dist ./packages/core/dist
+COPY --from=build /app/packages/cli/package.json ./packages/cli/package.json
+COPY --from=build /app/packages/cli/dist ./packages/cli/dist
+RUN chmod +x packages/cli/dist/index.js \
+  && ln -s /app/packages/cli/dist/index.js /usr/local/bin/membral
+USER node
 CMD ["membral", "mcp"]

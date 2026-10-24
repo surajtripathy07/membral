@@ -29,6 +29,8 @@ function sortKeys(v: unknown): unknown {
 }
 
 async function live() {
+  // The manifest is the default surface: keep a developer's env flag out of it.
+  vi.stubEnv("MEMBRAL_MCP_EXTENDED_TOOLS", "");
   const server = createCloudMcpServer("user-123", null, null);
   const client = new Client({ name: "test", version: "0.0.0" });
   const [ct, st] = InMemoryTransport.createLinkedPair();
