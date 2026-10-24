@@ -1,0 +1,55 @@
+# Copies the third-party images in .github/base-images.txt to GHCR
+# (ghcr.io/<owner>/membral-mirror-<name>) with the workflow's own GITHUB_TOKEN.
+# CI and the image publish pull from there, logged in, so a 429 from
+# public.ecr.aws or Docker Hub on the shared runner IPs does not fail them.
+# Weekly, so moving tags (node:20-bookworm-slim) pick up upstream fixes; an
+# image whose mirror already has the upstream digest is skipped. Runs on a
+# same-repo PR that changes the list, so the mirror exists before merge.
+name: mirror base images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/base-images.txt
+      - .github/workflows/mirror-base-images.yml
+      - scripts/ci/base-images.sh
+  pull_request:
+    paths:
+      - .github/base-images.txt
+      - .github/workflows/mirror-base-images.yml
+      - scripts/ci/base-images.sh
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirror-base-images
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    # A fork PR's token cannot write packages.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check the list covers every image in use
+        run: bash scripts/ci/base-images.sh check
+      - name: Mirror
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: bash scripts/ci/base-images.sh mirror
