@@ -1,41 +1,227 @@
 # Builds the self-hosted cloud image (apps/cloud/Dockerfile) and publishes it to
 # GHCR. Publishing is off until the repo variable PUBLISH_IMAGE is set to 'true'
 # (Settings > Secrets and variables > Actions > Variables), so merging this
-# workflow publishes nothing.
+# workflow publishes nothing. A PR that touches the image's inputs runs the
+# `build` job instead: both platforms, read-only token, nothing pushed, so a
+# broken publish shows on the PR, not on main.
 name: image
 
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - apps/cloud/Dockerfile
+      - apps/cloud/docker/**
+      - .github/workflows/image.yml
+      - .github/base-images.txt
+      - scripts/ci/base-images.sh
   workflow_dispatch:
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   publish:
-    if: vars.PUBLISH_IMAGE == 'true'
+    if: github.event_name != 'pull_request' && vars.PUBLISH_IMAGE == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+      - name: Tool images (mirror first, upstream fallback)
+        id: tools
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "binfmt=$(bash scripts/ci/base-images.sh resolve binfmt)" >> "$GITHUB_OUTPUT"
+          echo "buildkit=$(bash scripts/ci/base-images.sh resolve buildkit)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
+        with:
+          image: ${{ steps.tools.outputs.binfmt }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          driver-opts: image=${{ steps.tools.outputs.buildkit }}
+      # The node base image from the GHCR mirror (mirror-base-images.yml) when
+      # readable, else upstream: anonymous pulls from runner IPs hit 429.
+      - name: Base image
+        id: base
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          bash scripts/ci/base-images.sh check
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
+      # Three attempts: a registry 429 is transient.
+      - name: Build (attempt 1)
+        id: build1
+        continue-on-error: true
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: apps/cloud/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
+          build-args: NODE_IMAGE=${{ steps.base.outputs.node }}
           tags: |
             ghcr.io/surajtripathy07/membral-cloud:${{ github.sha }}
             ghcr.io/surajtripathy07/membral-cloud:main
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Wait, then re-resolve the base image (second attempt)
+        if: steps.build1.outcome == 'failure'
+        id: base2
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 30
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
+      - name: Build (attempt 2)
+        id: build2
+        if: steps.build1.outcome == 'failure'
+        continue-on-error: true
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/cloud/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: NODE_IMAGE=${{ steps.base2.outputs.node }}
+          tags: |
+            ghcr.io/surajtripathy07/membral-cloud:${{ github.sha }}
+            ghcr.io/surajtripathy07/membral-cloud:main
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Wait, then re-resolve the base image (third attempt)
+        if: steps.build2.outcome == 'failure'
+        id: base3
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 90
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
+      - name: Build (attempt 3)
+        id: build3
+        if: steps.build2.outcome == 'failure'
+        continue-on-error: false
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/cloud/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: NODE_IMAGE=${{ steps.base3.outputs.node }}
+          tags: |
+            ghcr.io/surajtripathy07/membral-cloud:${{ github.sha }}
+            ghcr.io/surajtripathy07/membral-cloud:main
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # PR dry-run: same build, read-only token, nothing pushed.
+  build:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # A fork PR's token may not log in; images then come from upstream.
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        continue-on-error: true
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tool images (mirror first, upstream fallback)
+        id: tools
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "binfmt=$(bash scripts/ci/base-images.sh resolve binfmt)" >> "$GITHUB_OUTPUT"
+          echo "buildkit=$(bash scripts/ci/base-images.sh resolve buildkit)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
+        with:
+          image: ${{ steps.tools.outputs.binfmt }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          driver-opts: image=${{ steps.tools.outputs.buildkit }}
+      # The node base image from the GHCR mirror (mirror-base-images.yml) when
+      # readable, else upstream: anonymous pulls from runner IPs hit 429.
+      - name: Base image
+        id: base
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          bash scripts/ci/base-images.sh check
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
+      # Three attempts: a registry 429 is transient.
+      - name: Build (attempt 1)
+        id: build1
+        continue-on-error: true
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/cloud/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: false
+          build-args: NODE_IMAGE=${{ steps.base.outputs.node }}
+          tags: |
+            ghcr.io/surajtripathy07/membral-cloud:${{ github.sha }}
+            ghcr.io/surajtripathy07/membral-cloud:main
+          cache-from: type=gha
+      - name: Wait, then re-resolve the base image (second attempt)
+        if: steps.build1.outcome == 'failure'
+        id: base2
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 30
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
+      - name: Build (attempt 2)
+        id: build2
+        if: steps.build1.outcome == 'failure'
+        continue-on-error: true
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/cloud/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: false
+          build-args: NODE_IMAGE=${{ steps.base2.outputs.node }}
+          tags: |
+            ghcr.io/surajtripathy07/membral-cloud:${{ github.sha }}
+            ghcr.io/surajtripathy07/membral-cloud:main
+          cache-from: type=gha
+      - name: Wait, then re-resolve the base image (third attempt)
+        if: steps.build2.outcome == 'failure'
+        id: base3
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 90
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
+      - name: Build (attempt 3)
+        id: build3
+        if: steps.build2.outcome == 'failure'
+        continue-on-error: false
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/cloud/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: false
+          build-args: NODE_IMAGE=${{ steps.base3.outputs.node }}
+          tags: |
+            ghcr.io/surajtripathy07/membral-cloud:${{ github.sha }}
+            ghcr.io/surajtripathy07/membral-cloud:main
+          cache-from: type=gha

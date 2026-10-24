@@ -8,6 +8,12 @@ on:
   push:
     branches: [main]
 
+# Read-only token; packages: read lets the linux local stack job pull the GHCR
+# base-image mirror (mirror-base-images.yml).
+permissions:
+  contents: read
+  packages: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -228,9 +234,44 @@ jobs:
           docker version
           docker compose version
 
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      # Third-party images come from the GHCR mirror (mirror-base-images.yml)
+      # when this token can read it, else from upstream with retries:
+      # anonymous pulls from runner IPs hit 429 at public.ecr.aws and Docker
+      # Hub. A fork PR cannot log in or read the mirror, so neither step is
+      # fatal; base-images.sh falls back to upstream on its own.
+      - name: Log in to GHCR (base-image mirror)
+        continue-on-error: true
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build the cloud image (local only, not pushed)
+      - name: Tool images (mirror first, upstream fallback)
+        id: tools
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "binfmt=$(bash scripts/ci/base-images.sh resolve binfmt)" >> "$GITHUB_OUTPUT"
+          echo "buildkit=$(bash scripts/ci/base-images.sh resolve buildkit)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          driver-opts: image=${{ steps.tools.outputs.buildkit }}
+
+      - name: Base images (mirror first, upstream fallback)
+        id: base
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          bash scripts/ci/base-images.sh check
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
+          bash scripts/ci/base-images.sh prepare postgres gotrue postgrest caddy
+
+      # Three attempts: a registry 429 is transient.
+      - name: Build the cloud image (local only, not pushed) (attempt 1)
+        id: build1
+        continue-on-error: true
         timeout-minutes: 25
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
@@ -239,16 +280,76 @@ jobs:
           push: false
           load: true
           tags: ${{ env.MEMBRAL_CI_IMAGE }}
+          build-args: NODE_IMAGE=${{ steps.base.outputs.node }}
+          cache-from: type=gha,scope=linux-local
+          cache-to: type=gha,mode=max,scope=linux-local
+
+      - name: Wait, then re-resolve the base image (second build attempt)
+        if: steps.build1.outcome == 'failure'
+        id: base2
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 30
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
+
+      - name: Build the cloud image (local only, not pushed) (attempt 2)
+        id: build2
+        if: steps.build1.outcome == 'failure'
+        continue-on-error: true
+        timeout-minutes: 25
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/cloud/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.MEMBRAL_CI_IMAGE }}
+          build-args: NODE_IMAGE=${{ steps.base2.outputs.node }}
+          cache-from: type=gha,scope=linux-local
+          cache-to: type=gha,mode=max,scope=linux-local
+
+      - name: Wait, then re-resolve the base image (third build attempt)
+        if: steps.build2.outcome == 'failure'
+        id: base3
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 90
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
+
+      - name: Build the cloud image (local only, not pushed) (attempt 3)
+        id: build3
+        if: steps.build2.outcome == 'failure'
+        continue-on-error: false
+        timeout-minutes: 25
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/cloud/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.MEMBRAL_CI_IMAGE }}
+          build-args: NODE_IMAGE=${{ steps.base3.outputs.node }}
           cache-from: type=gha,scope=linux-local
           cache-to: type=gha,mode=max,scope=linux-local
 
       - name: membral local up
         id: up
-        timeout-minutes: 12
+        timeout-minutes: 20
         run: |
           mkdir -p "$HOME_SCRATCH"
-          HOME="$HOME_SCRATCH" MEMBRAL_IMAGE="$MEMBRAL_CI_IMAGE" \
-            node packages/cli/dist/index.js local up --yes --no-sweep
+          for attempt in 1 2 3; do
+            if HOME="$HOME_SCRATCH" MEMBRAL_IMAGE="$MEMBRAL_CI_IMAGE" \
+              node packages/cli/dist/index.js local up --yes --no-sweep; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "local up attempt $attempt failed; retrying in $((20 * attempt * attempt))s"
+              sleep $((20 * attempt * attempt))
+            fi
+          done
+          exit 1
 
       - name: membral local status
         timeout-minutes: 2
