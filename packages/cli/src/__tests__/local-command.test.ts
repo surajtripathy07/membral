@@ -29,7 +29,15 @@ import {
   localUp,
   migrationVersion,
 } from "../local-command.js";
-import { KICK_INTERVAL_S, kickerScript, localPaths, parseEnv, renderCompose, signSupabaseJwt } from "../local-stack.js";
+import {
+  KICK_INTERVAL_S,
+  kickerScript,
+  localDirFor,
+  localPaths,
+  parseEnv,
+  renderCompose,
+  signSupabaseJwt,
+} from "../local-stack.js";
 
 interface Call {
   args: string[];
@@ -48,6 +56,9 @@ function makeFakeDocker(
     composeCode?: number;
     composeVersion?: string;
     volumeExists?: boolean;
+    contextInspect?: string;
+    pullCode?: number;
+    baseUpCode?: number;
   } = {},
 ) {
   const calls: Call[] = [];
@@ -61,6 +72,8 @@ function makeFakeDocker(
         return { code: opts.versionCode ?? 0, stdout: "27.0", stderr: opts.versionStderr ?? "boom" };
       if (args[0] === "compose" && args[1] === "version")
         return { code: opts.composeCode ?? 0, stdout: `${opts.composeVersion ?? "2.29.1"}\n`, stderr: "" };
+      if (args[0] === "pull") return { code: opts.pullCode ?? 0, stdout: "", stderr: "pull access denied" };
+      if (args[0] === "context") return ok(opts.contextInspect ?? "");
       if (args[0] === "create") return ok("cid123\n");
       if (args[0] === "volume") return { code: opts.volumeExists ? 0 : 1, stdout: "", stderr: "no such volume" };
       if (args[0] === "cp") {
@@ -84,6 +97,9 @@ function makeFakeDocker(
             )
             .join("\n"),
         );
+      }
+      if (sub[0] === "up" && sub.includes("auth") && opts.baseUpCode) {
+        return { code: opts.baseUpCode, stdout: "", stderr: "container db is unhealthy" };
       }
       if (sub[0] === "up") {
         for (const svc of sub.filter((s) => ["db", "auth", "rest", "gateway", "app", "kicker"].includes(s))) {
@@ -176,6 +192,7 @@ describe("membral local", () => {
       validateKey: async (_u, k) => ({ status: validKeys.has(k) ? "valid" : "invalid" }),
       runSetup,
       activate,
+      sweepCheck: async () => null,
     };
   });
 
@@ -523,6 +540,101 @@ describe("membral local", () => {
   it("passes --no-sweep through to setup", async () => {
     await localUp({ noSweep: true }, deps);
     expect(runSetup).toHaveBeenCalledWith(expect.objectContaining({ noSweep: true }));
+  });
+
+  it("exits non-zero with a clear line when the sweep agent is not loaded, unless --no-sweep", async () => {
+    deps.sweepCheck = async () => "launchctl: Could not find service";
+    await localUp({}, deps);
+    expect(process.exitCode).toBe(1);
+    expect(errors.at(-1)).toContain("Sweep agent not installed");
+    expect(errors.at(-1)).toContain("membral setup");
+    process.exitCode = undefined;
+    errors.length = 0;
+    await localUp({ noSweep: true }, deps);
+    expect(process.exitCode).toBeUndefined();
+    expect(errors).toEqual([]);
+  });
+
+  it("names MEMBRAL_LLM_PROVIDER and the README section in the extraction-off hint, in up and status", async () => {
+    expect(EXTRACTION_OFF_LINE).toContain("MEMBRAL_LLM_PROVIDER=claude-code");
+    expect(EXTRACTION_OFF_LINE).toContain("Run it locally");
+    await localUp({}, deps);
+    await localStatus({}, deps);
+    expect(logs.filter((l) => l === EXTRACTION_OFF_LINE)).toHaveLength(2);
+  });
+
+  it("names the endpoint it tried when the daemon is unreachable (active context, or DOCKER_HOST)", async () => {
+    deps.runner = makeFakeDocker({
+      versionCode: 1,
+      contextInspect: "colima-dev unix:///home/u/.colima/dev/docker.sock\n",
+    }).runner;
+    await localUp({}, deps);
+    expect(errors.at(-1)).toContain("tried context colima-dev unix:///home/u/.colima/dev/docker.sock");
+    deps.env = { DOCKER_HOST: "unix:///tmp/other.sock" };
+    await localStatus({}, deps);
+    expect(errors.at(-1)).toContain("tried DOCKER_HOST unix:///tmp/other.sock");
+  });
+
+  it("points a db/auth failure at the db log and free disk", async () => {
+    deps.runner = makeFakeDocker({ baseUpCode: 1 }).runner;
+    await localUp({}, deps);
+    expect(process.exitCode).toBe(1);
+    expect(errors.at(-1)).toContain("`membral local logs db`");
+    expect(errors.at(-1)).toContain("`membral local logs auth`");
+    expect(errors.at(-1)).toContain("free disk space");
+  });
+
+  it("says a local image is not pulled for an explicit --image, and keeps 'pull failed' for the default", async () => {
+    deps.runner = makeFakeDocker({ pullCode: 1 }).runner;
+    await localUp({ image: "membral-local-test:dev" }, deps);
+    expect(logs).toContain("  Image: membral-local-test:dev (local image, not pulled)");
+    expect(out()).not.toContain("pull failed");
+    logs.length = 0;
+    const d = { ...deps, paths: localPaths(join(dir, "local2")), runner: makeFakeDocker({ pullCode: 1 }).runner };
+    await localUp({}, d);
+    expect(out()).toContain("(pull failed, using the local copy)");
+  });
+
+  describe("--project", () => {
+    it("default stack is unchanged: project membral, default volumes", async () => {
+      await localUp({}, deps);
+      const yml = readFileSync(deps.paths!.compose, "utf8");
+      expect(yml).toContain("name: membral\n");
+      expect(yml).toContain("name: membral-local-db\n");
+      expect(yml).toContain("name: membral-local-claude-cli\n");
+      expect(docker.calls.find((c) => c.args[1] === "-p")!.args.slice(0, 3)).toEqual(["compose", "-p", "membral"]);
+      expect(localDirFor()).toMatch(/\.membral[\\/]local$/);
+    });
+
+    it("a custom name changes project, dir and volumes, and threads through down/status/logs", async () => {
+      await localUp({ project: "alt" }, deps);
+      const yml = readFileSync(deps.paths!.compose, "utf8");
+      expect(yml).toContain("name: alt\n");
+      expect(yml).toContain("name: membral-local-db-alt\n");
+      expect(yml).toContain("name: membral-local-claude-cli-alt\n");
+      expect(localDirFor("alt")).toMatch(/\.membral[\\/]local-alt$/);
+      expect(errors).toEqual([]);
+      docker.calls.length = 0;
+      await localStatus({ project: "alt" }, deps);
+      await localLogs({ project: "alt" }, deps);
+      await localDown({ project: "alt" }, deps);
+      const composeCalls = docker.calls.filter((c) => c.args[1] === "-p");
+      expect(composeCalls.length).toBeGreaterThanOrEqual(3);
+      for (const c of composeCalls) expect(c.args.slice(1, 3)).toEqual(["-p", "alt"]);
+    });
+
+    it("MEMBRAL_LOCAL_PROJECT is honoured, and an invalid name is rejected before docker runs", async () => {
+      deps.env = { MEMBRAL_LOCAL_PROJECT: "from-env" };
+      await localUp({}, deps);
+      expect(readFileSync(deps.paths!.compose, "utf8")).toContain("name: from-env\n");
+      docker.calls.length = 0;
+      for (const bad of ["Upper", "-lead", "has space", "x".repeat(32)]) {
+        await localUp({ project: bad }, deps);
+        expect(errors.at(-1)).toContain(`Invalid project name "${bad}"`);
+      }
+      expect(docker.calls).toEqual([]);
+      expect(process.exitCode).toBe(1);
+    });
   });
 
   it("prints the extraction-off line only when health says off", async () => {

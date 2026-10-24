@@ -106,6 +106,11 @@ embeddings, and one extraction model (step 3).
 `http://localhost:3000`. The image is multi-arch (amd64 and arm64); if a pull fails, build it locally and pass `--image`. Image source builds, extraction setup, disk, logs, Linux notes and what works without an
 extraction model are in [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
 
+To run a second stack beside it (for example to test a branch), add `--project <name>` to `local up|down|status|logs`
+(or set `MEMBRAL_LOCAL_PROJECT`) and pass free `--port` and `--gateway-port` values. Its files live in
+`~/.membral/local-<name>` and its Docker volumes end in `-<name>`; the default stack is untouched. Both stacks write
+the one `local` CLI profile, so the last `up` wins.
+
 ## Why embeddings
 
 Search compares meaning, so a question worded differently from the saved text still finds it. Without an embedder,
