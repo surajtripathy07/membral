@@ -26,7 +26,7 @@ export const IMAGES = {
   db: "public.ecr.aws/supabase/postgres:17.6.1.166",
   auth: "public.ecr.aws/supabase/gotrue:v2.196.0",
   rest: "public.ecr.aws/supabase/postgrest:v14.5",
-  gateway: "caddy:2-alpine",
+  gateway: "public.ecr.aws/docker/library/caddy:2-alpine",
 } as const;
 
 /** LLM settings passed through to the app only when set in .env. */

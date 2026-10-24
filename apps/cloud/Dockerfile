@@ -7,7 +7,7 @@
 # NEXT_PUBLIC_APP_URL, SUPABASE_SERVICE_ROLE_KEY, optional SUPABASE_INTERNAL_URL.
 # SQL migrations ship read-only at /app/migrations.
 
-ARG NODE_IMAGE=node:20-bookworm-slim
+ARG NODE_IMAGE=public.ecr.aws/docker/library/node:20-bookworm-slim
 
 FROM ${NODE_IMAGE} AS build
 WORKDIR /repo
