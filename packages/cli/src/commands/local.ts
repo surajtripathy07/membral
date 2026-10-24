@@ -9,6 +9,12 @@ export const localCommand: Command = {
     const sub = rest[0];
     const args = rest.slice(1);
     const flags = parseFlags(args);
+    // `membral local up --help` must print usage, not start the preflight (index.ts only catches rest[0]).
+    if (sub && flags.help === true) {
+      console.log(HELP.local);
+      return;
+    }
+    const project = stringFlag(flags, "project");
     switch (sub) {
       case "up":
         await localUp({
@@ -20,17 +26,23 @@ export const localCommand: Command = {
           embeddings: flags.embeddings === true ? "" : stringFlag(flags, "embeddings"),
           embeddingModel: stringFlag(flags, "embedding-model"),
           noSweep: boolFlag(flags, "no-sweep"),
+          project,
         });
         return;
       case "down":
-        await localDown({ wipe: boolFlag(flags, "wipe") || boolFlag(flags, "purge"), yes: boolFlag(flags, "yes") });
+        await localDown({
+          wipe: boolFlag(flags, "wipe") || boolFlag(flags, "purge"),
+          yes: boolFlag(flags, "yes"),
+          project,
+        });
         return;
       case "status":
-        await localStatus({ showPassword: boolFlag(flags, "show-password") });
+        await localStatus({ showPassword: boolFlag(flags, "show-password"), project });
         return;
       case "logs":
         await localLogs({
-          service: args.find((a) => !a.startsWith("-")),
+          service: args.find((a, i) => !a.startsWith("-") && args[i - 1] !== "--project"),
+          project,
           follow: args.includes("-f") || args.includes("--follow"),
         });
         return;

@@ -46,20 +46,43 @@ export const LLM_PASSTHROUGH = [
   "CLAUDE_CODE_OAUTH_TOKEN",
 ] as const;
 
+/** A custom compose project name (--project / MEMBRAL_LOCAL_PROJECT): lowercase, compose- and volume-safe. */
+export const PROJECT_NAME_RE = /^[a-z0-9][a-z0-9-]{0,30}$/;
+
 export interface LocalPaths {
   dir: string;
+  /** Custom compose project; unset = the default stack ("membral"). */
+  project?: string;
   env: string;
   compose: string;
   migrations: string;
 }
 
-export function localPaths(dir: string = join(homedir(), ".membral", "local")): LocalPaths {
+export function localPaths(dir: string = join(homedir(), ".membral", "local"), project?: string): LocalPaths {
   return {
     dir,
+    ...(project ? { project } : {}),
     env: join(dir, ".env"),
     compose: join(dir, "docker-compose.yml"),
     migrations: join(dir, "migrations"),
   };
+}
+
+/** The default stack dir, or ~/.membral/local-<project> for a custom project. */
+export function localDirFor(project?: string): string {
+  return join(homedir(), ".membral", project ? `local-${project}` : "local");
+}
+
+export function projectName(paths: Pick<LocalPaths, "project">): string {
+  return paths.project ?? COMPOSE_PROJECT;
+}
+
+export function dbVolumeName(project?: string): string {
+  return project ? `${DB_VOLUME}-${project}` : DB_VOLUME;
+}
+
+export function claudeCliVolumeName(project?: string): string {
+  return project ? `${CLAUDE_CLI_VOLUME}-${project}` : CLAUDE_CLI_VOLUME;
 }
 
 // --- keys --------------------------------------------------------------------
@@ -227,6 +250,8 @@ export interface StackSettings {
   image: string;
   /** Names from LLM_PASSTHROUGH that are set in .env. */
   llmKeys: string[];
+  /** Custom compose project (names the project and suffixes the volumes). */
+  project?: string;
 }
 
 export function appUrl(port: number): string {
@@ -336,7 +361,7 @@ export function renderCompose(s: StackSettings): string {
   const pg = envRef("POSTGRES_PASSWORD");
   const llm = s.llmKeys.map((k) => `      ${k}: ${q(envRef(k))}\n`).join("");
   return `# Written by \`membral local up\` — rewritten on every run; edit .env instead.
-name: ${COMPOSE_PROJECT}
+name: ${s.project ?? COMPOSE_PROJECT}
 
 services:
   db:
@@ -474,9 +499,9 @@ ${llm}    healthcheck:
 
 volumes:
   db-data:
-    name: ${DB_VOLUME}
+    name: ${dbVolumeName(s.project)}
   claude-cli:
-    name: ${CLAUDE_CLI_VOLUME}
+    name: ${claudeCliVolumeName(s.project)}
 
 configs:
   membral_roles:

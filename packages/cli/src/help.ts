@@ -346,9 +346,10 @@ sets "dogfood": {"issue": <n>, "repo": "owner/name"} and/or
   local: `Usage
   membral local up [--port <n>] [--gateway-port <n>] [--image <ref>] [--email <addr>]
                    [--embeddings ollama|none] [--embedding-model <name>] [--yes] [--no-sweep]
-  membral local status [--show-password]
-  membral local down [--wipe [--yes]]
-  membral local logs [db|auth|rest|gateway|app] [-f]
+                   [--project <name>]
+  membral local status [--show-password] [--project <name>]
+  membral local down [--wipe [--yes]] [--project <name>]
+  membral local logs [db|auth|rest|gateway|app|kicker] [-f] [--project <name>]
 
 Run Membral entirely on this machine with Docker. \`up\` writes a compose
 stack to ~/.membral/local (Postgres, auth, data API, a gateway and the
@@ -374,6 +375,11 @@ Flags
   --embeddings none   Remove those two lines (search is keyword only)
   --embedding-model <name>
                       Pulled Ollama model to use (default nomic-embed-text)
+  --project <name>    Run a second stack beside the default one (also
+                      MEMBRAL_LOCAL_PROJECT): compose project <name>, files in
+                      ~/.membral/local-<name>, volumes suffixed -<name>. Pass
+                      --port and --gateway-port that are free; give every
+                      command the same name. kicker is the extraction runner.
   --show-password     status: print the local user's password
   --wipe              down: also delete the database volume and the downloaded
                       Claude Code volume (asks first)

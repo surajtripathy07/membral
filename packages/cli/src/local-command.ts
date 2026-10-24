@@ -6,6 +6,7 @@
 // idempotent: a second `up` changes nothing and mints nothing.
 //
 // Docker is reached only through the injected DockerRunner (tests use a fake).
+import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import {
   existsSync,
@@ -40,24 +41,27 @@ import {
 } from "./local-embeddings.js";
 import {
   appUrl,
-  COMPOSE_PROJECT,
-  DB_VOLUME,
   DEFAULT_APP_PORT,
   DEFAULT_EMAIL,
   DEFAULT_GATEWAY_PORT,
   DEFAULT_IMAGE,
+  dbVolumeName,
   type EnvMap,
   ensureEnv,
   ensurePrivateDir,
   LLM_PASSTHROUGH,
   type LocalPaths,
+  localDirFor,
   localPaths,
+  PROJECT_NAME_RE,
   parseEnv,
+  projectName,
   renderCompose,
   writeIfChanged,
 } from "./local-stack.js";
 import { createPrompter } from "./prompt.js";
 import { setup } from "./setup.js";
+import { SWEEP_LABEL } from "./sweep-command.js";
 import { useCommand } from "./use-command.js";
 
 export const LOCAL_PROFILE = "local";
@@ -66,7 +70,8 @@ export const PREVIOUS_PROFILE = "local-previous";
 export const LOCAL_STACK_SOURCE = "local-stack";
 export const SERVICES = ["db", "auth", "rest", "gateway", "app", "kicker"] as const;
 export const EXTRACTION_OFF_LINE =
-  "Extraction is off. Set an LLM key in ~/.membral/local/.env (or MEMBRAL_LLM_PROVIDER=claude-code) and run `membral local up` again.";
+  "Extraction is off: no LLM provider is set. Put an API key in ~/.membral/local/.env, or set MEMBRAL_LLM_PROVIDER=claude-code " +
+  '(see "Run it locally" in the README), then run `membral local up` again.';
 const WAIT_TIMEOUT_S = "300";
 
 export interface LocalDeps {
@@ -83,6 +88,8 @@ export interface LocalDeps {
   activate?: (name: string) => Promise<void>;
   /** The `membral setup` path, run after a new key lands in the profile. */
   runSetup?: (opts: { apiUrl: string; yes: boolean; profile: string; noSweep?: boolean }) => Promise<void>;
+  /** Is the backstop sweep scheduled? Checked after setup; null when this platform has no check. */
+  sweepCheck?: () => Promise<string | null>;
   /** Is this pid alive? (stale-lock detection) */
   pidAlive?: (pid: number) => boolean;
   confirm?: (question: string) => Promise<boolean>;
@@ -100,6 +107,8 @@ export interface UpOptions {
   embeddingModel?: string;
   /** Passed to setup: don't schedule the backstop sweep (CI, throwaway HOMEs). */
   noSweep?: boolean;
+  /** Custom compose project name (also MEMBRAL_LOCAL_PROJECT). */
+  project?: string;
 }
 
 interface Ctx {
@@ -110,10 +119,21 @@ interface Ctx {
   sleep: (ms: number) => Promise<void>;
 }
 
-function ctxOf(deps: LocalDeps): Ctx {
+/** --project, else MEMBRAL_LOCAL_PROJECT; undefined = the default stack. */
+function resolveProject(opt: string | undefined, env: NodeJS.ProcessEnv): { project?: string } | { error: string } {
+  const name = opt || env.MEMBRAL_LOCAL_PROJECT || undefined;
+  if (name !== undefined && !PROJECT_NAME_RE.test(name)) {
+    return {
+      error: `Invalid project name "${name}" (--project / MEMBRAL_LOCAL_PROJECT): use a-z, 0-9 and "-", up to 31 characters.`,
+    };
+  }
+  return { project: name };
+}
+
+function ctxOf(deps: LocalDeps, project?: string): Ctx {
   return {
     runner: deps.runner ?? createDockerRunner(),
-    paths: deps.paths ?? localPaths(),
+    paths: deps.paths ? { ...deps.paths, ...(project ? { project } : {}) } : localPaths(localDirFor(project), project),
     credsPath: deps.credentialsPath ?? defaultCredentialsPath(),
     fetchImpl: deps.fetchImpl ?? fetch,
     sleep: deps.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms))),
@@ -134,7 +154,7 @@ function lastLine(r: DockerResult): string {
 }
 
 export function composeArgs(paths: LocalPaths, ...args: string[]): string[] {
-  return ["compose", "-p", COMPOSE_PROJECT, "-f", paths.compose, "--env-file", paths.env, ...args];
+  return ["compose", "-p", projectName(paths), "-f", paths.compose, "--env-file", paths.env, ...args];
 }
 
 /** Oldest Compose that takes the inline `configs:` content the stack file uses. */
@@ -146,12 +166,23 @@ export function parseComposeVersion(text: string): [number, number] | undefined 
   return m ? [Number(m[1]), Number(m[2])] : undefined;
 }
 
+/** The endpoint `docker` will use: DOCKER_HOST, else the active context's (a Colima profile has its own socket). */
+async function dockerEndpoint(runner: DockerRunner, env: NodeJS.ProcessEnv): Promise<string | null> {
+  if (env.DOCKER_HOST) return `DOCKER_HOST ${env.DOCKER_HOST}`;
+  const c = await runner.run(["context", "inspect", "--format", "{{.Name}} {{.Endpoints.docker.Host}}"]);
+  const line = c.code === 0 ? c.stdout.trim().split("\n")[0].replace(/\s+/g, " ") : "";
+  return line ? `context ${line}` : null;
+}
+
 /**
  * One-line failure when docker / compose / the daemon is missing, the socket
  * refuses this user (Linux without the docker group), or Compose is older
  * than MIN_COMPOSE_VERSION; null when all answer.
  */
-export async function dockerPreflight(runner: DockerRunner): Promise<string | null> {
+export async function dockerPreflight(
+  runner: DockerRunner,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<string | null> {
   const v = await runner.run(["version", "--format", "{{.Server.Version}}"]);
   if (v.code === DOCKER_NOT_FOUND) {
     return "Docker is not installed (no `docker` on PATH). Install Docker, then run this again.";
@@ -163,7 +194,13 @@ export async function dockerPreflight(runner: DockerRunner): Promise<string | nu
       "then log out and back in (or run `newgrp docker`), and run this again."
     );
   }
-  if (v.code !== 0) return "Docker is installed but its daemon is not running. Start Docker, then run this again.";
+  if (v.code !== 0) {
+    const tried = await dockerEndpoint(runner, env);
+    return (
+      `Docker is installed but its daemon is not running${tried ? ` (tried ${tried})` : ""}. ` +
+      "Start Docker, or point DOCKER_HOST at the right socket (`docker context ls` lists them), then run this again."
+    );
+  }
   const c = await runner.run(["compose", "version", "--short"]);
   if (c.code !== 0) return "`docker compose` is missing. Install the Docker Compose v2 plugin, then run this again.";
   const have = parseComposeVersion(c.stdout);
@@ -370,6 +407,24 @@ async function getHealth(ctx: Ctx, url: string): Promise<{ ok: boolean; llm?: He
   }
 }
 
+/** macOS only (launchd refuses a non-GUI session); returns why the agent is not loaded, else null. */
+function defaultSweepCheck(): Promise<string | null> {
+  if (process.platform !== "darwin") return Promise.resolve(null);
+  return new Promise((resolve) => {
+    execFile("launchctl", ["print", `gui/${process.getuid?.() ?? 0}/${SWEEP_LABEL}`], (err, _out, stderr) => {
+      resolve(
+        err
+          ? `launchctl: ${
+              String(stderr || err.message)
+                .trim()
+                .split("\n")[0]
+            }`
+          : null,
+      );
+    });
+  });
+}
+
 function extractionLine(llm: HealthLlm | undefined): string | null {
   if (!llm) return null;
   if (llm.extraction === "off") {
@@ -492,8 +547,10 @@ interface ProvisionResponse {
 }
 
 export async function localUp(opts: UpOptions = {}, deps: LocalDeps = {}): Promise<void> {
-  const ctx = ctxOf(deps);
-  const pre = await dockerPreflight(ctx.runner);
+  const proj = resolveProject(opts.project, deps.env ?? process.env);
+  if ("error" in proj) return fail(proj.error);
+  const ctx = ctxOf(deps, proj.project);
+  const pre = await dockerPreflight(ctx.runner, deps.env);
   if (pre) return fail(pre);
   ensurePrivateDir(ctx.paths.dir);
   const lock = acquireUpLock(ctx.paths.dir, deps.pidAlive ?? defaultPidAlive);
@@ -515,6 +572,7 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   if (typeof gwPort === "string") return fail(gwPort);
   if (port === gwPort) return fail("--port and --gateway-port must differ.");
   const image = opts.image || env.MEMBRAL_IMAGE || stored.MEMBRAL_IMAGE || DEFAULT_IMAGE;
+  const explicitImage = Boolean(opts.image || env.MEMBRAL_IMAGE);
   if (!validImage(image)) return fail(`Invalid image reference "${image}" (--image / MEMBRAL_IMAGE).`);
   const email = opts.email || stored.MEMBRAL_LOCAL_EMAIL || DEFAULT_EMAIL;
   if (!validEmail(email)) return fail(`Invalid email "${email}" (--email).`);
@@ -551,12 +609,12 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   // Secrets are generated once. If the database outlived them, new ones would lock us out of it.
   let passwordUnknown = false;
   if (!stored.POSTGRES_PASSWORD || !stored.JWT_SECRET || !stored.MEMBRAL_LOCAL_PASSWORD) {
-    const vol = await ctx.runner.run(["volume", "inspect", DB_VOLUME]);
+    const vol = await ctx.runner.run(["volume", "inspect", dbVolumeName(ctx.paths.project)]);
     if (vol.code === 0) {
       if (!stored.POSTGRES_PASSWORD || !stored.JWT_SECRET) {
         return fail(
-          `The database volume ${DB_VOLUME} exists but ${ctx.paths.env} is missing its secrets. ` +
-            `Restore that .env, or delete the data with \`docker volume rm ${DB_VOLUME}\` and run this again.`,
+          `The database volume ${dbVolumeName(ctx.paths.project)} exists but ${ctx.paths.env} is missing its secrets. ` +
+            `Restore that .env, or delete the data with \`docker volume rm ${dbVolumeName(ctx.paths.project)}\` and run this again.`,
         );
       }
       // Only the sign-in password is lost: the user already exists with a password we cannot know.
@@ -585,7 +643,10 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   // Provisioning needs some password even for an existing user (it is ignored then).
   const provisionPassword = localEnv.MEMBRAL_LOCAL_PASSWORD ?? randomBytes(18).toString("base64url");
   const llmKeys = LLM_PASSTHROUGH.filter((k) => (localEnv[k] ?? "") !== "");
-  writeIfChanged(ctx.paths.compose, renderCompose({ appPort: port, gatewayPort: gwPort, image, llmKeys }));
+  writeIfChanged(
+    ctx.paths.compose,
+    renderCompose({ appPort: port, gatewayPort: gwPort, image, llmKeys, project: ctx.paths.project }),
+  );
   const url = appUrl(port);
   console.log(`Membral local: ${url} (files in ${ctx.paths.dir})`);
 
@@ -601,7 +662,9 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
       }
       return fail(`Could not pull ${image}: ${lastLine(pull)}`);
     }
-    console.log(`  Image: ${image} (pull failed, using the local copy)`);
+    console.log(
+      `  Image: ${image} (${explicitImage ? "local image, not pulled" : "pull failed, using the local copy"})`,
+    );
   } else {
     console.log(`  Image: ${image}`);
   }
@@ -621,7 +684,9 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
     composeArgs(ctx.paths, "up", "-d", "--wait", "--wait-timeout", WAIT_TIMEOUT_S, "db", "auth"),
   );
   if (base.code !== 0) {
-    return fail(`Database or auth did not become healthy (${lastLine(base)}). See \`membral local logs auth\`.`);
+    return fail(
+      `Database or auth did not become healthy (${lastLine(base)}). See \`membral local logs db\` and \`membral local logs auth\`; also check free disk space.`,
+    );
   }
 
   // 4. migrations
@@ -734,6 +799,16 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
     console.log(`  Profile: "local" is active`);
   }
 
+  if (prov.apiKey && !opts.noSweep) {
+    const problem = await (deps.sweepCheck ?? defaultSweepCheck)();
+    if (problem) {
+      console.error(
+        `Sweep agent not installed (${problem}): uploads will not be swept. Run \`membral setup\` again from a login shell, or pass --no-sweep to skip it.`,
+      );
+      process.exitCode = 1;
+    }
+  }
+
   console.log(`  ${embeddingsLine(localEnv)}`);
   const line = extractionLine(health.llm);
   if (line?.startsWith("Extraction is off")) console.log(line);
@@ -741,9 +816,14 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
 
 // --- status -------------------------------------------------------------------
 
-export async function localStatus(opts: { showPassword?: boolean } = {}, deps: LocalDeps = {}): Promise<void> {
-  const ctx = ctxOf(deps);
-  const pre = await dockerPreflight(ctx.runner);
+export async function localStatus(
+  opts: { showPassword?: boolean; project?: string } = {},
+  deps: LocalDeps = {},
+): Promise<void> {
+  const proj = resolveProject(opts.project, deps.env ?? process.env);
+  if ("error" in proj) return fail(proj.error);
+  const ctx = ctxOf(deps, proj.project);
+  const pre = await dockerPreflight(ctx.runner, deps.env);
   if (pre) return fail(pre);
   if (!existsSync(ctx.paths.compose) || !existsSync(ctx.paths.env)) {
     return fail("No local stack yet. Run `membral local up`.");
@@ -799,9 +879,14 @@ async function defaultConfirm(question: string): Promise<boolean> {
   }
 }
 
-export async function localDown(opts: { wipe?: boolean; yes?: boolean } = {}, deps: LocalDeps = {}): Promise<void> {
-  const ctx = ctxOf(deps);
-  const pre = await dockerPreflight(ctx.runner);
+export async function localDown(
+  opts: { wipe?: boolean; yes?: boolean; project?: string } = {},
+  deps: LocalDeps = {},
+): Promise<void> {
+  const proj = resolveProject(opts.project, deps.env ?? process.env);
+  if ("error" in proj) return fail(proj.error);
+  const ctx = ctxOf(deps, proj.project);
+  const pre = await dockerPreflight(ctx.runner, deps.env);
   if (pre) return fail(pre);
   if (!existsSync(ctx.paths.compose) || !existsSync(ctx.paths.env)) {
     console.log("No local stack to stop.");
@@ -826,11 +911,13 @@ export async function localDown(opts: { wipe?: boolean; yes?: boolean } = {}, de
 }
 
 export async function localLogs(
-  opts: { service?: string; follow?: boolean } = {},
+  opts: { service?: string; follow?: boolean; project?: string } = {},
   deps: LocalDeps = {},
 ): Promise<void> {
-  const ctx = ctxOf(deps);
-  const pre = await dockerPreflight(ctx.runner);
+  const proj = resolveProject(opts.project, deps.env ?? process.env);
+  if ("error" in proj) return fail(proj.error);
+  const ctx = ctxOf(deps, proj.project);
+  const pre = await dockerPreflight(ctx.runner, deps.env);
   if (pre) return fail(pre);
   if (!existsSync(ctx.paths.compose) || !existsSync(ctx.paths.env)) {
     return fail("No local stack yet. Run `membral local up`.");
