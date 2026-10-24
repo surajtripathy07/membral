@@ -268,9 +268,14 @@ jobs:
           cache-from: type=gha,scope=linux-local
           cache-to: type=gha,mode=max,scope=linux-local
 
-      - name: Wait before the second build attempt
+      - name: Wait, then re-resolve the base image (second build attempt)
         if: steps.build1.outcome == 'failure'
-        run: sleep 30
+        id: base2
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 30
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
 
       - name: Build the cloud image (local only, not pushed) (attempt 2)
         id: build2
@@ -284,13 +289,18 @@ jobs:
           push: false
           load: true
           tags: ${{ env.MEMBRAL_CI_IMAGE }}
-          build-args: NODE_IMAGE=${{ steps.base.outputs.node }}
+          build-args: NODE_IMAGE=${{ steps.base2.outputs.node }}
           cache-from: type=gha,scope=linux-local
           cache-to: type=gha,mode=max,scope=linux-local
 
-      - name: Wait before the third build attempt
+      - name: Wait, then re-resolve the base image (third build attempt)
         if: steps.build2.outcome == 'failure'
-        run: sleep 90
+        id: base3
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 90
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
 
       - name: Build the cloud image (local only, not pushed) (attempt 3)
         id: build3
@@ -304,7 +314,7 @@ jobs:
           push: false
           load: true
           tags: ${{ env.MEMBRAL_CI_IMAGE }}
-          build-args: NODE_IMAGE=${{ steps.base.outputs.node }}
+          build-args: NODE_IMAGE=${{ steps.base3.outputs.node }}
           cache-from: type=gha,scope=linux-local
           cache-to: type=gha,mode=max,scope=linux-local
 

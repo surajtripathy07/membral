@@ -67,9 +67,14 @@ jobs:
             ghcr.io/surajtripathy07/membral-cloud:main
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Wait before the second attempt
+      - name: Wait, then re-resolve the base image (second attempt)
         if: steps.build1.outcome == 'failure'
-        run: sleep 30
+        id: base2
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 30
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
       - name: Build (attempt 2)
         id: build2
         if: steps.build1.outcome == 'failure'
@@ -80,15 +85,20 @@ jobs:
           file: apps/cloud/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          build-args: NODE_IMAGE=${{ steps.base.outputs.node }}
+          build-args: NODE_IMAGE=${{ steps.base2.outputs.node }}
           tags: |
             ghcr.io/surajtripathy07/membral-cloud:${{ github.sha }}
             ghcr.io/surajtripathy07/membral-cloud:main
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Wait before the third attempt
+      - name: Wait, then re-resolve the base image (third attempt)
         if: steps.build2.outcome == 'failure'
-        run: sleep 90
+        id: base3
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          sleep 90
+          echo "node=$(bash scripts/ci/base-images.sh resolve node)" >> "$GITHUB_OUTPUT"
       - name: Build (attempt 3)
         id: build3
         if: steps.build2.outcome == 'failure'
@@ -99,7 +109,7 @@ jobs:
           file: apps/cloud/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          build-args: NODE_IMAGE=${{ steps.base.outputs.node }}
+          build-args: NODE_IMAGE=${{ steps.base3.outputs.node }}
           tags: |
             ghcr.io/surajtripathy07/membral-cloud:${{ github.sha }}
             ghcr.io/surajtripathy07/membral-cloud:main

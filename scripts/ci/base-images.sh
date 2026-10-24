@@ -7,7 +7,7 @@
 #   prepare [name..]  docker pull each image from its mirror, else upstream,
 #                     else a fallback, and tag it as the upstream ref, so
 #                     `docker compose up` (pull_policy: missing) uses it as is
-#   resolve <name>    print the first reachable ref (mirror, then upstream) for
+#   resolve <name>    print the first reachable ref (mirror, upstream, fallbacks) for
 #                     a buildx build arg; prints the upstream ref if none is
 #   check             fail when an image used in the Dockerfile or the CLI's
 #                     local stack is missing from the list
@@ -118,7 +118,8 @@ cmd_resolve() {
   local name="${1:?resolve needs an image name}" n up rest src
   while read -r n up rest; do
     [[ "$n" == "$name" ]] || continue
-    for src in "$(mirror_ref "$n" "$up")" "$up"; do
+    # shellcheck disable=SC2086
+    for src in "$(mirror_ref "$n" "$up")" "$up" $rest; do
       if try docker buildx imagetools inspect "$src"; then
         echo "$src"
         return 0
