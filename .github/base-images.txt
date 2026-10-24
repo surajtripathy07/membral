@@ -7,6 +7,9 @@
 # sources for the same tag. The mirror is
 # ghcr.io/<owner>/membral-mirror-<name>:<upstream tag>.
 #
+# binfmt and buildkit are the images docker/setup-qemu-action and
+# docker/setup-buildx-action pull from Docker Hub.
+#
 # Changing an image: edit it here and at its upstream use in the same PR
 # (`scripts/ci/base-images.sh check` fails CI when they drift).
 node      public.ecr.aws/docker/library/node:20-bookworm-slim  docker.io/library/node:20-bookworm-slim
@@ -14,3 +17,5 @@ caddy     public.ecr.aws/docker/library/caddy:2-alpine         docker.io/library
 postgres  public.ecr.aws/supabase/postgres:17.6.1.166          docker.io/supabase/postgres:17.6.1.166
 gotrue    public.ecr.aws/supabase/gotrue:v2.196.0              docker.io/supabase/gotrue:v2.196.0
 postgrest public.ecr.aws/supabase/postgrest:v14.5              docker.io/postgrest/postgrest:v14.5
+binfmt    docker.io/tonistiigi/binfmt:latest
+buildkit  docker.io/moby/buildkit:buildx-stable-1

@@ -228,8 +228,6 @@ jobs:
           docker version
           docker compose version
 
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
       # Third-party images come from the GHCR mirror (mirror-base-images.yml)
       # when this token can read it, else from upstream with retries:
       # anonymous pulls from runner IPs hit 429 at public.ecr.aws and Docker
@@ -242,6 +240,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tool images (mirror first, upstream fallback)
+        id: tools
+        env:
+          MIRROR_OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "binfmt=$(bash scripts/ci/base-images.sh resolve binfmt)" >> "$GITHUB_OUTPUT"
+          echo "buildkit=$(bash scripts/ci/base-images.sh resolve buildkit)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          driver-opts: image=${{ steps.tools.outputs.buildkit }}
 
       - name: Base images (mirror first, upstream fallback)
         id: base
