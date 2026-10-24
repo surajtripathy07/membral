@@ -6,6 +6,7 @@ Membral saves your coding-agent sessions (Claude Code, Codex, opencode, Copilot,
 machine, extracts the decisions, learnings and outcomes, and lets your agents search them.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![membral MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/surajtripathy07/membral/badges/score.svg)](https://glama.ai/mcp/servers/surajtripathy07/membral)
 
 ## How it fits together
 
