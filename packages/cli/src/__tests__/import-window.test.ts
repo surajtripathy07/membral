@@ -2,7 +2,7 @@
 // `membral sessions` and setup's first import. The sweep full-walk bound is
 // covered in sweep-command.test.ts.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_IMPORT_WINDOW_DAYS, defaultImportSince, resolveImportSince } from "../import-window.js";
+import { DEFAULT_IMPORT_WINDOW_DAYS, defaultImportSince, parseSince, resolveImportSince } from "../import-window.js";
 
 const NOW = new Date("2026-10-02T12:00:00.000Z");
 const WINDOW_START = "2026-09-02T12:00:00.000Z";
@@ -18,6 +18,25 @@ describe("import window helpers", () => {
     expect(resolveImportSince({ all: true }, NOW)).toBeUndefined();
     expect(resolveImportSince({ since: "2025-01-01" }, NOW)).toBe("2025-01-01");
     expect(resolveImportSince({ since: "2025-01-01", all: true }, NOW)).toBe("2025-01-01");
+  });
+});
+
+describe("parseSince", () => {
+  it("counts <n>h, <n>d and <n>w back from now", () => {
+    expect(parseSince("12h", NOW)).toBe(NOW.getTime() - 12 * 3_600_000);
+    expect(parseSince("7d", NOW)).toBe(Date.parse("2026-09-25T12:00:00.000Z"));
+    expect(parseSince("2w", NOW)).toBe(Date.parse("2026-09-18T12:00:00.000Z"));
+    expect(parseSince("7D", NOW)).toBe(Date.parse("2026-09-25T12:00:00.000Z"));
+  });
+
+  it("still accepts an ISO date", () => {
+    expect(parseSince("2026-01-01", NOW)).toBe(Date.parse("2026-01-01"));
+  });
+
+  it("returns NaN for invalid input", () => {
+    for (const bad of ["nonsense", "d7", "7x", "-7d", "1.5d", ""]) {
+      expect(parseSince(bad, NOW)).toBeNaN();
+    }
   });
 });
 
