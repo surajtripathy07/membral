@@ -4,7 +4,11 @@
 // Claude Code SessionEnd hook via `import-session.ts`) honors it: a project
 // explicitly listed with `enabled: false` is skipped; a project NOT listed
 // at all is enabled by default (new projects auto-sync) unless
-// `defaultNewProjects: false` is set.
+// `defaultNewProjects: false` is set. An optional top-level
+// `excludePathPatterns` (e.g. ["/private/var/folders/*/membral-lab-*"]) disables
+// every project whose path matches: `*` matches any characters (including `/`),
+// the pattern is anchored to the whole path, and a string without `*` is an
+// exact match. An explicit `enabled: true` entry for a path beats a pattern.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
@@ -25,6 +29,25 @@ export interface SyncAllowlist {
   updatedAt: string;
   /** Default true (new/unlisted projects sync automatically) when omitted. */
   defaultNewProjects?: boolean;
+  /** Glob-ish patterns (`*` = any chars) matched against the whole project path; a match disables the project unless it has an explicit `enabled: true` entry. */
+  excludePathPatterns?: string[];
+}
+
+const MAX_EXCLUDE_PATTERNS = 100;
+
+function validateExcludePatterns(v: unknown): string[] | undefined {
+  if (!Array.isArray(v) || v.length > MAX_EXCLUDE_PATTERNS) return undefined;
+  if (!v.every((e) => typeof e === "string" && e.length > 0)) return undefined;
+  return v as string[];
+}
+
+/** Anchored match; `*` matches any chars, everything else is literal (regex metacharacters escaped). */
+export function matchesPathPattern(pattern: string, path: string): boolean {
+  const source = pattern
+    .split("*")
+    .map((part) => part.replace(/[.+?^${}()|[\]\\/-]/g, "\\$&"))
+    .join(".*");
+  return new RegExp(`^${source}$`, "s").test(path);
 }
 
 export function defaultSyncAllowlistPath(): string {
@@ -63,6 +86,9 @@ export function validateSyncAllowlist(raw: unknown): SyncAllowlist | null {
     harnesses,
     updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : new Date().toISOString(),
     defaultNewProjects: typeof r.defaultNewProjects === "boolean" ? r.defaultNewProjects : undefined,
+    ...(validateExcludePatterns(r.excludePathPatterns)
+      ? { excludePathPatterns: validateExcludePatterns(r.excludePathPatterns) }
+      : {}),
   };
 }
 
@@ -89,12 +115,18 @@ export function saveSyncAllowlist(allowlist: SyncAllowlist, path: string = defau
 export function isProjectEnabled(allowlist: SyncAllowlist | null, harness: HarnessId, path: string): boolean {
   if (!allowlist) return true;
   const entry = allowlist.harnesses[harness]?.projects.find((p) => p.path === path);
+  if (entry?.enabled) return true;
+  if (allowlist.excludePathPatterns?.some((pat) => matchesPathPattern(pat, path))) return false;
   if (entry) return entry.enabled;
   return allowlist.defaultNewProjects !== false;
 }
 
 /** Builds a fresh allowlist from a harness scan + the set of (1-based) numbered indices the user chose to exclude — see setup.ts's printScanTable, which returns the matching numbered project list. */
-export function buildSyncAllowlist(numberedProjects: HarnessProject[], excludedIndices: Set<number>): SyncAllowlist {
+export function buildSyncAllowlist(
+  numberedProjects: HarnessProject[],
+  excludedIndices: Set<number>,
+  previous?: SyncAllowlist | null,
+): SyncAllowlist {
   const harnesses: SyncAllowlist["harnesses"] = {};
   numberedProjects.forEach((p, i) => {
     const n = i + 1;
@@ -103,7 +135,13 @@ export function buildSyncAllowlist(numberedProjects: HarnessProject[], excludedI
     cfg.projects.push({ path: p.projectPath, enabled });
     harnesses[p.harness] = cfg;
   });
-  return { version: 1, harnesses, updatedAt: new Date().toISOString() };
+  return {
+    version: 1,
+    harnesses,
+    updatedAt: new Date().toISOString(),
+    // Hand-edited field the wizard never asks about: carry it over.
+    ...(previous?.excludePathPatterns ? { excludePathPatterns: previous.excludePathPatterns } : {}),
+  };
 }
 
 /** True if every project in `scanned` is already explicitly listed in `allowlist` — used by setup.ts to decide whether a re-run can skip re-prompting. */
