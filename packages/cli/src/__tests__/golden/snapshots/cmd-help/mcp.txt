@@ -1,0 +1,13 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral mcp [--api-url <url>] [--api-key <key>]
+
+A stdio MCP server for clients that cannot speak HTTP MCP. Reads
+newline-delimited JSON-RPC on stdin, writes only protocol messages on stdout
+(logs go to stderr). With a saved profile or --api-key it forwards each
+request to <api-url>/api/mcp. With no key, or when the stack is unreachable,
+it still answers initialize, ping and tools/list from a built-in tool list;
+tools/call then returns an error saying to run `membral local up`.
+
+--- STDERR ---

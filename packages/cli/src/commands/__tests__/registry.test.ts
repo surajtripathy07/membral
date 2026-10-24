@@ -78,6 +78,7 @@ const EXPECTED_ORDER = [
   "preamble",
   "prompt-hook",
   "mcp-headers",
+  "mcp",
   "install-session-hook",
   "dogfood",
   "help",

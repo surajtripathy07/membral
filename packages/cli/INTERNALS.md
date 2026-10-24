@@ -101,6 +101,19 @@ saved profile whose server is `<url>`, so config.toml never holds the key.
 No matching profile: prints nothing, exits 1. **Argv is baked into
 config.toml** — a rename breaks Codex's MCP connection until setup re-runs.
 
+## `mcp`
+
+`membral mcp [--api-url <url>] [--api-key <key>]`. A stdio MCP server
+(newline-delimited JSON-RPC; `src/mcp-stdio.ts`). With a key it proxies each
+message to `<api>/api/mcp` (JSON or SSE replies). With no key, or when the
+stack is down, `initialize`, `ping` and `tools/list` come from
+`MCP_TOOL_MANIFEST` in `@membral/core`, and `tools/call` returns
+`isError` "no Membral stack configured; run membral local up". The manifest
+is generated: `apps/cloud/src/lib/mcp/__tests__/tool-manifest.test.ts` fails
+when it differs from the cloud registry and regenerates it with
+`UPDATE_MCP_MANIFEST=1`. stdout carries protocol messages only. Used by
+`packages/cli/Dockerfile.mcp` (registry listings).
+
 ## `install-session-hook`
 
 `membral install-session-hook [--api-url <url>] [--settings <path>]

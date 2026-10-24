@@ -30,6 +30,7 @@ export const HIDDEN_COMMANDS = [
   "preamble",
   "prompt-hook",
   "mcp-headers",
+  "mcp",
   "install-session-hook",
   "sweep",
   "dogfood",
@@ -87,6 +88,7 @@ maintainer use — see \`membral --help\` for the nine everyday commands.
   preamble               Print the memory preamble for a SessionStart hook
   prompt-hook            Print past work related to a prompt (UserPromptSubmit)
   mcp-headers            Print the MCP auth header for Codex (http_headers_helper)
+  mcp                    Run a stdio MCP server (offline tool list)
   install-session-hook   Install or remove the Claude Code session and prompt hooks
   sweep                  Upload sessions ended since the last sweep (scheduled)
   dogfood                Weekly Membral-on-Membral digest and candidates
@@ -285,6 +287,16 @@ prompt to your Membral server, and prints up to three past records about
 what the prompt names as UserPromptSubmit additionalContext. Skips slash
 commands and prompts under four words. Never exits non-zero, never takes
 more than about 2 seconds, never prints anything on any failure.`,
+
+  mcp: `Usage
+  membral mcp [--api-url <url>] [--api-key <key>]
+
+A stdio MCP server for clients that cannot speak HTTP MCP. Reads
+newline-delimited JSON-RPC on stdin, writes only protocol messages on stdout
+(logs go to stderr). With a saved profile or --api-key it forwards each
+request to <api-url>/api/mcp. With no key, or when the stack is unreachable,
+it still answers initialize, ping and tools/list from a built-in tool list;
+tools/call then returns an error saying to run \`membral local up\`.`,
 
   "mcp-headers": `Usage
   membral mcp-headers --api-url <url>

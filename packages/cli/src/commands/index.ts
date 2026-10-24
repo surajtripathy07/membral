@@ -12,6 +12,7 @@ import { installSessionHookCommand } from "./install-session-hook.js";
 import { localCommand } from "./local.js";
 import { loginCommand } from "./login.js";
 import { logoutCommand } from "./logout.js";
+import { mcpCommand } from "./mcp.js";
 import { mcpHeadersCommand } from "./mcp-headers.js";
 import { preambleCommand } from "./preamble.js";
 import { promptHookCommand } from "./prompt-hook.js";
@@ -40,6 +41,7 @@ export const COMMANDS: readonly Command[] = [
   preambleCommand,
   promptHookCommand,
   mcpHeadersCommand,
+  mcpCommand,
   installSessionHookCommand,
   dogfoodCommand,
   helpCommand,
