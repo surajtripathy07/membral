@@ -1,19 +1,17 @@
 # Membral stdio MCP server (`membral mcp`) for registry listings such as Glama.
-# Self-contained: it clones the public repo at build time, so it also works
-# when pasted into a UI with no build context. From a checkout you can build
-# it instead with:  docker build -f packages/cli/Dockerfile.mcp .
+# Self-contained: it downloads the public repo at build time (no git or apt
+# needed), so it also works when pasted into a UI with no build context.
 # With no Membral stack configured the server still answers `initialize` and
 # `tools/list`; `tools/call` reports that no stack is configured.
 FROM node:22-slim
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends git ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
-
 # REF is only overridden to test a branch; the shipped default is main.
 ARG REF=main
-RUN git clone --depth 1 --branch ${REF} https://github.com/surajtripathy07/membral.git /app
 WORKDIR /app
+RUN node -e 'fetch(process.argv[1]).then(r=>{if(!r.ok)throw new Error(r.status);return r.arrayBuffer()}).then(b=>require("fs").writeFileSync("/tmp/src.tgz",Buffer.from(b)))' \
+    "https://codeload.github.com/surajtripathy07/membral/tar.gz/refs/heads/${REF}" \
+  && tar -xzf /tmp/src.tgz --strip-components=1 \
+  && rm /tmp/src.tgz
 
 # Only the CLI and core workspaces: skips the Next.js app and the extension.
 RUN npm ci --workspace=@membral/core --workspace=@membral/cli --include-workspace-root --ignore-scripts \
