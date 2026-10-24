@@ -11,6 +11,7 @@ maintainer use — see `membral --help` for the nine everyday commands.
   preamble               Print the memory preamble for a SessionStart hook
   prompt-hook            Print past work related to a prompt (UserPromptSubmit)
   mcp-headers            Print the MCP auth header for Codex (http_headers_helper)
+  mcp                    Run a stdio MCP server (offline tool list)
   install-session-hook   Install or remove the Claude Code session and prompt hooks
   sweep                  Upload sessions ended since the last sweep (scheduled)
   dogfood                Weekly Membral-on-Membral digest and candidates

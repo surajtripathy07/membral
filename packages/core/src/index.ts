@@ -36,6 +36,7 @@ export {
   renderChatgptContent,
   treeToLinearMessages,
 } from "./importers/index.js";
+export { MCP_SERVER_INFO, MCP_TOOL_MANIFEST, MCP_TOOL_MANIFEST_INSTRUCTIONS } from "./mcp-tool-manifest.js";
 export { normalizeConversation, toISO } from "./normalizer.js";
 export { claudeCodeParser, SessionRootUnreadableError, subAgentSessionId } from "./sessions/claude-code.js";
 export { CODEX_SESSIONS_DIR, CODEX_SOURCE, codexParser, codexThreadIdFromFileName } from "./sessions/codex.js";

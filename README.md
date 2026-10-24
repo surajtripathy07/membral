@@ -80,7 +80,7 @@ matching records at each prompt. The dashboard shows everything stored.
 - One store for sessions from every agent, in one shape: turns, models, token usage, tools, files and sub-agents.
 - Extracts decisions, learnings and outcomes, each with its quote and a link to the session.
 - Searches by meaning, with keyword search as the fallback.
-- MCP tools (`memory_search`, `memory_recall`, `get_code_session`) for any MCP-capable agent.
+- MCP tools (`memory_search`, `memory_recall`, `get_code_session`) for any MCP-capable agent. Clients that only speak stdio can run `membral mcp`.
 - A session-start preamble and, in Claude Code only, prompt-time lookup.
 - ChatGPT and Claude.ai chats saved next to your coding sessions, and a dashboard to browse it all.
 

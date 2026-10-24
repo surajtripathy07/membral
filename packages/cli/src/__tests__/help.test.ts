@@ -322,7 +322,7 @@ describe("TOP_LEVEL_HELP copy rules", () => {
     expect(text).toContain("git fetch --prune origin");
   });
 
-  it("HIDDEN_COMMANDS is exactly the 9 hidden names ('dogfood' — recall-precision W3b) ('sweep' added for the launchd backstop; 'mcp-headers' — W9, Codex's http_headers_helper; 'prompt-hook' — prompt-time recall) (import-sessions is REMOVED, not hidden — D7(c); start/continue/agent/context/render-membral-md/draft-handoff removed with the bridge — 2026-09-12 refocus goal's kill list; 'preamble' added — P4, memory-on-prod-new-user goal)", () => {
+  it("HIDDEN_COMMANDS is exactly the 10 hidden names ('dogfood' — recall-precision W3b) ('sweep' added for the launchd backstop; 'mcp' — stdio MCP server; 'mcp-headers' — W9, Codex's http_headers_helper; 'prompt-hook' — prompt-time recall) (import-sessions is REMOVED, not hidden — D7(c); start/continue/agent/context/render-membral-md/draft-handoff removed with the bridge — 2026-09-12 refocus goal's kill list; 'preamble' added — P4, memory-on-prod-new-user goal)", () => {
     expect(new Set(HIDDEN_COMMANDS)).toEqual(
       new Set([
         "whoami",
@@ -331,6 +331,7 @@ describe("TOP_LEVEL_HELP copy rules", () => {
         "preamble",
         "prompt-hook",
         "mcp-headers",
+        "mcp",
         "install-session-hook",
         "sweep",
         "dogfood",
@@ -355,7 +356,7 @@ describe("command registry — the only non-vacuous way to assert 'hidden but st
     // P4, memory-on-prod-new-user goal; 'use' + 'sweep' added for profiles;
     // 'mcp-headers' added — W9, Codex http_headers_helper; 'local' added — W7;
     // 'prompt-hook' added — prompt-time recall; 'dogfood' — recall-precision W3b).
-    expect(names).toHaveLength(18);
+    expect(names).toHaveLength(19);
     expect(new Set(names).size).toBe(names.length); // no duplicate registry entries
   });
 
