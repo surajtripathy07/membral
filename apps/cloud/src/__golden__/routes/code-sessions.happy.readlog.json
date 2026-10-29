@@ -18,7 +18,7 @@
     "table": "code_sessions",
     "op": "select",
     "payload": {
-      "columns": "id, content_hash, code_project_id, props",
+      "columns": "id, content_hash, code_project_id, turn_count, props",
       "modifiers": [
         "maybeSingle"
       ]

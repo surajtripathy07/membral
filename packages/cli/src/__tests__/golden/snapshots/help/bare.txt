@@ -14,9 +14,10 @@ Commands
   logout     Sign out and forget the saved credentials
   use        List profiles, or switch between servers
   status     Show your account, this device, and what synced last
-  import     Import a ChatGPT or Claude.ai export file
+  import     Import a ChatGPT or Claude.ai export, or a claude-mem store
   sessions   Upload this machine's coding-session transcripts
   local      Run the whole server on this machine with Docker
+  up         Run the whole server on this machine, no Docker (down, logs)
   help       Print this help, a command's help, or --all for hook internals
 
 Flags

@@ -15,9 +15,10 @@ import {
   UnknownScopeError,
 } from "@/lib/mcp/graph-tools";
 import { registerMemoryTools } from "@/lib/mcp/memory-tools";
+import { handoffViewBudget, loadNotInHandoffSection } from "@/lib/mcp/not-in-handoff-view";
 import { omitToolIO } from "@/lib/mcp/omit-tool-io";
 import { paginateCodeSession, windowCodeSession } from "@/lib/mcp/paginate-code-session";
-import { paginateConversation } from "@/lib/mcp/paginate-conversation";
+import { clampMaxChars, paginateConversation } from "@/lib/mcp/paginate-conversation";
 import { resolveSessionId } from "@/lib/mcp/resolve-session-id";
 import { MAX_SINCE_DAYS, resolveSince } from "@/lib/mcp/since";
 import { instrumentServer, type McpTelemetryOptions } from "@/lib/mcp/telemetry";
@@ -600,6 +601,16 @@ function registerCodeTools(
         typeof turn === "number"
           ? windowCodeSession(data as unknown as Record<string, unknown>, { turn, window, maxChars: max_chars })
           : paginateCodeSession(data as unknown as Record<string, unknown>, { start, maxChars: max_chars });
+      // Box 2.4 (design section 6): first part of a whole-session read: the live handoff note and the records it does not cover.
+      if (typeof turn !== "number" && (part.data.returned as { start: number } | undefined)?.start === 0) {
+        const gaps = await loadNotInHandoffSection(
+          db,
+          userId,
+          resolved.ok ? resolved.id : id,
+          handoffViewBudget(clampMaxChars(max_chars)),
+        );
+        if (gaps) Object.assign(part.data, gaps);
+      }
       const note = part.note ? `${part.note}\n` : "";
       return {
         content: [{ type: "text" as const, text: formatFreshnessPrefix(freshness) + note + JSON.stringify(part.data) }],

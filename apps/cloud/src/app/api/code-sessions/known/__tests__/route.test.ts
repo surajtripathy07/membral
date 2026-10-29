@@ -11,6 +11,7 @@ interface Row {
   turn_count: number;
   ended_at: string | null;
   content_hash: string;
+  open_upload?: boolean | null;
 }
 let table: Row[] = [];
 const inCalls: string[][] = [];
@@ -123,6 +124,17 @@ describe("POST /api/code-sessions/known", () => {
       expect.any(String),
       expect.objectContaining({ p_key: "codeSessionsKnown:user:user-1", p_limit: 60 }),
     );
+  });
+
+  it("never lists a row stamped open_upload, even when turn_count and ended_at match (the closing upload must re-send it)", async () => {
+    table = [
+      row("open", 4, "2026-02-01T00:05:00Z", { open_upload: true }),
+      row("closed", 4, "2026-02-01T00:05:00Z", { open_upload: false }),
+    ];
+    const res = await POST(
+      makeRequest({ sessions: [probe("open", 4, "2026-02-01T00:05:00Z"), probe("closed", 4, "2026-02-01T00:05:00Z")] }),
+    );
+    expect(await res.json()).toEqual({ known: [1] });
   });
 
   it("lists a session whose turn_count and ended_at (to the second) match the stored row", async () => {

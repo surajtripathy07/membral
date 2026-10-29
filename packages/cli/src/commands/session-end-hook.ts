@@ -1,4 +1,4 @@
-import { parseFlags, stringFlag } from "../args.js";
+import { boolFlag, parseFlags, stringFlag } from "../args.js";
 import { HELP } from "../help.js";
 import { sessionEndHook } from "../session-end-hook.js";
 import type { Command } from "./types.js";
@@ -20,6 +20,10 @@ export const sessionEndHookCommand: Command = {
       // Only Copilot CLI passes --source; Claude Code's call is unchanged.
       ...(stringFlag(flags, "source") === "copilot-cli" ? { source: "copilot-cli" as const } : {}),
       ...(stringFlag(flags, "source") === "agy" ? { source: "agy" as const } : {}),
+      // Claude Code Stop hook (session still open): hand the transcript so far to a detached child.
+      ...(boolFlag(flags, "stop") ? { stop: true } : {}),
+      // Internal: set only on the Stop hook's detached child (open-session upload; no paid extraction).
+      ...(boolFlag(flags, "open") ? { open: true } : {}),
       // Internal: set only on the detached child the hook spawns (Claude Code and Copilot).
       ...(stringFlag(flags, "deferred-path") ? { deferredPath: stringFlag(flags, "deferred-path") } : {}),
       ...(deferredOffset !== undefined ? { deferredOffset } : {}),

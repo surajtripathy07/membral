@@ -18,7 +18,7 @@
     "table": "code_sessions",
     "op": "select",
     "payload": {
-      "columns": "source, source_session_id, turn_count, ended_at, content_hash, actions_version:props->actions_version",
+      "columns": "source, source_session_id, turn_count, ended_at, content_hash, actions_version:props->actions_version, open_upload:props->open_upload",
       "modifiers": []
     },
     "filters": [

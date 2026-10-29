@@ -381,7 +381,9 @@ describe("spawn", () => {
   });
 
   it("keeps embeddings off without an embeddings base URL", async () => {
-    const client = new LlmClient(resolveModelConfig(LOCAL_ENV));
+    const client = new LlmClient(
+      resolveModelConfig({ ...LOCAL_ENV, MEMBRAL_EMBEDDING_MODEL: "text-embedding-3-small" }),
+    );
     await expect(client.embed({ text: "hi", pass: "memory_embedding", conversationId: "c" })).rejects.toThrow(
       /Embeddings are off/,
     );

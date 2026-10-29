@@ -684,7 +684,7 @@ describe("memorySearch embedding family (migration 118, D-072)", () => {
       p_query: "cache key",
       p_query_embedding: `[${new Array(1536).fill(0).join(",")}]`,
       p_code_project_id: null,
-      p_kinds: null,
+      p_kinds: null, // both handoff flags off: no kind filter, exactly main's call
       p_scope: null,
       p_path: null,
       p_include_retired: false,
@@ -692,6 +692,125 @@ describe("memorySearch embedding family (migration 118, D-072)", () => {
       p_since: null,
     });
     expect(result.records).toHaveLength(0);
+  });
+
+  describe("MEMBRAL_HANDOFF_SEARCH reserved handoff slot", () => {
+    const note = (over: Partial<Row> = {}) =>
+      baseRecord({
+        id: "note",
+        kind: "handoff",
+        text: "Next: wire the cache",
+        quote: null,
+        similarity: 0.7,
+        ...over,
+      });
+    const atomic = (id: string, similarity: number) => baseRecord({ id, similarity, text: `fact ${id}`, quote: quote });
+    const run = (rows: Row[], args: Record<string, unknown> = {}) => {
+      const supabase = makeFakeSupabase(seed(), { rpc: makeRpc(rows) });
+      return memorySearch(supabase, USER, null, { query: "cache key", ...args }, { now: NOW, floor: true });
+    };
+
+    it("on: the main read excludes handoff, a second read asks for handoff only", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+      await run([atomic("a", 0.8)]);
+      expect(rpcCalls).toHaveLength(2);
+      expect(rpcCalls[0]?.p_kinds).toEqual(["outcome", "decision", "learning", "blocker", "preference"]);
+      expect(rpcCalls[1]?.p_kinds).toEqual(["handoff"]);
+    });
+
+    it("on: a relevant note is served by its cosine, among the atomic records", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+      const result = await run([atomic("a", 0.9), atomic("b", 0.8), atomic("c", 0.5), note()]);
+      expect(result.records.map((r) => r.id)).toEqual(["a", "b", "note", "c"]);
+    });
+
+    it("on: the note is kept when the list is full; the last atomic record gives way", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+      const rows = [
+        atomic("a", 0.9),
+        atomic("b", 0.8),
+        atomic("c", 0.6),
+        note({ similarity: 0.1, lex_hits: 2, query_lexemes: 2 }),
+      ];
+      const result = await run(rows, { limit: 3 });
+      expect(result.records).toHaveLength(3);
+      expect(result.records.map((r) => r.id)).toContain("note");
+      expect(result.records[0]?.id).toBe("a");
+    });
+
+    it("on: only the top note is added, never two", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+      const result = await run([atomic("a", 0.9), note({ id: "n1" }), note({ id: "n2", similarity: 0.65 })]);
+      expect(result.records.filter((r) => (r.kind as string) === "handoff")).toHaveLength(1);
+    });
+
+    it("on: a note under the relevance floor is not added (abstention holds)", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+      const result = await run([atomic("a", 0.9), note({ similarity: 0.2, lex_hits: 0, query_lexemes: 2 })]);
+      expect(result.records.map((r) => r.id)).toEqual(["a"]);
+      const none = await run([note({ similarity: 0.2, lex_hits: 0, query_lexemes: 2 })]);
+      expect(none.records).toHaveLength(0);
+      expect(none.empty_reason).toBeDefined();
+    });
+
+    it("on: a note alone is served when no atomic record matches", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+      const result = await run([note()]);
+      expect(result.records.map((r) => r.id)).toEqual(["note"]);
+      expect(result.empty_reason).toBeUndefined();
+    });
+
+    it("off (both flags): one read, p_kinds null exactly as main sent it", async () => {
+      await run([atomic("a", 0.9)]);
+      expect(rpcCalls).toHaveLength(1);
+      expect(rpcCalls[0]?.p_kinds).toBeNull();
+    });
+
+    it("search off but synthesis on: one read with the explicit non-handoff list, notes stay out", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SYNTHESIS", "1");
+      const result = await run([atomic("a", 0.9), note()]);
+      expect(rpcCalls).toHaveLength(1);
+      expect(rpcCalls[0]?.p_kinds).toEqual(["outcome", "decision", "learning", "blocker", "preference"]);
+      expect(result.records.map((r) => r.id)).toEqual(["a"]);
+    });
+
+    it("search off: an explicit kind:handoff is not honoured (falls back to the default kinds, no notes)", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SYNTHESIS", "1");
+      const r = await run([atomic("a", 0.9), note()], { kind: "handoff" });
+      expect(rpcCalls).toHaveLength(1);
+      expect(rpcCalls[0]?.p_kinds).not.toContain("handoff");
+      expect(r.records.map((x) => x.id)).toEqual(["a"]);
+      rpcCalls.length = 0;
+      vi.unstubAllEnvs();
+      await run([atomic("a", 0.9)], { kind: "handoff" }); // both flags off: no filter at all
+      expect(rpcCalls[0]?.p_kinds).toBeNull();
+    });
+
+    it("on: an explicit kind is unchanged (one read, exactly that kind); explicit handoff reads notes only", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+      await run([atomic("a", 0.9), note()], { kind: "decision" });
+      expect(rpcCalls).toHaveLength(1);
+      expect(rpcCalls[0]?.p_kinds).toEqual(["decision"]);
+      rpcCalls.length = 0;
+      const r = await run([atomic("a", 0.9), note()], { kind: "handoff" });
+      expect(rpcCalls).toHaveLength(1);
+      expect(r.records.map((x) => x.id)).toEqual(["note"]);
+    });
+
+    it("on: a failed note read serves the atomic records and does not throw", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+      const inner = makeRpc([atomic("a", 0.9)]).memory_search_scored;
+      const supabase = makeFakeSupabase(seed(), {
+        rpc: {
+          memory_search_scored: (args: Record<string, unknown>) =>
+            Array.isArray(args.p_kinds) && args.p_kinds[0] === "handoff"
+              ? { data: null, error: { message: "boom" } }
+              : inner(args),
+        },
+      });
+      const result = await memorySearch(supabase, USER, null, { query: "cache key" }, { now: NOW, floor: true });
+      expect(result.records.map((r) => r.id)).toEqual(["a"]);
+    });
   });
 
   it("a database without the family params is an error: the call is made once, with them, and not retried", async () => {

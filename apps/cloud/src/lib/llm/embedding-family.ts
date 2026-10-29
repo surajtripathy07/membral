@@ -46,7 +46,7 @@ export class EmbeddingFamilyMismatchError extends Error {
     public readonly table: string,
   ) {
     super(
-      `Embedding model "${family}" differs from vectors already stored in ${table}. Mixing models would make similarity meaningless, so no vector is written (keyword search still works). Re-embed the store with the new model (a future \`membral local reembed\`) or switch MEMBRAL_EMBEDDING_MODEL back.`,
+      `Embedding model "${family}" differs from vectors already stored in ${table}. Mixing models would make similarity meaningless, so no vector is written (keyword search still works). Re-embed the store with the new model (run \`membral local reembed\`) or switch MEMBRAL_EMBEDDING_MODEL back.`,
     );
     this.name = "EmbeddingFamilyMismatchError";
   }
@@ -108,6 +108,11 @@ export async function assertEmbeddingFamilyWritable(
     else log.warn("embeddings: store holds another embedding model — vectors disabled", { family, err: err.message });
   });
   return check;
+}
+
+/** Forget cached family checks so the next write re-reads the store (a re-embed just changed its vectors). */
+export function invalidateEmbeddingFamilyCache(): void {
+  checks.clear();
 }
 
 /** Test seam: forget cached checks and one-time logs. */

@@ -1617,6 +1617,7 @@ export type Database = {
           code_session_id: string
           confidence: number
           content_hash: string
+          covered_by_handoff: boolean | null
           created_at: string
           durable: boolean
           embedding: string | null
@@ -1646,6 +1647,7 @@ export type Database = {
           scope: string
           session_title: string | null
           source: string
+          source_record_ids: string[] | null
           supersede_kind: string | null
           superseded_by: string | null
           supersedes: string | null
@@ -1667,6 +1669,7 @@ export type Database = {
           code_session_id: string
           confidence?: number
           content_hash: string
+          covered_by_handoff?: boolean | null
           created_at?: string
           durable?: boolean
           embedding?: string | null
@@ -1696,6 +1699,7 @@ export type Database = {
           scope?: string
           session_title?: string | null
           source: string
+          source_record_ids?: string[] | null
           supersede_kind?: string | null
           superseded_by?: string | null
           supersedes?: string | null
@@ -1717,6 +1721,7 @@ export type Database = {
           code_session_id?: string
           confidence?: number
           content_hash?: string
+          covered_by_handoff?: boolean | null
           created_at?: string
           durable?: boolean
           embedding?: string | null
@@ -1746,6 +1751,7 @@ export type Database = {
           scope?: string
           session_title?: string | null
           source?: string
+          source_record_ids?: string[] | null
           supersede_kind?: string | null
           superseded_by?: string | null
           supersedes?: string | null
@@ -2701,6 +2707,20 @@ export type Database = {
           p_user_id: string
         }
         Returns: number
+      }
+      replace_session_handoff: {
+        Args: {
+          p_code_session_id: string
+          p_content_hash: string
+          p_extraction_pass: string
+          p_retire_reason: string
+          p_retired_at: string
+          p_source_record_ids: string[]
+          p_text: string
+          p_turn_idx: number
+          p_user_id: string
+        }
+        Returns: string
       }
       replace_session_raw_units: {
         Args: {

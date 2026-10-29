@@ -64,6 +64,10 @@ export interface ImportSessionOptions extends UploadFlags {
   uploadAbortAt?: number;
   /** Called once the parent upload has finished (or failed), before any child starts. */
   onParentDone?: () => void;
+  /** The session is still open (Stop hook): the server stores turns but queues no paid extraction. */
+  open?: boolean;
+  /** An `open` parent upload got no `open_supported` ack: the server would run paid extraction on it. */
+  onOpenUnsupported?: () => void;
 }
 
 /** Sub-agent upload counts — `deferred` were never started (deadline reached). */
@@ -185,22 +189,36 @@ async function importSessionInner(opts: ImportSessionOptions): Promise<ChildUplo
       (msg) => warn(`${warnPrefix}${msg}`),
       false,
       client,
+      opts.open === true,
     );
 
+  // Open (Stop) uploads: children go only after the parent proved the server acks `open`.
+  // A thrown parent (429/413/5xx/network) or a missing ack leaves them for the next
+  // Stop/SessionEnd/sweep, so an old server never queues paid extraction for them.
+  let parentOpenOk = true;
   try {
     // The parent goes first and is never skipped for the child budget: it may
     // start (and retry) until the hard cut; children only before childDeadlineAt.
     const outcome = await upload(session, "", opts.uploadAbortAt ?? opts.childDeadlineAt);
+    if (opts.open === true && outcome.openSupported !== true) {
+      parentOpenOk = false;
+      // Only a successful reply without the ack disables Stop; a thrown error must not.
+      opts.onOpenUnsupported?.();
+    }
     if (outcome.errors.length > 0) {
       for (const e of outcome.errors) {
         warn(`server reported an error for ${e.sourceSessionId}: ${e.error}`);
       }
     }
   } catch (err) {
+    parentOpenOk = false;
     warn(`${err instanceof UploadDeferredError ? "upload deferred" : "upload failed"}: ${errMessage(err)}`);
   }
 
   opts.onParentDone?.();
+  if (opts.open === true && !parentOpenOk) {
+    return { total: children.length, uploaded: 0, failed: 0, deferred: children.length };
+  }
 
   // Each sub-agent transcript is its own session, one POST each (keeps every
   // body under the route's 4 MB cap; content_hash dedup applies per child),

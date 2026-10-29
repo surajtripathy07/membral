@@ -11,14 +11,13 @@
 //
 // Body: { email, password (>= 16 chars), deviceName, mintKey }.
 // 200:  { userId, email, created, apiKey: string | null }.
-import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withRoute } from "@/lib/api/route";
 import { getServiceClient } from "@/lib/db/clients";
-import { getEnv } from "@/lib/env";
 import { isLocalMode } from "@/lib/local/mode";
 import { provisionLocalUser } from "@/lib/local/provision";
+import { bearerMatches, serviceKey } from "@/lib/local/service-auth";
 import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
@@ -29,24 +28,6 @@ const ProvisionSchema = z.object({
   deviceName: z.string().trim().min(1).max(100),
   mintKey: z.boolean(),
 });
-
-function digest(s: string): Buffer {
-  return createHash("sha256").update(s).digest();
-}
-
-function bearerMatches(header: string | null, secret: string): boolean {
-  const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length) : "";
-  if (!token) return false;
-  return timingSafeEqual(digest(token), digest(secret));
-}
-
-function serviceKey(): string | null {
-  try {
-    return getEnv().supabaseServiceRoleKey;
-  } catch {
-    return null;
-  }
-}
 
 export const POST = withRoute({ auth: { kind: "none" } }, async ({ req }) => {
   if (!isLocalMode()) return NextResponse.json({ error: "Not found" }, { status: 404 });

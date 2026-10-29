@@ -284,6 +284,32 @@ describe("runTailCaptureForSession (step2d finding 11)", () => {
     });
   });
 
+  it("force re-extraction leaves the session's handoff note live (it is not an extracted record)", async () => {
+    const mk = (id: string, kind: string): Row => ({
+      id,
+      user_id: "u1",
+      code_session_id: "s1",
+      code_project_id: "p1",
+      source: "extractor",
+      kind,
+      retired_at: null,
+      embedding: "[0,1,0]",
+    });
+    const decision = mk("old-1", "decision");
+    const handoff = mk("handoff-1", "handoff");
+    const rows = {
+      code_sessions: [
+        sessionRow({ props: { memory_extraction: { prompt_version: "memory-extract-v-old", records: 1 } } }),
+      ],
+      code_session_turns: [...TWO_TURNS],
+      session_memories: [decision, handoff],
+    };
+    const { llm } = makeLlm();
+    await runTailCaptureForSession({ supabase: makeFakeSupabase(rows), llm }, "u1", "s1", { runId: "r1", force: true });
+    expect(decision.retired_at).toBeTruthy();
+    expect(handoff.retired_at).toBeFalsy();
+  });
+
   it("no-prose skip (finding 17): a tail with zero prose turns makes no LLM call and is stamped skipped:'no_prose'", async () => {
     const toolOnlyTurns: Row[] = [
       turnRow({ idx: 0, role: "assistant", kind: "tool_use", tool_name: "Bash" }),

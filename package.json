@@ -11,6 +11,7 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "build:local-server": "node scripts/local/build-server.mjs",
     "cli:install": "node packages/cli/scripts/pack.mjs && npm i -g ./packages/cli/dist-pack/membral-cli.tgz",
     "check:vercelignore": "bash scripts/check-vercelignore.sh",
     "hooks:install": "git config core.hooksPath .githooks",

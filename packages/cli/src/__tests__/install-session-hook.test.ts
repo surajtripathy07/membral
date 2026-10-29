@@ -584,3 +584,46 @@ describe("installSessionHook: UserPromptSubmit (prompt-time recall)", () => {
     expect(await promptEntries()).toEqual([{ type: "command", command: "echo mine" }]);
   });
 });
+
+describe("installSessionHook: Stop hook (open-session upload)", () => {
+  let root: string;
+  let settingsPath: string;
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "membral-install-stop-hook-"));
+    settingsPath = join(root, "settings.json");
+    vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+    vi.restoreAllMocks();
+    process.exitCode = undefined;
+  });
+
+  const stopCmds = async () =>
+    (((await readSettings(settingsPath)).hooks?.Stop as HookGroup[] | undefined) ?? []).flatMap((g) =>
+      g.hooks.map((h) => h.command),
+    );
+
+  it("registers one Stop entry, idempotent, leaving the user's own Stop hooks and the SessionEnd entry alone", async () => {
+    await writeFile(
+      settingsPath,
+      JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: "command", command: "echo mine" }] }] } }),
+    );
+    const opts = { settings: settingsPath, cliInvocation: FIXTURE_INVOCATION, promptRecall: false };
+    await installSessionHook(opts);
+    await installSessionHook(opts);
+    expect(await stopCmds()).toEqual(["echo mine", `${FIXTURE_SESSION_END_CMD} --stop`]);
+    expect(allSessionEndCommands(await readSettings(settingsPath))).toEqual([FIXTURE_SESSION_END_CMD]);
+  });
+
+  it("--remove deletes only the Membral Stop entry", async () => {
+    await writeFile(
+      settingsPath,
+      JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: "command", command: "echo mine" }] }] } }),
+    );
+    const opts = { settings: settingsPath, cliInvocation: FIXTURE_INVOCATION, promptRecall: false };
+    await installSessionHook(opts);
+    await installSessionHook({ ...opts, remove: true });
+    expect(await stopCmds()).toEqual(["echo mine"]);
+  });
+});

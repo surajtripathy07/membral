@@ -30,6 +30,21 @@ test("throwaway user sees their imported session and cost on the dashboard", asy
   await page.goto(`/code/session/${SESSION_ID}`);
   await expect(page.getByText(/\d+ turns/).first()).toBeVisible();
 
+  // --- verify affordance (goal 2026-10-25 box 3.5): a memory receipt link is `?turn=N&quote=<text>#turn-N`; the
+  // session page marks the cited text in that turn. The fixture sessions carry no extracted memories, so build the
+  // same link by hand from the first prompt the page shows. ---
+  const firstPrompt = page.locator('[id^="turn-"] p.text-lead').first();
+  await expect(firstPrompt).toBeVisible();
+  const promptId = await firstPrompt.evaluate((el) => el.closest('[id^="turn-"]')?.id ?? "");
+  const promptText = ((await firstPrompt.textContent()) ?? "").replace(/^\s*\$/, "").replace(/\s+/g, " ").trim();
+  const cited = promptText.slice(0, 24).trim();
+  expect(promptId).toMatch(/^turn-\d+$/);
+  expect(cited.length).toBeGreaterThanOrEqual(3);
+  await page.goto(`/code/session/${SESSION_ID}?turn=${promptId.slice(5)}&quote=${encodeURIComponent(cited)}#${promptId}`);
+  const mark = page.locator(`#${promptId} mark[data-testid="quote-mark"]`);
+  await expect(mark).toBeVisible();
+  expect(((await mark.textContent()) ?? "").replace(/\s+/g, " ").toLowerCase()).toBe(cited.toLowerCase());
+
   // --- /code/stats: a cost figure renders (formatCostUsd — "$" + digits) ---
   await page.goto("/code/stats");
   await expect(page.getByText(/\$\d/).first()).toBeVisible();

@@ -37,6 +37,8 @@ interface SettingsViewProps {
   /** issue #128 (ADR 0047 v2) — server-computed checkFeature results for the "AI features" card below; no client fetch of flags. */
   embeddingsCheck: CheckFeatureResult;
   llmCheck: CheckFeatureResult;
+  /** False in local mode, where the auth stub has no admin.deleteUser. Defaults to shown. */
+  showDeleteAccount?: boolean;
   /** Browser-verify finding (2026-09-06): resolved server-side once (lib/mcp-url.ts, via getAppUrl()) and threaded down to McpConfig as a plain prop — never recomputed client-side from window.location, which used to cause a hydration mismatch on every load of this page. */
   mcpUrl: string;
 }
@@ -61,6 +63,7 @@ export function SettingsView({
   embeddingsCheck,
   llmCheck,
   mcpUrl,
+  showDeleteAccount = true,
 }: SettingsViewProps) {
   // The freshly-minted API key is only available in the browser at generation
   // time. We hold it in client state so the MCP config snippet can include it
@@ -192,6 +195,7 @@ export function SettingsView({
 
       {/* Danger zone — destructive actions last, per the audit's explicit
           ordering rule (this used to be the SECOND card on the page). */}
+      {showDeleteAccount && (
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-ink">Danger zone</h2>
         {/* UX W5 (settings height): the delete form sits one deliberate click away. */}
@@ -199,6 +203,7 @@ export function SettingsView({
           <DeleteAccountControl accessToken={accessToken} />
         </Disclosure>
       </section>
+      )}
     </PageFrame>
   );
 }

@@ -33,6 +33,13 @@ vi.mock("../../import-session.js", () => ({ importSession: vi.fn() }));
 vi.mock("../../session-end-hook.js", () => ({ sessionEndHook: vi.fn() }));
 vi.mock("../../preamble-hook.js", () => ({ preambleHook: vi.fn() }));
 vi.mock("../../install-session-hook.js", () => ({ installSessionHook: vi.fn() }));
+vi.mock("../../up-command.js", () => ({
+  upCommand: vi.fn(),
+  downCommand: vi.fn(),
+  statusCommand: vi.fn(),
+  logsCommand: vi.fn(),
+  serverPidFileExists: () => false,
+}));
 vi.mock("../../local-command.js", () => ({
   localUp: vi.fn(),
   localDown: vi.fn(),
@@ -73,6 +80,9 @@ const EXPECTED_ORDER = [
   "status",
   "sessions",
   "local",
+  "up",
+  "down",
+  "logs",
   "import-session",
   "session-end-hook",
   "preamble",

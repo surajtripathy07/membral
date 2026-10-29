@@ -56,9 +56,11 @@ import {
   type ProfileTrace,
   type ProfileTurnInput,
 } from "@/lib/code-sessions/profile";
+import { patchCodeSessionProps } from "@/lib/code-sessions/props-patch";
 import type { Db } from "@/lib/db/types";
 import { BLOCKER_FRESH_DAYS } from "@/lib/domain/blockers";
 import { RESOLVED_IN_SESSION_RETIRE_REASON, RESOLVED_OBSERVED_RETIRE_REASON } from "@/lib/domain/retire-reasons";
+import { handoffModelRaw, handoffSearchEnabled, handoffSynthesisEnabled } from "@/lib/env";
 import type { LlmClient } from "@/lib/llm/client";
 import { log } from "@/lib/log";
 import {
@@ -128,6 +130,9 @@ import { liveReconcileEnabled, reconcileInserted } from "./reconcile/live";
 import { type CodeSessionRow, renderSessionHeader, renderTurnLines, type TurnRow } from "./render";
 import { parseSessionIssues, type SessionIssueParsed } from "./schema";
 import { associateSession, sessionAssocEnabled } from "./session-association";
+import { synthesizeSessionHandoff } from "./session-handoff";
+import { embedHandoffNote } from "./session-handoff-embed";
+import { markHandoffGaps } from "./session-handoff-gap";
 import { writeSessionIssueRows } from "./session-issues";
 import {
   countTailTurnsExtracted,
@@ -137,6 +142,7 @@ import {
   runCostUsd,
 } from "./tail-capture/checkpoint";
 import { buildWindows, type ChatPrecontextLine, fetchChatPrecontext, renderPrecontextBlock } from "./windows";
+import { buildLock } from "./write/lock";
 
 /** step2e finding 5: a hard cap on how many rendered tail lines the blocker re-ask prompt carries — a long session's remaining tail could otherwise be enormous; the resolution is almost always visible soon after the blocker, not necessarily at the very end. */
 const BLOCKER_REASK_MAX_TAIL_LINES = 400;
@@ -1031,7 +1037,7 @@ async function loadPhase(
   if (opts.force && previousExtraction) {
     const priorRes = await deps.supabase
       .from("session_memories")
-      .select("id")
+      .select("id, kind")
       .eq("user_id", userId)
       .eq("code_session_id", sessionId)
       .eq("source", "extractor")
@@ -1039,13 +1045,16 @@ async function loadPhase(
     if (priorRes.error) {
       throw new Error(`runTailCaptureForSession: prior-live-rows read failed: ${priorRes.error.message}`);
     }
-    priorLiveIdsForForce = ((priorRes.data ?? []) as Array<{ id: string }>).map((r) => r.id);
+    // The session's handoff note is rewritten by its own synthesis (session-handoff.ts), never by re-extraction.
+    priorLiveIdsForForce = ((priorRes.data ?? []) as Array<{ id: string; kind: string }>)
+      .filter((r) => r.kind !== "handoff")
+      .map((r) => r.id);
     // Review v6 M1: the replaced extraction's rows that were already
     // retired as unverified — re-tagged `rerun` after this run's insert so
     // `--reverify` can never resurrect them.
     const priorRetiredRes = await deps.supabase
       .from("session_memories")
-      .select("id, retire_reason")
+      .select("id, kind, retire_reason")
       .eq("user_id", userId)
       .eq("code_session_id", sessionId)
       .eq("source", "extractor")
@@ -1053,8 +1062,10 @@ async function loadPhase(
     if (priorRetiredRes.error) {
       throw new Error(`runTailCaptureForSession: prior-retired-rows read failed: ${priorRetiredRes.error.message}`);
     }
-    priorUnverifiedIdsForForce = ((priorRetiredRes.data ?? []) as Array<{ id: string; retire_reason: string | null }>)
-      .filter((r) => isRetiredUnverified(r.retire_reason))
+    priorUnverifiedIdsForForce = (
+      (priorRetiredRes.data ?? []) as Array<{ id: string; kind: string; retire_reason: string | null }>
+    )
+      .filter((r) => r.kind !== "handoff" && isRetiredUnverified(r.retire_reason))
       .map((r) => r.id);
   }
 
@@ -2268,7 +2279,123 @@ async function issuesPhase(state: RunState, deps: TailCaptureDeps): Promise<Issu
  * that its inputs are read from `RunState` and the checkpoint/budget math
  * calls the helpers in `./tail-capture/checkpoint`.
  */
-async function finalizePhase(state: RunState, deps: TailCaptureDeps): Promise<TailCaptureSummary> {
+interface HandoffLimits {
+  /** The run hit its deadline or `shouldStop` fired. */
+  cutOff: boolean;
+  remainingBudgetUsd: number;
+  /** The run's stop callback, checked again before each model call of the synthesis. */
+  shouldStop: () => boolean;
+}
+
+/** Whether the run was cut off, and what is left of the session budget, once everything but the note has run. */
+function handoffLimits(state: RunState): HandoffLimits {
+  const { mainPass, userPass, blockerChecks, persist, issues } = state;
+  if (!mainPass || !blockerChecks || !persist) {
+    return { cutOff: true, remainingBudgetUsd: 0, shouldStop: () => true };
+  }
+  const spentUsd = blockerChecks.extractionCostUsd + persist.embedCostUsd + (issues?.associationCostUsd ?? 0);
+  return {
+    cutOff: (userPass?.deadlineHit ?? false) || mainPass.deadlineHit || mainPass.shouldStop("embed"),
+    remainingBudgetUsd: mainPass.sessionBudgetUsd - spentUsd,
+    shouldStop: () => mainPass.shouldStop("embed"),
+  };
+}
+
+/**
+ * Handoff note (docs/design/2026-10-25_agent-authored-handoff.md): while the extraction lock is still held, rewrite
+ * the session's synthesized handoff from its live records. Behind MEMBRAL_HANDOFF_SYNTHESIS (off by default).
+ * `synthesizeSessionHandoff` never throws, but the guard stays: the note must never fail an extraction pass.
+ */
+async function handoffPhase(
+  deps: TailCaptureDeps,
+  userId: string,
+  sessionId: string,
+  runId: string,
+  limits: HandoffLimits,
+): Promise<number> {
+  if (!handoffSynthesisEnabled()) return 0;
+  // A cut-off run (deadline, shouldStop) or one with no budget left must not start model calls it cannot finish.
+  if (limits.cutOff) {
+    log.info("memory: handoff skipped, the run was cut off", { session_id: sessionId, reason: "deadline_or_stop" });
+    return 0;
+  }
+  if (limits.remainingBudgetUsd <= 0) {
+    log.info("memory: handoff skipped, the session budget is spent", {
+      session_id: sessionId,
+      reason: "budget_exhausted",
+    });
+    return 0;
+  }
+  try {
+    // Renew the lease (same run id, fresh timestamp) so the model calls below start with a full window. Conditional:
+    // only while the lock is still this run's. Another run's lock is never overwritten; then there is no synthesis.
+    const renewed = await patchCodeSessionProps(
+      deps.supabase,
+      userId,
+      sessionId,
+      { memory_extraction_lock: buildLock((deps.now ?? defaultNow)().toISOString(), runId) },
+      [],
+      { memory_extraction_lock: { run_id: runId } },
+    );
+    if (!renewed) {
+      log.warn("memory: handoff skipped, the extraction lock is no longer this run's", {
+        session_id: sessionId,
+        reason: "lock_lost",
+      });
+      return 0;
+    }
+  } catch (err) {
+    log.warn("memory: handoff could not renew the extraction lease", {
+      session_id: sessionId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return 0;
+  }
+  try {
+    const res = await synthesizeSessionHandoff(
+      {
+        supabase: deps.supabase,
+        llm: deps.llm,
+        now: deps.now,
+        strongModelOverride: handoffModelRaw(),
+        budgetUsd: limits.remainingBudgetUsd,
+        shouldStop: limits.shouldStop,
+      },
+      userId,
+      sessionId,
+    );
+    let costUsd = Number.isFinite(res?.costUsd) ? res.costUsd : 0;
+    if (res?.status === "written" && typeof res.text === "string") {
+      // MEMBRAL_HANDOFF_SEARCH: make the note findable. A failed embed leaves the vector null (keyword search still works).
+      if (handoffSearchEnabled() && typeof res.id === "string") {
+        const emb = await embedHandoffNote(deps.supabase, deps.llm, userId, res.id, res.text);
+        costUsd += Number.isFinite(emb.costUsd) ? emb.costUsd : 0;
+      }
+      // Box 2.4: mark the records the new note does not carry. Never throws; a skip leaves the marks null.
+      const gap = await markHandoffGaps(
+        {
+          supabase: deps.supabase,
+          llm: deps.llm,
+          shouldStop: limits.shouldStop,
+          remainingBudgetUsd: limits.remainingBudgetUsd - costUsd,
+        },
+        userId,
+        sessionId,
+        { text: res.text, renderedRecordIds: res.renderedRecordIds ?? new Set<string>() },
+      );
+      costUsd += Number.isFinite(gap?.costUsd) ? gap.costUsd : 0;
+    }
+    return costUsd;
+  } catch (err) {
+    log.warn("memory: handoff phase failed", {
+      session_id: sessionId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return 0;
+  }
+}
+
+async function finalizePhase(state: RunState, deps: TailCaptureDeps, handoffCostUsd = 0): Promise<TailCaptureSummary> {
   const { userId, sessionId, opts, baseProps, checkpoint, tailTurns } = state;
   let props = state.props;
   const now = deps.now ?? defaultNow;
@@ -2366,7 +2493,7 @@ async function finalizePhase(state: RunState, deps: TailCaptureDeps): Promise<Ta
     embeddingMissing: embedFailedCount,
     recordsVerified: insertedLive.length,
     recordsRetiredUnverified,
-    costUsd: runCostUsd(extractionCostUsd, embedCostUsd) + associationCostUsd,
+    costUsd: runCostUsd(extractionCostUsd, embedCostUsd) + associationCostUsd + handoffCostUsd,
     windowsFailed: countWindowsFailed(failedWindowIndexes, userPassWindowsFailed),
     deadlineHit,
     lockHeld: false,
@@ -2415,8 +2542,9 @@ async function runTailCaptureInner(
     if (persist.kind === "skip") return withFailure(persist.result);
 
     await issuesPhase(state, deps);
+    const handoffCostUsd = await handoffPhase(deps, userId, sessionId, opts.runId, handoffLimits(state));
 
-    return withFailure(await finalizePhase(state, deps));
+    return withFailure(await finalizePhase(state, deps, handoffCostUsd));
   } catch (err) {
     try {
       await releaseMemoryExtractionLock(deps.supabase, userId, sessionId, opts.runId);

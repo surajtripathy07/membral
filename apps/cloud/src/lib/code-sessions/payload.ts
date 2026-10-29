@@ -197,6 +197,10 @@ export const CodeSessionsRequestSchema = z.object({
   // either way), used one-off by `membral sessions --force` to backfill
   // code_sessions.props.usage on rows imported before ADR 0026 D3/D4 landed.
   force: z.boolean().optional(),
+  // Open-session upload (Stop hook, goal 2026-10-25 box 2.1): the transcript is
+  // still being written. Turns and raw units are stored as usual, but the batch
+  // is NOT queued for paid memory extraction (a later non-open upload is).
+  open: z.boolean().optional().default(false),
 });
 
 export type CodeSessionsRequest = z.infer<typeof CodeSessionsRequestSchema>;

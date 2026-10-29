@@ -63,6 +63,10 @@ const PREAMBLE_HOOK_MARKER = "preamble --hook";
 // `~/.claude/hooks/user-prompt-hook.sh` is not ours to rewrite or remove.
 const PROMPT_HOOK_MARKER = (command: string): boolean => /(?:^|\s)prompt-hook$/.test(command.trimEnd());
 export const PROMPT_HOOK_TIMEOUT_SEC = 5;
+// Stop hook (Lever 2): `session-end-hook --stop` uploads the still-open session's transcript so far.
+// Own marker (exact tail) so it never matches, upgrades or removes the SessionEnd entry.
+const STOP_HOOK_MARKER = (command: string): boolean => /(?:^|\s)session-end-hook --stop$/.test(command.trimEnd());
+export const STOP_HOOK_TIMEOUT_SEC = 10;
 
 interface HookEntry {
   type: string;
@@ -214,6 +218,10 @@ function buildPreambleHookCommand(invocation: CliInvocation): string {
   return `${quoteArgv(invocation.argv)} preamble --hook`;
 }
 
+function buildStopHookCommand(invocation: CliInvocation): string {
+  return `${quoteArgv(invocation.argv)} session-end-hook --stop`;
+}
+
 function buildPromptHookCommand(invocation: CliInvocation): string {
   return `${quoteArgv(invocation.argv)} prompt-hook`;
 }
@@ -262,7 +270,7 @@ export async function isSymlink(path: string): Promise<boolean> {
  */
 async function configureCommandHook(
   settingsPath: string,
-  eventName: "SessionEnd" | "SessionStart" | "UserPromptSubmit",
+  eventName: "SessionEnd" | "SessionStart" | "UserPromptSubmit" | "Stop",
   marker: HookMarker,
   label: string,
   opts: SessionHookOptions,
@@ -485,6 +493,25 @@ export async function configureUserPromptSubmitHook(
     opts,
     buildPromptHookCommand,
     { timeout: PROMPT_HOOK_TIMEOUT_SEC },
+  );
+}
+
+/**
+ * Install or remove the Membral Stop hook (mid-session upload of the transcript so far) in a Claude
+ * Code settings.json. Same idempotency, upgrade and removal behaviour as the hooks above. Its
+ * marker is distinct from SessionEnd's, so the two never touch each other's entry.
+ */
+export async function configureStopHook(settingsPath: string, opts: SessionHookOptions = {}): Promise<ConfigureResult> {
+  return configureCommandHook(
+    settingsPath,
+    "Stop",
+    STOP_HOOK_MARKER,
+    "stop (open-session upload)",
+    opts,
+    buildStopHookCommand,
+    {
+      timeout: STOP_HOOK_TIMEOUT_SEC,
+    },
   );
 }
 

@@ -1,6 +1,6 @@
 import { boolFlag, parseFlags, stringFlag } from "../args.js";
 import { HELP } from "../help.js";
-import { localDown, localLogs, localStatus, localUp } from "../local-command.js";
+import { localDown, localLogs, localReembed, localStatus, localUp } from "../local-command.js";
 import type { Command } from "./types.js";
 
 export const localCommand: Command = {
@@ -38,6 +38,13 @@ export const localCommand: Command = {
         return;
       case "status":
         await localStatus({ showPassword: boolFlag(flags, "show-password"), project });
+        return;
+      case "reembed":
+        await localReembed({
+          project,
+          batch: stringFlag(flags, "batch"),
+          dryRun: boolFlag(flags, "dry-run"),
+        });
         return;
       case "logs":
         await localLogs({

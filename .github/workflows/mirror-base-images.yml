@@ -61,7 +61,7 @@ jobs:
 
   # main, the weekly schedule and manual runs on main: the only writers.
   mirror:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.repository == 'surajtripathy07/membral' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

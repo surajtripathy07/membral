@@ -1,10 +1,16 @@
 import { execSync, spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { sanitizeLogReason, sessionEndHook, uploadDeadlines } from "../session-end-hook.js";
+import {
+  DEFERRED_LOCK_WAIT_MS,
+  HOOK_TIMEOUT_MS,
+  sanitizeLogReason,
+  sessionEndHook,
+  uploadDeadlines,
+} from "../session-end-hook.js";
 
 function sessionLine(cwd: string, timestamp: string) {
   return JSON.stringify({
@@ -959,5 +965,322 @@ describe("uploadDeadlines", () => {
   it("abortAt is never earlier than startBy", () => {
     expect(uploadDeadlines({ timeoutMs: 50 }, 0)).toEqual({ childDeadlineAt: 20_000, uploadAbortAt: 20_000 });
     expect(uploadDeadlines({ childBudgetMs: 0 }, 0)).toEqual({ childDeadlineAt: 0, uploadAbortAt: 28_000 });
+  });
+});
+
+// Lever 2 (goal 2026-10-25, box 2.1): Claude Code's Stop hook uploads the transcript of a session
+// that has NOT ended. Proves, at the CLI level with a mocked server: Stop payload -> detached child
+// hand-off -> POST /api/code-sessions carrying the turns written so far. (Server-side idempotency is
+// by content_hash in apps/cloud import.ts; not re-tested here.)
+describe("sessionEndHook --stop (open-session upload)", () => {
+  let root: string;
+  let hookLogPath: string;
+  const id = "44444444-4444-4444-8444-444444444444";
+
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "membral-stop-hook-"));
+    hookLogPath = join(root, "hook.log");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const payload = (extra: Record<string, unknown> = {}) =>
+    stdinWith(
+      JSON.stringify({ session_id: id, transcript_path: join(root, `${id}.jsonl`), hook_event_name: "Stop", ...extra }),
+    );
+
+  it("hands a detached child the unfinished transcript, prints nothing, and the child uploads its turns", async () => {
+    const transcript = join(root, `${id}.jsonl`);
+    await writeFile(transcript, `${sessionLine("/home/dev/acme-webapp", "2026-01-01T00:00:00.000Z")}\n`);
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ imported: 1, skipped: 0, total: 1, errors: [] }),
+      text: async () => JSON.stringify({ imported: 1, skipped: 0, total: 1, errors: [] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const stdout = vi.spyOn(process.stdout, "write");
+    const spawned: string[][] = [];
+
+    await sessionEndHook({
+      stop: true,
+      stdin: payload(),
+      apiKey: "lls_k",
+      apiUrl: "https://cloud.example.com",
+      hookLogPath,
+      spawnDeferred: (a) => spawned.push(a),
+    });
+
+    expect(stdout).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled(); // the parent does no network I/O
+    expect(spawned).toHaveLength(1);
+    expect(spawned[0].slice(0, 4)).toEqual(["session-end-hook", "--deferred-path", transcript, "--open"]);
+
+    // Run what the detached child would run: the session is still open, yet its turns reach the store.
+    await sessionEndHook({
+      deferredPath: transcript,
+      open: true,
+      apiKey: "lls_k",
+      apiUrl: "https://cloud.example.com",
+      hookLogPath,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse((fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string) as {
+      sessions: Array<{ sourceSessionId: string; turns: Array<{ text?: string }> }>;
+    };
+    expect(body.sessions[0].sourceSessionId).toBe(id);
+    expect(body.sessions[0].turns.some((t) => t.text === "hello")).toBe(true);
+    expect(
+      (JSON.parse((fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string) as { open?: boolean }).open,
+    ).toBe(true);
+  });
+
+  function okFetch() {
+    return vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true }),
+      text: async () => JSON.stringify({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true }),
+    });
+  }
+
+  it("Stop child skips silently when another child holds the session lock (never waits, never logs)", async () => {
+    const transcript = join(root, `${id}.jsonl`);
+    await writeFile(transcript, `${sessionLine("/home/dev/acme-webapp", "2026-01-01T00:00:00.000Z")}\n`);
+    await mkdir(join(root, "deferred"), { recursive: true });
+    await writeFile(join(root, "deferred", `${id}.lock`), String(process.pid)); // alive
+    const fetchMock = okFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    const t0 = Date.now();
+    await sessionEndHook({
+      deferredPath: transcript,
+      open: true,
+      apiKey: "lls_k",
+      hookLogPath,
+      deferredLockWaitMs: 5_000, // ignored for an open child
+    });
+    expect(Date.now() - t0).toBeLessThan(1_000);
+    expect(fetchMock).not.toHaveBeenCalled();
+    await expect(readFile(hookLogPath, "utf8")).rejects.toThrow(); // silent
+  });
+
+  it("Stop child that finds the lock held clears the throttle stamp so the next Stop retries", async () => {
+    const transcript = join(root, `${id}.jsonl`);
+    await writeFile(transcript, `${sessionLine("/home/dev/acme-webapp", "2026-01-01T00:00:00.000Z")}\n`);
+    const stampDir = join(root, "hook-state", "stop");
+    await mkdir(stampDir, { recursive: true });
+    await writeFile(join(stampDir, id), "");
+    await mkdir(join(root, "deferred"), { recursive: true });
+    await writeFile(join(root, "deferred", `${id}.lock`), String(process.pid));
+    vi.stubGlobal("fetch", okFetch());
+    await sessionEndHook({ deferredPath: transcript, open: true, apiKey: "lls_k", hookLogPath });
+    await expect(readFile(join(stampDir, id), "utf8")).rejects.toThrow();
+  });
+
+  it("an open child uploads once and does no trailing pass", async () => {
+    const transcript = join(root, `${id}.jsonl`);
+    await writeFile(transcript, `${sessionLine("/home/dev/acme-webapp", "2026-01-01T00:00:00.000Z")}\n`);
+    const fetchMock = okFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockImplementationOnce(async () => {
+      await writeFile(
+        transcript,
+        `${sessionLine("/home/dev/acme-webapp", "2026-01-01T00:00:00.000Z")}\n${sessionLine("/home/dev/acme-webapp", "2026-01-01T00:01:00.000Z")}\n`,
+      );
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true }),
+        text: async () => "{}",
+      };
+    });
+    await sessionEndHook({ deferredPath: transcript, open: true, apiKey: "lls_k", hookLogPath });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("an open upload without the open_supported ack writes the stop-disabled marker and logs once", async () => {
+    const transcript = join(root, `${id}.jsonl`);
+    await writeFile(transcript, `${sessionLine("/home/dev/acme-webapp", "2026-01-01T00:00:00.000Z")}\n`);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ imported: 1, skipped: 0, total: 1, errors: [] }), // legacy server shape
+        text: async () => "{}",
+      }),
+    );
+    await sessionEndHook({ deferredPath: transcript, open: true, apiKey: "lls_k", hookLogPath });
+    expect((await readFile(join(root, "hook-state", "stop-disabled"), "utf8")).trim()).toMatch(/^\d{4}-/);
+    const lines = (await readFile(hookLogPath, "utf8")).trim().split("\n");
+    expect(lines.filter((l) => l.includes("does not acknowledge open uploads"))).toHaveLength(1);
+  });
+
+  it("an acked open upload writes no marker", async () => {
+    const transcript = join(root, `${id}.jsonl`);
+    await writeFile(transcript, `${sessionLine("/home/dev/acme-webapp", "2026-01-01T00:00:00.000Z")}\n`);
+    vi.stubGlobal("fetch", okFetch());
+    await sessionEndHook({ deferredPath: transcript, open: true, apiKey: "lls_k", hookLogPath });
+    await expect(readFile(join(root, "hook-state", "stop-disabled"), "utf8")).rejects.toThrow();
+  });
+
+  it("the Stop parent no-ops while the marker is fresh and spawns again after 24 h", async () => {
+    const dir = join(root, "hook-state");
+    await mkdir(dir, { recursive: true });
+    const marker = join(dir, "stop-disabled");
+    await writeFile(marker, "x");
+    const spawned: string[][] = [];
+    await sessionEndHook({ stop: true, stdin: payload(), hookLogPath, spawnDeferred: (a) => spawned.push(a) });
+    expect(spawned).toHaveLength(0);
+    const old = new Date(Date.now() - 25 * 60 * 60 * 1000);
+    await utimes(marker, old, old);
+    await sessionEndHook({ stop: true, stdin: payload(), hookLogPath, spawnDeferred: (a) => spawned.push(a) });
+    expect(spawned).toHaveLength(1);
+  });
+
+  async function writeWithChild() {
+    const transcript = join(root, `${id}.jsonl`);
+    await writeFile(transcript, `${sessionLine("/home/dev/acme-webapp", "2026-01-01T00:00:00.000Z")}\n`);
+    const subDir = join(root, id, "subagents");
+    await mkdir(subDir, { recursive: true });
+    await writeFile(join(subDir, "agent-a.meta.json"), JSON.stringify({ agentType: "Explore" }));
+    await writeFile(
+      join(subDir, "agent-a.jsonl"),
+      `${JSON.stringify({
+        type: "user",
+        isSidechain: true,
+        message: { role: "user", content: "task" },
+        timestamp: "2026-01-01T00:00:01.000Z",
+      })}\n`,
+    );
+    return transcript;
+  }
+  const sentIds = (m: ReturnType<typeof vi.fn>) =>
+    m.mock.calls.map(
+      (c) =>
+        (JSON.parse((c as [string, RequestInit])[1].body as string) as { sessions: Array<{ sourceSessionId: string }> })
+          .sessions[0].sourceSessionId,
+    );
+
+  it("open child: parent throws (500) => no child uploads and no disable marker", async () => {
+    const transcript = await writeWithChild();
+    const realSetTimeout = globalThis.setTimeout;
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(((fn: () => void, ms?: number) =>
+      realSetTimeout(fn, ms !== undefined && ms < 10_000 ? 0 : ms)) as typeof setTimeout);
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500, text: async () => "boom" });
+    vi.stubGlobal("fetch", fetchMock);
+    await sessionEndHook({ deferredPath: transcript, open: true, apiKey: "lls_k", hookLogPath });
+    expect(sentIds(fetchMock).every((x) => !x.includes(":agent-"))).toBe(true);
+    await expect(readFile(join(root, "hook-state", "stop-disabled"), "utf8")).rejects.toThrow();
+  });
+
+  it("open child: parent ok without ack => marker written, no child uploads", async () => {
+    const transcript = await writeWithChild();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ imported: 1, skipped: 0, total: 1, errors: [] }),
+      text: async () => "{}",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await sessionEndHook({ deferredPath: transcript, open: true, apiKey: "lls_k", hookLogPath });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sentIds(fetchMock).some((x) => x.includes(":agent-"))).toBe(false);
+    expect((await readFile(join(root, "hook-state", "stop-disabled"), "utf8")).trim()).toMatch(/^\d{4}-/);
+  });
+
+  it("open child: parent ack => children upload", async () => {
+    const transcript = await writeWithChild();
+    const fetchMock = okFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    await sessionEndHook({ deferredPath: transcript, open: true, apiKey: "lls_k", hookLogPath });
+    expect(sentIds(fetchMock).some((x) => x.includes(":agent-a"))).toBe(true);
+    await expect(readFile(join(root, "hook-state", "stop-disabled"), "utf8")).rejects.toThrow();
+  });
+
+  it("Stop parent fails closed when the throttle stamp cannot be written", async () => {
+    await mkdir(join(root, "hook-state"), { recursive: true });
+    await writeFile(join(root, "hook-state", "stop"), "not a dir"); // mkdir of the stamp dir fails
+    const spawned: string[][] = [];
+    await sessionEndHook({ stop: true, stdin: payload(), hookLogPath, spawnDeferred: (a) => spawned.push(a) });
+    expect(spawned).toHaveLength(0);
+    expect(await readFile(hookLogPath, "utf8")).toContain("stop throttle stamp not writable");
+  });
+
+  it("DEFERRED_LOCK_WAIT_MS covers the Stop cap plus a 5 s margin", () => {
+    expect(DEFERRED_LOCK_WAIT_MS).toBeGreaterThanOrEqual(HOOK_TIMEOUT_MS + 5_000);
+  });
+
+  it("ignores a transcript whose file name is not the session_id", async () => {
+    const spawned: string[][] = [];
+    await sessionEndHook({
+      stop: true,
+      stdin: stdinWith(JSON.stringify({ session_id: id, transcript_path: join(root, "other.jsonl") })),
+      hookLogPath,
+      spawnDeferred: (a) => spawned.push(a),
+    });
+    expect(spawned).toHaveLength(0);
+  });
+
+  it("prunes stop state files older than 7 days", async () => {
+    const dir = join(root, "hook-state", "stop");
+    await mkdir(dir, { recursive: true });
+    const old = join(dir, "old-session");
+    await writeFile(old, "");
+    const eightDays = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+    await utimes(old, eightDays, eightDays);
+    await sessionEndHook({ stop: true, stdin: payload(), hookLogPath, spawnDeferred: () => {} });
+    expect(await readdir(dir)).toEqual([id]);
+  });
+
+  it("does nothing when stop_hook_active is true (loop guard)", async () => {
+    const spawned: string[][] = [];
+    await sessionEndHook({
+      stop: true,
+      stdin: payload({ stop_hook_active: true }),
+      hookLogPath,
+      spawnDeferred: (a) => spawned.push(a),
+    });
+    expect(spawned).toHaveLength(0);
+  });
+
+  it("throttles: a second Stop inside the window spawns nothing; after the window it spawns again", async () => {
+    const spawned: string[][] = [];
+    const run = (ms: number) =>
+      sessionEndHook({
+        stop: true,
+        stdin: payload(),
+        hookLogPath,
+        stopThrottleMs: ms,
+        spawnDeferred: (a) => spawned.push(a),
+      });
+    await run(60_000);
+    await run(60_000);
+    expect(spawned).toHaveLength(1);
+    await run(0);
+    expect(spawned).toHaveLength(2);
+  });
+
+  it("ignores malformed, relative-path and unsafe-session-id payloads without throwing", async () => {
+    const spawned: string[][] = [];
+    const spawnDeferred = (a: string[]) => spawned.push(a);
+    await sessionEndHook({ stop: true, stdin: stdinWith("{nope"), hookLogPath, spawnDeferred });
+    await sessionEndHook({
+      stop: true,
+      stdin: stdinWith(JSON.stringify({ session_id: id, transcript_path: "rel.jsonl" })),
+      hookLogPath,
+      spawnDeferred,
+    });
+    await sessionEndHook({
+      stop: true,
+      stdin: stdinWith(JSON.stringify({ session_id: "../x", transcript_path: "/a/b.jsonl" })),
+      hookLogPath,
+      spawnDeferred,
+    });
+    expect(spawned).toHaveLength(0);
   });
 });

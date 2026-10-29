@@ -32,6 +32,7 @@
 
 import type { Db } from "@/lib/db/types";
 import { ageText } from "@/lib/domain/age";
+import { handoffSearchEnabled } from "@/lib/env";
 import { lexicalMinHits } from "@/lib/llm/embedding-family";
 import { log } from "@/lib/log";
 import {
@@ -164,6 +165,10 @@ export const PROMPT_RECALL_HEADER =
   "Membral: past work related to this prompt (true when recorded; check live state yourself):";
 
 const KINDS = ["decision", "learning", "outcome", "blocker"];
+/** The kinds prompt recall reads: with MEMBRAL_HANDOFF_SEARCH on, handoff notes too (call-time read). */
+function recallKinds(): string[] {
+  return handoffSearchEnabled() ? [...KINDS, "handoff"] : KINDS;
+}
 /** The served kinds whose text feeds the second hop's query. */
 const SECOND_HOP_KINDS = new Set<string>(["decision", "blocker", "outcome"]);
 
@@ -246,7 +251,7 @@ export function promptSkipReason(prompt: string): "short_prompt" | "slash_comman
 }
 
 /**
- * `[decision · 2d ago · session abcd1234] <full text> (#ref) → https://…`. The record's text is never cut (a cut
+ * `[decision · 2d ago · session abcd1234] <quote, else full text> (#ref) → https://…`. The record's quote (else text) is never cut (a cut
  * drops exactly the consequence a ruling states). Past PROMPT_RECALL_LINE_MAX_CHARS the URL is dropped first, then
  * the ref. Only text longer than the schema allows is cut, as a last resort. Pure.
  */
@@ -258,23 +263,50 @@ export function renderPromptRecallLine(
 ): string {
   const day = asOfDay(r.when);
   const head = `[${r.kind} · ${day ? `as of ${day} · ` : ""}${ageText(r.when, now)} · session ${r.session_id.slice(0, 8)}] `;
-  const text = oneLine(r.text);
+  // M2 (goal 2026-10-25 box 3.4): the verbatim quote is the receipt. It leads, framed as a citation, and the
+  // extracted `text` follows in whatever room is left (a short user ruling alone would lose the decision).
+  // A record with no quote (e.g. an imported one) renders its text as before.
+  const quote = r.quote?.trim() ? oneLine(r.quote) : "";
+  const fullText = oneLine(r.text);
   const ref = r.ref ? oneLine(r.ref) : "";
-  const tail = ref && !text.includes(ref) ? ` (${ref})` : "";
   const seen = seenIn > 1 ? ` (seen in ${seenIn} sessions)` : "";
   const url = r.ref_url ? ` → ${r.ref_url}` : "";
   // The URL outranks the relative age: when the full head pushes the line past the cap, the age goes first.
   const shortHead = `[${r.kind} · ${day ? `as of ${day} · ` : ""}session ${r.session_id.slice(0, 8)}] `;
-  for (const line of [
-    `${head}${text}${tail}${seen}${url}`,
-    `${shortHead}${text}${tail}${seen}${url}`,
-    `${head}${text}${tail}${seen}`,
-    `${head}${text}${seen}`,
-    `${head}${text}`,
-  ]) {
-    if (line.length <= lineMax) return line;
+  const candidates = (body: string): string[] => {
+    const tail = ref && !body.includes(ref) ? ` (${ref})` : "";
+    return [
+      `${head}${body}${tail}${seen}${url}`,
+      `${shortHead}${body}${tail}${seen}${url}`,
+      `${head}${body}${tail}${seen}`,
+      `${head}${body}${seen}`,
+      `${head}${body}`,
+    ];
+  };
+  const fit = (body: string): string | null => candidates(body).find((l) => l.length <= lineMax) ?? null;
+  const cite = quote ? `said: "${quote}"` : "";
+  const sep = " — ";
+  const addText = fullText && fullText !== quote && !quote.includes(fullText);
+  const text = cite || fullText;
+  const full = cite && addText ? `${cite}${sep}${fullText}` : text;
+  const whole = fit(full);
+  if (whole) return whole;
+  if (cite && addText) {
+    // The quote fits without the text: append as much of the text as the room allows (word-cut, with an ellipsis).
+    const base = fit(cite);
+    if (base) {
+      const room = lineMax - base.length - sep.length - 1;
+      if (room >= 20) {
+        const cut = safeSlice(fullText, room);
+        const atWord = /\s/.test(fullText.charAt(cut.length)) ? cut : cut.replace(/\s*\S*$/, "");
+        const part = (atWord || cut).trimEnd();
+        const withText = fit(`${cite}${sep}${part}…`);
+        if (withText) return withText;
+      }
+      return base;
+    }
   }
-  // The text alone passes the client's cut (a legacy client, text over ~330): cut it at a word boundary and end
+  // The body alone passes the client's cut (a legacy client, quote over ~330): cut it at a word boundary and end
   // with a short open hint, so the line is whole rather than sliced mid-word or mid-URL by the client.
   const suffix = `… (open: ${r.session_id.slice(0, 8)})`;
   const room = lineMax - shortHead.length - suffix.length;
@@ -523,7 +555,7 @@ export async function loadPromptRecallAnchors(
     p_user_id: userId,
     p_code_project_id: projectId,
     p_tokens: tokens,
-    p_kinds: KINDS,
+    p_kinds: recallKinds(),
     p_limit: PROMPT_RECALL_ANCHOR_MAX_RECORDS,
   });
   if (error) throw new Error(`prompt recall anchors: read failed: ${error.message}`);
@@ -705,7 +737,7 @@ export async function buildPromptRecall(
       db,
       userId,
       projectId,
-      { query, kind: KINDS, limit: PROMPT_RECALL_SEARCH_LIMIT },
+      { query, kind: recallKinds(), limit: PROMPT_RECALL_SEARCH_LIMIT },
       {
         now,
         floor: true,
@@ -978,7 +1010,7 @@ async function buildContinuationRecall(
             db,
             userId,
             projectId,
-            { query, kind: KINDS, limit: PROMPT_RECALL_SEARCH_LIMIT },
+            { query, kind: recallKinds(), limit: PROMPT_RECALL_SEARCH_LIMIT },
             { now, floor: true, logEvent: false },
           );
         })(),

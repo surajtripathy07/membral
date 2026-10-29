@@ -72,7 +72,7 @@ const RECENT_TOOLS = ["list_recent_conversations"];
 const CODE_TOOLS = ["list_code_projects", "get_code_project", "get_code_session", "get_code_context_for"];
 // Memory v1 (#152): the three read tools are gated the SAME way as CODE_TOOLS
 // (see server.ts's call site) — always alongside them, never alone.
-const MEMORY_TOOLS = ["memory_search", "memory_recall", "memory_resolve", "session_summary"];
+const MEMORY_TOOLS = ["memory_search", "memory_recall", "memory_get", "memory_resolve", "session_summary"];
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => ({ from: vi.fn() })),
@@ -130,7 +130,7 @@ describe("createCloudMcpServer", () => {
       process.env.MEMBRAL_MCP_EXTENDED_TOOLS = "1";
     });
 
-    it("default (flag unset): an unscoped key lists 9 tools, without the two extended ones", () => {
+    it("default (flag unset): an unscoped key lists 10 tools, without the two extended ones", () => {
       delete process.env.MEMBRAL_MCP_EXTENDED_TOOLS;
       const keys = Object.keys(tools(createCloudMcpServer("user-123"))).sort();
       expect(keys).toEqual(
@@ -143,13 +143,13 @@ describe("createCloudMcpServer", () => {
           ...MEMORY_TOOLS,
         ].sort(),
       );
-      expect(keys).toHaveLength(9);
+      expect(keys).toHaveLength(10);
     });
 
-    it("flag on: restores the 2 extended tools (11 total) and keeps their scope gates", () => {
+    it("flag on: restores the 2 extended tools (12 total) and keeps their scope gates", () => {
       process.env.MEMBRAL_MCP_EXTENDED_TOOLS = "1";
       const unscoped = Object.keys(tools(createCloudMcpServer("user-123")));
-      expect(unscoped).toHaveLength(11);
+      expect(unscoped).toHaveLength(12);
       for (const t of ["get_code_project", "get_code_context_for"]) expect(unscoped).toContain(t);
       const area = Object.keys(tools(createCloudMcpServer("user-123", "area-bound")));
       expect(area).not.toContain("get_code_project");

@@ -2,12 +2,14 @@ import { tryServiceClient } from "@/lib/db/clients";
 import type { Db } from "@/lib/db/types";
 import { SERVICE_ROLE_KEY_ENV } from "./env";
 import { assertFeature } from "./feature-flags";
+import { bundledEmbeddingsCreate } from "./llm/bundled-embedder";
 import { embedCostUsd } from "./llm/client";
 import {
   callEmbeddingsCreate,
   EMBEDDING_DIMENSIONS,
   type EmbeddingRequestOptions,
   embedTimeoutMs,
+  isBundledEmbeddingConfig,
   resolveEmbeddingConfig,
 } from "./llm/embedding-client";
 import { checkMonthlyCeiling, createSpendLedger, type SpendLedger } from "./llm/spend-ledger";
@@ -364,8 +366,10 @@ export async function generateEmbedding(text: string, opts: GenerateEmbeddingOpt
     }
   }
 
-  const openai = getOpenAI();
   const embeddingConfig = resolveEmbeddingConfig();
+  // The bundled model runs in this process: no HTTP client, no key (lib/llm/bundled-embedder.ts).
+  const bundled = isBundledEmbeddingConfig(embeddingConfig);
+  const openai = bundled ? null : getOpenAI();
   let attemptText = text;
   let lastErr: unknown;
   const requestOptions: EmbeddingRequestOptions | undefined =
@@ -376,7 +380,12 @@ export async function generateEmbedding(text: string, opts: GenerateEmbeddingOpt
   for (let attempt = 0; attempt <= MAX_HALVINGS; attempt++) {
     try {
       const response = await callEmbeddingsCreate(
-        (body, reqOpts) => (reqOpts ? openai.embeddings.create(body, reqOpts) : openai.embeddings.create(body)),
+        (body, reqOpts) =>
+          openai === null
+            ? bundledEmbeddingsCreate(body, reqOpts)
+            : reqOpts
+              ? openai.embeddings.create(body, reqOpts)
+              : openai.embeddings.create(body),
         embeddingConfig,
         attemptText,
         requestOptions,

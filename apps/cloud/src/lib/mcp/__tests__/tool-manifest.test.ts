@@ -62,6 +62,7 @@ describe("offline MCP tool manifest", () => {
       "get_conversation",
       "list_code_projects",
       "list_recent_conversations",
+      "memory_get",
       "memory_recall",
       "memory_resolve",
       "memory_search",

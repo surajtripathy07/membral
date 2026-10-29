@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Markdown } from "@/components/markdown";
 import { digestFirstLine, type TurnActionView, turnActionViews } from "@/lib/code-sessions/turn-actions";
+import { markQuote } from "./quote-mark";
 import { type ChildSessionForMatch, toolActivityLabel, toolResultStatus, type TurnRow } from "@/lib/code-sessions/view";
 
 /** #89 (migration 089): the Task/Agent tool_use turn that spawned a sub-agent — an inline link to its own session page, right where the spawn happened in the transcript, in addition to the end-of-page "Sub-agents" section (unmatched children only, see SubAgentSection). */
@@ -59,11 +60,13 @@ function ActivityLineBody({
   subAgent,
   projectIdentity,
   glabHosts,
+  quote,
 }: {
   turn: TurnRow;
   subAgent?: ChildSessionForMatch;
   projectIdentity: string | null;
   glabHosts?: readonly string[];
+  quote?: string | null;
 }) {
   if (turn.kind === "tool_use") {
     const views = turnActionViews(turn.actions ?? [], projectIdentity, glabHosts);
@@ -102,10 +105,17 @@ function ActivityLineBody({
     );
   }
   if (turn.kind === "thinking") {
-    return <p className="whitespace-pre-wrap break-words py-0.5 text-body-sm italic text-muted">{turn.text}</p>;
+    return (
+      <p className="whitespace-pre-wrap break-words py-0.5 text-body-sm italic text-muted">
+        {markQuote(turn.text ?? "", quote) ?? turn.text}
+      </p>
+    );
   }
   // assistant prose — markdown (fences, bullets, emphasis) via the shared
   // Markdown component with a token-only palette; no raw HTML is rendered.
+  // A cited quote found in this turn: plain text with the mark (marking inside rendered markdown would mean parsing it).
+  const marked = markQuote(turn.text ?? "", quote);
+  if (marked) return <p className="whitespace-pre-wrap break-words py-0.5 text-body-sm text-ink-2">{marked}</p>;
   return <Markdown content={turn.text ?? ""} className={ASSISTANT_PROSE} />;
 }
 
@@ -117,9 +127,12 @@ export function ActivityLine({
   subAgent,
   projectIdentity = null,
   glabHosts,
+  quote,
 }: {
   turn: TurnRow;
   subAgent?: ChildSessionForMatch;
+  /** The quote a memory record cites (`?quote=`), marked in this turn's text. Pass it for the focused turn only. */
+  quote?: string | null;
   /** code_projects.repo_identity of the session — qualifies a bare `#N` action ref the way attribution stores it. */
   projectIdentity?: string | null;
   /** Hosts the page's data shows are glab-family (forge-url.ts `glabHostsFrom`) — their refs link glab-style. */
@@ -127,7 +140,13 @@ export function ActivityLine({
 }) {
   return (
     <div id={`turn-${turn.idx}`} className="scroll-mt-24">
-      <ActivityLineBody turn={turn} subAgent={subAgent} projectIdentity={projectIdentity} glabHosts={glabHosts} />
+      <ActivityLineBody
+        turn={turn}
+        subAgent={subAgent}
+        projectIdentity={projectIdentity}
+        glabHosts={glabHosts}
+        quote={quote}
+      />
     </div>
   );
 }

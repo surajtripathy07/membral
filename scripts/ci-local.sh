@@ -75,6 +75,7 @@ step() {
 # grep turbo's own "Cached: N cached, N total" summary line out of after
 # the run, for the receipt's cache-hit line.
 gate_turbo() { npx turbo run build test lint typecheck 2>&1 | tee "$TURBO_LOG"; }
+gate_db_pglite() { MEMBRAL_TEST_STORE=pglite npm run test:db --workspace=@membral/cloud; }
 gate_mock_paths() { npm run check:mock-paths; }
 gate_ratchets() { npm run check:ratchets; }
 gate_script_tests() { bash scripts/__tests__/run.sh; }
@@ -93,6 +94,7 @@ gate_move_coverage() {
 
 step "ci-local sync" npm run check:ci-local-sync
 step "turbo build test lint typecheck" gate_turbo
+step "DB tests on the embedded store (pglite)" gate_db_pglite
 step "Mock-path guard (G6)" gate_mock_paths
 step "Ratchets (G1–G5)" gate_ratchets
 step "Script tests" gate_script_tests
@@ -129,6 +131,17 @@ smoke_write_env() {
     echo "NEXT_PUBLIC_APP_URL=http://localhost:3001"
   } > .env.local
 }
+smoke_db_postgrest() {
+  cd apps/cloud || return 1
+  STATUS_ENV="$(supabase status -o env)"
+  export MEMBRAL_TEST_STORE=postgrest
+  export SUPABASE_URL="$(echo "$STATUS_ENV" | grep '^API_URL=' | cut -d'"' -f2)"
+  export SUPABASE_ANON_KEY="$(echo "$STATUS_ENV" | grep '^ANON_KEY=' | cut -d'"' -f2)"
+  export SUPABASE_SERVICE_ROLE_KEY="$(echo "$STATUS_ENV" | grep '^SERVICE_ROLE_KEY=' | cut -d'"' -f2)"
+  export SUPABASE_DB_URL="$(echo "$STATUS_ENV" | grep '^DB_URL=' | cut -d'"' -f2)"
+  export SUPABASE_JWT_SECRET="$(echo "$STATUS_ENV" | grep '^JWT_SECRET=' | cut -d'"' -f2)"
+  npm run test:db
+}
 smoke_build() { npx turbo build; }
 smoke_playwright() { npx playwright install --with-deps chromium; }
 smoke_run() { SMOKE_MODE=start npm run smoke; }
@@ -142,6 +155,7 @@ if [ "$SMOKE" -eq 1 ]; then
     set -a; . apps/cloud/.env.local; set +a
   fi
   step "Build (with the local Supabase env)" smoke_build
+  step "DB tests on real PostgREST" smoke_db_postgrest
   step "Playwright chromium" smoke_playwright
   step "Smoke" smoke_run
 fi

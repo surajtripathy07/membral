@@ -32,6 +32,7 @@ export type EndpointId =
   | "upload"
   | "known"
   | "import"
+  | "importClaudeMem"
   | "preamble"
   | "promptRecall"
   | "kick"
@@ -102,6 +103,20 @@ export const ENDPOINTS: Record<EndpointId, EndpointPolicy> = {
     on401: "fallback",
     timeoutMs: 310_000,
     idempotent: false,
+    attempts: { network: 3, server5xx: 3, rateLimited: 6 },
+    bucket: "importBulk",
+    pace: true,
+    response: "json",
+  },
+  // claude-mem observations -> records (apps/cloud/src/lib/memory/import-claude-mem.ts). Idempotent
+  // server-side (unique content hash per session), so a timed-out batch may be re-sent.
+  importClaudeMem: {
+    method: "POST",
+    path: "/api/memory/import-claude-mem",
+    auth: "key",
+    on401: "fallback",
+    timeoutMs: 60_000,
+    idempotent: true,
     attempts: { network: 3, server5xx: 3, rateLimited: 6 },
     bucket: "importBulk",
     pace: true,

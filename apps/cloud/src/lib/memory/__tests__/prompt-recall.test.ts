@@ -147,6 +147,65 @@ describe("renderPromptRecallLine", () => {
     );
   });
 
+  it("leads with the quote as a citation and keeps the extracted text after it", () => {
+    const line = renderPromptRecallLine(
+      served({ quote: "let's keep ledger-sync.ts inline, the worker needs it", text: "Paraphrased decision text" }),
+      NOW.getTime(),
+    );
+    expect(line).toBe(
+      `[decision · as of 2026-10-06 · 2d ago · session abcd1234] said: "let's keep ledger-sync.ts inline, the worker needs it" — Paraphrased decision text (#157)`,
+    );
+  });
+
+  it("a short user ruling as the quote does not lose the decision text", () => {
+    const line = renderPromptRecallLine(
+      served({ quote: "yes, do that", text: "Adopt the outbox pattern" }),
+      NOW.getTime(),
+    );
+    expect(line).toContain('said: "yes, do that" — Adopt the outbox pattern');
+  });
+
+  it("two records with one quote and different text render differently", () => {
+    const quote = "ok go ahead";
+    const a = renderPromptRecallLine(served({ quote, text: "Ship the migration first" }), NOW.getTime());
+    const b = renderPromptRecallLine(served({ quote, text: "Drop the legacy table" }), NOW.getTime());
+    expect(a).not.toBe(b);
+  });
+
+  it("a long quote consumes the line: text is dropped, line stays under the cap", () => {
+    const quote = "keep the vendor call inline because the worker needs it ".repeat(6).trim();
+    for (const lineMax of [420, 720]) {
+      const line = renderPromptRecallLine(served({ quote, text: "Extracted decision" }), NOW.getTime(), 1, lineMax);
+      expect(line.length).toBeLessThanOrEqual(lineMax);
+      expect(line).toContain("said:");
+    }
+  });
+
+  it("a mid-size quote gets a word-cut slice of the text in the room left; 720 fits more than 420", () => {
+    const quote = "q ".repeat(80).trim();
+    const text = "decision words here ".repeat(20).trim();
+    const l420 = renderPromptRecallLine(served({ quote, text, ref: null }), NOW.getTime(), 1, 420);
+    const l720 = renderPromptRecallLine(served({ quote, text, ref: null }), NOW.getTime(), 1, 720);
+    expect(l420.length).toBeLessThanOrEqual(420);
+    expect(l720.length).toBeLessThanOrEqual(720);
+    expect(l720.length).toBeGreaterThan(l420.length);
+    expect(l420).toContain(" — decision");
+  });
+
+  it("falls back to text when the quote is null or blank", () => {
+    for (const quote of [null, "", "   "]) {
+      expect(renderPromptRecallLine(served({ quote }), NOW.getTime())).toContain("single inline-call exception");
+    }
+  });
+
+  it("a quote longer than a legacy client's cut is word-cut with the (open: id8) suffix, under the cap", () => {
+    const quote = "keep the vendor call inline because the sync worker needs its retry ".repeat(10).trim();
+    const line = renderPromptRecallLine(served({ quote, ref: null }), NOW.getTime());
+    expect(line.length).toBeLessThanOrEqual(420);
+    expect(line).toMatch(/… \(open: abcd1234\)$/);
+    expect(line).toContain("keep the vendor call inline");
+  });
+
   it("does not repeat a ref the text already names", () => {
     expect(renderPromptRecallLine(served({ text: "Ruled on #157 today" }), NOW.getTime())).toMatch(/today$/);
   });
@@ -1044,6 +1103,23 @@ describe("W4b serving changes (eval loop 2)", () => {
       });
       expect(out.record_ids[0]).toBe("ruling");
       expect(out.lines[1]).toContain("Leave the kg module file alone");
+    });
+
+    it("MEMBRAL_HANDOFF_SEARCH on: the anchor call also reads handoff notes", async () => {
+      vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+      try {
+        const calls: Record<string, unknown>[] = [];
+        await buildPromptRecall(
+          db([generic(1)], [ruling], calls),
+          USER,
+          null,
+          { prompt: QUEUE_PROMPT, repo: "acme/app", clientBudgetMs: EXT },
+          { now: NOW },
+        );
+        expect(calls[0]?.p_kinds).toEqual(["decision", "learning", "outcome", "blocker", "handoff"]);
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
 
     it("a bare file name (route.ts) makes no anchor call", async () => {

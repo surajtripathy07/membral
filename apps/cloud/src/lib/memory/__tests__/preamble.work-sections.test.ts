@@ -649,4 +649,25 @@ describe("fitLine", () => {
   it("renders the prefix alone when there is no text", () => {
     expect(fitLine("- #4 — as of 2026-09-24 (2d ago)", null)).toBe("- #4 — as of 2026-09-24 (2d ago)");
   });
+  it("excludes unverified imported claude-mem records from the work-memory read (verified ones stay)", async () => {
+    const fake = makeFakeSupabase(tables([session(S_LEDGER, "main", 1)], [], [memory({ id: "m1", text: "kept" })]));
+    const ors: string[] = [];
+    // biome-ignore lint/suspicious/noExplicitAny: a recording proxy over the untyped fake query builder
+    const watch = (q: any): any =>
+      new Proxy(q, {
+        get(target, prop) {
+          const v = target[prop];
+          if (typeof v !== "function") return v;
+          return (...args: unknown[]) => {
+            if (prop === "or") ors.push(String(args[0]));
+            const r = v.apply(target, args);
+            return r === target ? watch(r) : r;
+          };
+        },
+      });
+    const realFrom = fake.from.bind(fake);
+    fake.from = (table: string) => (table === "session_memories" ? watch(realFrom(table)) : realFrom(table));
+    await buildPreamble(fake, USER, { repo: PROJECT_IDENTITY, branch: "main" });
+    expect(ors).toContain("source.neq.claude-mem,verified.eq.true");
+  });
 });

@@ -1,0 +1,26 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral up [--port <n>] [--server-dir <dir>] [--foreground] [--email <addr>] [--yes] [--no-sweep]
+
+Runs the whole server on this machine as one process, with no Docker: the
+Membral app on an embedded Postgres (PGlite) keeping its data in
+~/.membral/local/pgdata. Starts it detached (log: ~/.membral/local/logs/server.log,
+rotated at 10 MB, 3 kept), waits until its store is ready, creates your one
+local user and an API key, saves the "local" profile, makes it active, and
+points hooks and MCP at it. A second `up` while it runs just prints status.
+
+The server build is looked up in --server-dir, then MEMBRAL_SERVER_DIR, then
+apps/cloud/.next/standalone of the checkout you run this from.
+Extraction uses `claude` when it is on PATH; otherwise put an API key in
+~/.membral/local/.env (it stays off without one).
+
+Flags
+  --port <n>          Port on 127.0.0.1 (default 3000, then the saved one)
+  --server-dir <dir>  Directory holding apps/cloud/server.js
+  --foreground        Stay attached; Ctrl-C stops the server
+  --email <addr>      Local user's email (default you@membral.local)
+  --yes               Accept setup defaults (implied when stdin is not a terminal)
+  --no-sweep          Don't schedule the backstop sweep
+
+--- STDERR ---

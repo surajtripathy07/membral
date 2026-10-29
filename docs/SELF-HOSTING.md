@@ -184,9 +184,23 @@ says keyword-only, check this path first: Ollama can answer in your shell and st
 
 Vector columns are 1,536 wide. Smaller models are zero-padded, and cosine similarity stays the same. Any model of
 1,536 dimensions or fewer fits: `nomic-embed-text` (768), `mxbai-embed-large` (1024), `text-embedding-3-small`
-(1536). A store holds one embedding model. Switching later needs a re-embed, and that is not built yet, so pick
-before you import much. Only `nomic-embed-text` has calibrated thresholds; other models run without the
-calibrated floors unless you set `MEMBRAL_EMBEDDING_MIN_SIMILARITY`.
+(1536). A store holds one embedding model. Only `nomic-embed-text` has calibrated thresholds; other models run
+without the calibrated floors unless you set `MEMBRAL_EMBEDDING_MIN_SIMILARITY`.
+
+To switch models later, point the stack at the new one, then re-embed what is already stored:
+
+```
+membral local up --embeddings ollama --embedding-model nomic-embed-text
+membral local reembed --dry-run     # counts per table and model; writes nothing
+membral local reembed               # converts every vector, with progress; Ctrl-C stops, rerun resumes
+```
+
+Until it finishes, new writes keep their text but get no vector (keyword search still works), and search only uses
+vectors of the configured model. `reembed` skips rows already on that model, so rerunning it is safe. A row whose
+text the model definitively rejects (a 4xx on that text, or input still too long after halving) is left keyword-only.
+A row hit by a transient error (5xx, timeout, dropped connection) is left exactly as it was and reported as
+"skipped"; rerun `reembed` and it is picked up again. A model with more than 1536 dimensions is refused before
+anything is written. Use `--batch <n>` (1 to 256, default 64) to tune the request size.
 
 ## Chrome extension on a local stack
 

@@ -9,8 +9,10 @@
 // Every query is scoped by `user_id` on top of RLS (`own_rows`), the same
 // belt-and-braces idiom lib/code-sessions/queries.ts uses.
 
+import { quoteForLink } from "@/lib/code-sessions/quote-highlight";
 import type { Db } from "@/lib/db/types";
 import { isFreshBlocker } from "@/lib/domain/blockers";
+import { handoffFeatureEnabled } from "@/lib/env";
 import { MEMORY_KINDS, type MemoryKind } from "./schema";
 import { memorySearch } from "./search";
 
@@ -78,10 +80,15 @@ export function parsePage(value: string | null | undefined): number {
  * v4: `?turn=N` is always added — the page loads the activity window around
  * that turn, so the anchor exists wherever it sits.
  */
-export function receiptHref(record: Pick<BrowseSessionMemory, "code_session_id" | "turn_idx">): string {
+export function receiptHref(
+  record: Pick<BrowseSessionMemory, "code_session_id" | "turn_idx"> & { quote?: string | null },
+): string {
   // v4 item 6: `?turn=N` loads a window around the turn (queries.ts getCodeSessionDetail), so the
   // anchor exists past the default cap — and past `?all=1`'s hard ceiling too.
-  return `/code/session/${record.code_session_id}?turn=${record.turn_idx}#turn-${record.turn_idx}`;
+  // Verify affordance (goal 2026-10-25 3.5): `&quote=` makes the session page mark the cited text in that turn.
+  const quote = quoteForLink(record.quote);
+  const q = quote ? `&quote=${encodeURIComponent(quote)}` : "";
+  return `/code/session/${record.code_session_id}?turn=${record.turn_idx}${q}#turn-${record.turn_idx}`;
 }
 
 /** The user's code projects for the filter dropdown, by display name. */
@@ -175,7 +182,10 @@ export async function listSessionMemories(
   const offset = opts.offset ?? 0;
   let query = supabase.from("session_memories").select(ROW_COLUMNS).eq("user_id", userId).is("retired_at", null);
   if (opts.projectId) query = query.eq("code_project_id", opts.projectId);
+  // Without a kind filter, only the extracted kinds: the "All" view must not list a synthesized `handoff` note. With
+  // both handoff flags off no note is written, so the query keeps its pre-handoff shape.
   if (opts.kind) query = query.eq("kind", opts.kind);
+  else if (handoffFeatureEnabled()) query = query.in("kind", MEMORY_KINDS);
   const { data, error } = await query.order("created_at", { ascending: false }).range(offset, offset + limit);
   if (error) throw new Error(`listSessionMemories: ${error.message}`);
   const rows = (data ?? []) as SessionMemoryRow[];

@@ -52,6 +52,17 @@ const MODEL_INFERRED_SOURCE = "model_segment";
  */
 const EVIDENCE_TIER = "observed";
 
+/**
+ * A served handoff note is cut to this many characters (about 200 tokens): a note runs to thousands of characters and
+ * would crowd the result's token budget. The full note is one `get_code_session` away (the record carries session_id).
+ */
+export const HANDOFF_SERVED_MAX_CHARS = 800;
+
+export function truncateHandoffText(text: string): string {
+  if (text.length <= HANDOFF_SERVED_MAX_CHARS) return text;
+  return `${text.slice(0, HANDOFF_SERVED_MAX_CHARS).trimEnd()}… [truncated; open session_id with get_code_session for the full note]`;
+}
+
 function isEmpty(value: unknown): boolean {
   return value === null || value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
 }
@@ -112,13 +123,15 @@ export function compactServedRecord(
   sessionRefs?: readonly string[],
   refInfo?: RecordRefInfo,
   now: number = Date.now(),
+  /** memory_get opens a record whole: a handoff note is not cut to HANDOFF_SERVED_MAX_CHARS. */
+  wholeHandoff = false,
 ): CompactServedRecord {
   const out = {} as CompactServedRecord;
   out.id = record.id;
   out.kind = record.kind;
   if (!isEmpty(record.source)) out.source = record.source;
   if (!isEmpty(record.quote)) out.quote = record.quote as string;
-  out.text = record.text;
+  out.text = (record.kind as string) === "handoff" && !wholeHandoff ? truncateHandoffText(record.text) : record.text;
   if (!isEmpty(record.ref)) {
     out.ref = record.ref as string;
     if (refInfo) {
@@ -263,6 +276,7 @@ export async function compactServedRecords(
   records: readonly ServedRecord[],
   userId: string,
   now: number = Date.now(),
+  wholeHandoff = false,
 ): Promise<CompactServedRecord[]> {
   const [refsBySession, refInfo] = await Promise.all([
     fetchSessionRefs(
@@ -276,5 +290,7 @@ export async function compactServedRecords(
       userId,
     ),
   ]);
-  return records.map((r) => compactServedRecord(r, refsBySession.get(r.session_id), refInfo.get(r.id), now));
+  return records.map((r) =>
+    compactServedRecord(r, refsBySession.get(r.session_id), refInfo.get(r.id), now, wholeHandoff),
+  );
 }

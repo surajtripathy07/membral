@@ -2,13 +2,23 @@ EXIT: 0
 --- STDOUT ---
 Usage
   membral import <file.json> [--api-url <url>] [--api-key <key>]
+  membral import claude-mem [--db <path>] [--api-url <url>] [--api-key <key>]
 
 Import a ChatGPT or Claude.ai export file — a conversations.json export
 (detected automatically), uploaded in batches of 100 with a progress line.
 A .zip export isn't unzipped automatically; extract conversations.json
 first (the command prints the exact steps if it sees one).
 
+`import claude-mem` reads a claude-mem SQLite store (default
+~/.claude-mem/claude-mem.db; needs Node >= 22.5) and stores its observations
+as Membral records labelled source claude-mem. Each links to the Membral
+session with the same session id, so upload those transcripts first
+(`membral sessions`); observations with no matching session are skipped and
+counted. A record carries a quote only when its text appears verbatim in that
+session's transcript. Re-running imports nothing twice.
+
 Flags
+  --db <path>       claude-mem database (import claude-mem only)
   --api-url <url>   Overrides the default API URL
   --api-key <key>   Overrides the saved/env credentials for this run
 

@@ -78,6 +78,55 @@ export const MAX_LINE_CHARS = 300;
 export const MAX_SELF_LINES = 8;
 /** A self-recall line carries a record's full text plus ref and link, as prompt-recall lines do (prompt-hook.ts MAX_PROMPT_LINE_CHARS). */
 export const MAX_SELF_LINE_CHARS = 720;
+/**
+ * The session's handoff note (`handoff_text`), shown whole up to this many characters: a ceiling above the server's
+ * largest inject budget (4,800, resume), so a well-formed note is never cut here; its own cap, not squeezed through
+ * MAX_SELF_LINES. A longer string (a misbehaving server) is cut with an ellipsis.
+ */
+export const MAX_HANDOFF_TEXT_CHARS = 6_000;
+/**
+ * One budget for the whole injected context (handoff, preamble lines and self-recall lines together): Claude Code
+ * caps hook `additionalContext` near 10,000 characters and spills or drops anything longer, so stay under it.
+ * Filled in priority order: handoff, then preamble lines, then self-recall lines.
+ */
+export const MAX_RESUME_CONTEXT_CHARS = 9_500;
+/** A line cut to fit the remaining budget must keep at least this many characters to be worth showing. */
+const MIN_USEFUL_LINE_CHARS = 80;
+
+/**
+ * Packs the parts into `budget` characters (newline-joined) in priority order: handoff, preamble lines, self lines.
+ * A part that does not fit whole is cut with an ellipsis when enough room remains, and ends that part's turn.
+ * The result keeps the display order: handoff, self lines, preamble lines.
+ */
+export function fitContextBudget(
+  handoff: string | null,
+  lines: string[],
+  selfLines: string[],
+  budget: number = MAX_RESUME_CONTEXT_CHARS,
+): string {
+  let used = 0;
+  const take = (parts: string[]): string[] => {
+    const out: string[] = [];
+    for (const part of parts) {
+      const room = budget - used - (used > 0 ? 1 : 0);
+      if (part.length <= room) {
+        out.push(part);
+        used += part.length + (used > 0 ? 1 : 0);
+        continue;
+      }
+      if (room >= MIN_USEFUL_LINE_CHARS) {
+        out.push(`${part.slice(0, room - 1)}…`);
+        used = budget;
+      }
+      break;
+    }
+    return out;
+  };
+  const fittedHandoff = take(handoff ? [handoff] : []);
+  const fittedLines = take(lines);
+  const fittedSelf = take(selfLines);
+  return [...fittedHandoff, ...fittedSelf, ...fittedLines].join("\n");
+}
 
 /**
  * Antigravity (agy) fires PreInvocation on every model call, not once per conversation, so its
@@ -267,6 +316,8 @@ interface PreambleResponse {
   /** Present only when the request carried `self=`. */
   self_lines?: unknown;
   self_skipped?: unknown;
+  /** Present on resume/compact when the session has a handoff note; absent from servers that predate it. */
+  handoff_text?: unknown;
   recall_token: string;
   open_blockers: unknown[];
 }
@@ -400,6 +451,8 @@ async function preambleHookInner(opts: PreambleHookOptions): Promise<void> {
   if (selfSource) {
     params.set("self", selfSource);
     params.set("line_max", String(MAX_SELF_LINE_CHARS));
+    // Capability flag: this CLI shows `handoff_text`. The server serves (and logs) a handoff note only when it is set.
+    params.set("handoff", "1");
   }
 
   // Design note §4: one budget for the whole call, fallback included —
@@ -453,7 +506,8 @@ async function preambleHookInner(opts: PreambleHookOptions): Promise<void> {
           selfLines.length > 0 ? `served ${selfLines.length} lines` : /^[a-z_]{1,40}$/.test(skipped) ? skipped : "none";
         appendPreambleHookLog(hookLogPath, `preamble: self-recall ${selfSource} ${outcome} in ${ms} ms`);
       }
-      if (!isPreambleResponse(body) || (body.lines.length === 0 && selfLines.length === 0)) {
+      const handoff = isPreambleResponse(body) ? handoffText(body) : null;
+      if (!isPreambleResponse(body) || (body.lines.length === 0 && selfLines.length === 0 && !handoff)) {
         debug("response failed validation — skipping");
         return;
       }
@@ -461,7 +515,8 @@ async function preambleHookInner(opts: PreambleHookOptions): Promise<void> {
       const lines = body.lines
         .slice(0, MAX_INJECTED_LINES)
         .map((l) => (l.length > MAX_LINE_CHARS ? `${l.slice(0, MAX_LINE_CHARS - 1)}…` : l));
-      const context = [...selfLines, ...lines].join("\n");
+      // The handoff note is this session's own summary: it covers the self-recall records, so those lines are dropped.
+      const context = fitContextBudget(handoff, lines, handoff ? [] : selfLines);
       if (opts.format === "text") {
         process.stdout.write(`${context}\n`);
         return;
@@ -474,6 +529,13 @@ async function preambleHookInner(opts: PreambleHookOptions): Promise<void> {
     // A call that served nothing (failure, empty body, throw) must not suppress later retries.
     if (claimed && !served && agyConversationId) releaseAgyMarker(agyDir, agyConversationId);
   }
+}
+
+/** The response's `handoff_text`: a non-blank string, capped at MAX_HANDOFF_TEXT_CHARS; null when absent or not a string. */
+function handoffText(body: PreambleResponse): string | null {
+  if (typeof body.handoff_text !== "string" || body.handoff_text.trim().length === 0) return null;
+  const t = body.handoff_text.trim();
+  return t.length > MAX_HANDOFF_TEXT_CHARS ? `${t.slice(0, MAX_HANDOFF_TEXT_CHARS - 1)}…` : t;
 }
 
 /** The response's `self_lines`, string-checked and capped (MAX_SELF_LINES, MAX_SELF_LINE_CHARS); [] when absent. */

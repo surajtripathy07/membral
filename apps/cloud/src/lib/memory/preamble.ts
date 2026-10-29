@@ -397,6 +397,9 @@ export async function buildPreamble(
       .eq("user_id", userId)
       .eq("code_project_id", project.id)
       .is("retired_at", null)
+      // An imported claude-mem record that found no quote in a Membral transcript stays searchable
+      // (memory_search) but never reaches session start: a large import must not flood the preamble.
+      .or("source.neq.claude-mem,verified.eq.true")
       .in("kind", ["decision", "outcome", "learning", "blocker"])
       .order("created_at", { ascending: false })
       .limit(WORK_MEMORY_LIMIT)

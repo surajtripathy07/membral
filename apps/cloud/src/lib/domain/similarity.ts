@@ -7,6 +7,7 @@
  * non-empty `a` already fails the length-equality check).
  */
 
+import { BUNDLED_EMBEDDING_MODEL } from "./embedding-model-ids";
 import { CROSS_SESSION_DUP_COSINE_THRESHOLD, RECURRENCE_COSINE_THRESHOLD } from "./recurrence";
 
 /** Supersede rule (`write.ts`): a new record this close to a live one supersedes it. */
@@ -77,6 +78,25 @@ export const CALIBRATED_FAMILY_THRESHOLDS: Readonly<Record<string, Readonly<Reco
     mixed_sem_floor: 0.61,
     sql_cut: 0.51,
   },
+  // The Docker-free store's bundled ONNX q8 nomic. Not an alias of the Ollama row: per-pair cosines differ (sd 0.016-0.020,
+  // up to 0.087). supersede, sem_floor, mixed_sem_floor and sql_cut were replayed on the bundled model's own scores
+  // (tuning split, not written by the script). The four dedupe/recurrence values (in_batch 0.93, cross_session 0.94,
+  // semantic 0.86, recurrence/blocker_dismiss 0.86) keep Ollama's adjudicated cosines: re-scored on ONNX they would be
+  // 0.90/0.91/0.82/0.82, so the kept values are stricter and safe. These write-path steps go from skipped to active on
+  // Docker-free stores. content_match stays null (no labelled pairs).
+  // `scripts/eval/recall-precision/calibration/2026-10-25-onnx-q8.md`, replay: `onnx-thresholds-replay.mjs`.
+  [BUNDLED_EMBEDDING_MODEL]: {
+    in_batch_dedupe: 0.93,
+    cross_session_dedup: 0.94,
+    semantic_dedup: 0.86,
+    supersede: 0.88,
+    recurrence: 0.86,
+    blocker_dismiss: 0.86,
+    content_match: null,
+    sem_floor: 0.68,
+    mixed_sem_floor: 0.63,
+    sql_cut: 0.53,
+  },
 };
 
 /**
@@ -90,6 +110,8 @@ export const CALIBRATED_FAMILY_THRESHOLDS: Readonly<Record<string, Readonly<Reco
  */
 export const LEXICAL_MIN_HITS: Readonly<Record<string, number>> = {
   "nomic-embed-text": 4,
+  // Lexical legs do not read the embedding model, so the Ollama row's count carries over (same results file as above).
+  [BUNDLED_EMBEDDING_MODEL]: 4,
 };
 
 /** Cosine similarity over readonly arrays (was `code-sessions/content-match.ts`). Returns 0 when either is empty, lengths differ, or either norm is 0. */

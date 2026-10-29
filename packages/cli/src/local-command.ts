@@ -1,6 +1,7 @@
 // `membral local up|down|status|logs` (W7, docs/design/w7-one-command-local.md).
-// `up` writes a compose stack under ~/.membral/local (trimmed Supabase + the
-// membral-cloud image), applies the image's migrations, provisions the one
+// `up` writes a compose stack under ~/.membral/local (Postgres, PostgREST and the
+// membral-cloud image, which also serves sign-in), applies the auth prelude and the
+// image's migrations, provisions the one
 // local user and an API key through the app, writes the `local` profile,
 // makes it active and runs the setup path for hooks/MCP. Every step is
 // idempotent: a second `up` changes nothing and mints nothing.
@@ -9,6 +10,10 @@
 import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import {
+  accessSync,
+  chmodSync,
+  constants,
+  copyFileSync,
   existsSync,
   linkSync,
   readdirSync,
@@ -21,6 +26,7 @@ import {
 } from "node:fs";
 import { connect, createServer } from "node:net";
 import { hostname as osHostname } from "node:os";
+import { basename, delimiter, join } from "node:path";
 import {
   type ApiKeyValidation,
   defaultCredentialsPath,
@@ -30,6 +36,13 @@ import {
   validateApiKey,
 } from "./credentials.js";
 import { createDockerRunner, DOCKER_NOT_FOUND, type DockerResult, type DockerRunner } from "./docker-runner.js";
+import {
+  createBucketState,
+  decayBucketState,
+  growBucketState,
+  parseRetryAfterMs,
+  RULE4_BACKOFF,
+} from "./lib/backoff.js";
 import {
   checkOllama,
   DEFAULT_EMBEDDING_MODEL,
@@ -43,7 +56,6 @@ import {
   appUrl,
   DEFAULT_APP_PORT,
   DEFAULT_EMAIL,
-  DEFAULT_GATEWAY_PORT,
   DEFAULT_IMAGE,
   dbVolumeName,
   type EnvMap,
@@ -68,7 +80,7 @@ export const LOCAL_PROFILE = "local";
 export const PREVIOUS_PROFILE = "local-previous";
 /** Marks a profile written by `membral local up`; any other "local" profile is moved aside, never overwritten. */
 export const LOCAL_STACK_SOURCE = "local-stack";
-export const SERVICES = ["db", "auth", "rest", "gateway", "app", "kicker"] as const;
+export const SERVICES = ["db", "rest", "app"] as const;
 export const EXTRACTION_OFF_LINE =
   "Extraction is off: no LLM provider is set. Put an API key in ~/.membral/local/.env, or set MEMBRAL_LLM_PROVIDER=claude-code " +
   '(see "Run it locally" in the README), then run `membral local up` again.';
@@ -90,13 +102,20 @@ export interface LocalDeps {
   runSetup?: (opts: { apiUrl: string; yes: boolean; profile: string; noSweep?: boolean }) => Promise<void>;
   /** Is the backstop sweep scheduled? Checked after setup; null when this platform has no check. */
   sweepCheck?: () => Promise<string | null>;
+  /** Is `claude` on PATH? Decides the default extractor. */
+  claudeOnPath?: () => boolean;
   /** Is this pid alive? (stale-lock detection) */
   pidAlive?: (pid: number) => boolean;
   confirm?: (question: string) => Promise<boolean>;
+  /** `local reembed`: wall clock for rate/ETA and the progress throttle. */
+  now?: () => number;
+  /** `local reembed`: aborted to stop cleanly after the current batch (default: the first Ctrl-C). */
+  stopSignal?: AbortSignal;
 }
 
 export interface UpOptions {
   port?: string;
+  /** Deprecated and ignored: there is no gateway any more (the app serves sign-in and reaches PostgREST itself). */
   gatewayPort?: string;
   image?: string;
   email?: string;
@@ -298,7 +317,7 @@ export async function defaultIsPortFree(port: number, probes: PortProbes = {}): 
   return (probes.bind ?? bindProbe)(port);
 }
 
-function parsePort(value: string | undefined, fallback: number, flag: string): number | string {
+export function parsePort(value: string | undefined, fallback: number, flag: string): number | string {
   if (value === undefined || value === "") return fallback;
   const n = Number(value);
   if (!Number.isInteger(n) || n < 1024 || n > 65535)
@@ -306,7 +325,7 @@ function parsePort(value: string | undefined, fallback: number, flag: string): n
   return n;
 }
 
-function readEnvFile(paths: LocalPaths): EnvMap {
+export function readEnvFile(paths: LocalPaths): EnvMap {
   return existsSync(paths.env) ? parseEnv(readFileSync(paths.env, "utf8")) : {};
 }
 
@@ -315,8 +334,9 @@ function readEnvFile(paths: LocalPaths): EnvMap {
 const PSQL_SCRIPT =
   'PGPASSWORD="$POSTGRES_PASSWORD" exec psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -q -At "$@"';
 
-function psql(ctx: Ctx, args: string[], input?: string): Promise<DockerResult> {
-  return ctx.runner.run(composeArgs(ctx.paths, "exec", "-T", "db", "sh", "-c", PSQL_SCRIPT, "psql", ...args), {
+function psql(ctx: Ctx, args: string[], input?: string, user = "postgres"): Promise<DockerResult> {
+  const script = user === "postgres" ? PSQL_SCRIPT : PSQL_SCRIPT.replace("-U postgres", `-U ${user}`);
+  return ctx.runner.run(composeArgs(ctx.paths, "exec", "-T", "db", "sh", "-c", script, "psql", ...args), {
     input,
   });
 }
@@ -448,7 +468,37 @@ export function validEmail(email: string): boolean {
   return EMAIL_RE.test(email) && email.length <= 254;
 }
 
-function defaultPidAlive(pid: number): boolean {
+/** True when an executable named `claude` is in a PATH directory. */
+export function defaultClaudeOnPath(env: NodeJS.ProcessEnv = process.env): boolean {
+  const exts = process.platform === "win32" ? [".exe", ".cmd", ".bat", ""] : [""];
+  for (const dir of (env.PATH ?? "").split(delimiter)) {
+    if (!dir) continue;
+    for (const ext of exts) {
+      try {
+        accessSync(join(dir, `claude${ext}`), constants.X_OK);
+        return true;
+      } catch {
+        // not here
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Providers that make `claude-code` the wrong default: any key, a base URL, or an explicit provider
+ * in .env. Computed on every `up` and never written to .env, so adding a key later switches cleanly.
+ */
+const EXPLICIT_LLM_KEYS = [
+  "OPENAI_API_KEY",
+  "OPENROUTER_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "GEMINI_API_KEY",
+  "MEMBRAL_MODEL_BASE_URL",
+  "MEMBRAL_LLM_PROVIDER",
+] as const;
+
+export function defaultPidAlive(pid: number): boolean {
   try {
     process.kill(pid, 0);
     return true;
@@ -546,6 +596,137 @@ interface ProvisionResponse {
   apiKey: string | null;
 }
 
+export interface ProvisionSetupArgs {
+  /** The server's base URL. */
+  url: string;
+  email: string;
+  serviceRoleKey: string | undefined;
+  provisionPassword: string;
+  /** The user may already exist with a password we cannot know. */
+  passwordUnknown: boolean;
+  /** Where `.env` lives (the password is written back when the user turns out to be new). */
+  envPaths: LocalPaths;
+  credsPath: string;
+  fetchImpl: typeof fetch;
+  yes?: boolean;
+  noSweep?: boolean;
+  /** How the error messages tell the user to read the server's log. */
+  logsHint: string;
+}
+
+/**
+ * Steps shared by `membral local up` (Docker) and `membral up` (embedded store): provision the one local user and,
+ * when needed, an API key; save and activate the "local" profile; run setup; check the sweep agent.
+ * Reports its own failures and returns false; true when the server is provisioned and wired.
+ */
+export async function provisionAndSetup(a: ProvisionSetupArgs, deps: LocalDeps = {}): Promise<boolean> {
+  const { url, email, provisionPassword, passwordUnknown } = a;
+  // 6. provision the one local user (+ a key only when we lack a working one)
+  const state = loadProfiles(a.credsPath);
+  const existing = state?.profiles[LOCAL_PROFILE];
+  const ownsLocal = existing?.source === LOCAL_STACK_SOURCE && existing.apiUrl.replace(/\/+$/, "") === url;
+  let mintKey = true;
+  if (ownsLocal && existing.apiKey) {
+    const v = await (deps.validateKey ?? ((u, k) => validateApiKey(u, k, a.fetchImpl)))(url, existing.apiKey);
+    mintKey = v.status === "invalid";
+  }
+  const provision = async (mint: boolean): Promise<ProvisionResponse | string> => {
+    try {
+      const res = await a.fetchImpl(`${url}/api/internal/local/provision`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${a.serviceRoleKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: a.email,
+          password: provisionPassword,
+          deviceName: `local-${(deps.hostname ?? osHostname)()}`,
+          mintKey: mint,
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!res.ok) return `Provisioning the local user failed (HTTP ${res.status}). See ${a.logsHint}.`;
+      return (await res.json()) as ProvisionResponse;
+    } catch (err) {
+      return `Provisioning the local user failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  };
+  let prov = await provision(mintKey);
+  if (typeof prov === "string") {
+    fail(prov);
+    return false;
+  }
+  // A valid key for a different user (e.g. --email changed) is the wrong key.
+  if (!mintKey && existing?.userId && prov.userId !== existing.userId) {
+    mintKey = true;
+    const again = await provision(true);
+    if (typeof again === "string") {
+      fail(again);
+      return false;
+    }
+    prov = { ...again, created: prov.created || again.created };
+  }
+  if (mintKey && !prov.apiKey) {
+    fail(`Provisioning returned no API key. See ${a.logsHint}.`);
+    return false;
+  }
+
+  console.log(`  User: ${prov.email}${prov.created ? " (created)" : ""}`);
+  if (prov.created && passwordUnknown) {
+    // The user did not exist after all, so the password we just set is the real one: keep it.
+    ensureEnv(a.envPaths, { MEMBRAL_LOCAL_PASSWORD: provisionPassword });
+  }
+  if (prov.created) {
+    console.log(`  Password: ${provisionPassword}  (shown once; \`membral local status --show-password\`)`);
+  }
+
+  // 7. profile → active → hooks/MCP
+  if (prov.apiKey) {
+    const s = loadProfiles(a.credsPath) ?? { activeProfile: LOCAL_PROFILE, profiles: {} };
+    const old = s.profiles[LOCAL_PROFILE];
+    if (old && (old.source !== LOCAL_STACK_SOURCE || old.apiUrl.replace(/\/+$/, "") !== url)) {
+      const aside = freePreviousName(s.profiles);
+      s.profiles[aside] = old;
+      if (s.activeProfile === LOCAL_PROFILE) s.activeProfile = aside;
+      console.log(`  Kept your existing "local" profile (${old.apiUrl}) as "${aside}".`);
+    }
+    s.profiles[LOCAL_PROFILE] = {
+      apiUrl: url,
+      apiKey: prov.apiKey,
+      email: prov.email,
+      userId: prov.userId,
+      createdAt: new Date().toISOString(),
+      source: LOCAL_STACK_SOURCE,
+    };
+    saveProfiles(s, a.credsPath);
+    setActiveProfile(LOCAL_PROFILE, a.credsPath);
+    console.log(`  Profile: "local" saved and active`);
+    console.log("");
+    const runSetup =
+      deps.runSetup ?? ((o: { apiUrl: string; yes: boolean; profile: string; noSweep?: boolean }) => setup(o));
+    await runSetup({
+      apiUrl: url,
+      yes: a.yes ?? false,
+      profile: LOCAL_PROFILE,
+      ...(a.noSweep ? { noSweep: true } : {}),
+    });
+  } else if (loadProfiles(a.credsPath)?.activeProfile !== LOCAL_PROFILE) {
+    const activate = deps.activate ?? ((name: string) => useCommand(name, { credentialsPath: a.credsPath }));
+    await activate(LOCAL_PROFILE);
+  } else {
+    console.log(`  Profile: "local" is active`);
+  }
+
+  if (prov.apiKey && !a.noSweep) {
+    const problem = await (deps.sweepCheck ?? defaultSweepCheck)();
+    if (problem) {
+      console.error(
+        `Sweep agent not installed (${problem}): uploads will not be swept. Run \`membral setup\` again from a login shell, or pass --no-sweep to skip it.`,
+      );
+      process.exitCode = 1;
+    }
+  }
+  return true;
+}
+
 export async function localUp(opts: UpOptions = {}, deps: LocalDeps = {}): Promise<void> {
   const proj = resolveProject(opts.project, deps.env ?? process.env);
   if ("error" in proj) return fail(proj.error);
@@ -568,9 +749,9 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   const stored = readEnvFile(ctx.paths);
   const port = parsePort(opts.port ?? stored.MEMBRAL_APP_PORT, DEFAULT_APP_PORT, "--port");
   if (typeof port === "string") return fail(port);
-  const gwPort = parsePort(opts.gatewayPort ?? stored.MEMBRAL_GATEWAY_PORT, DEFAULT_GATEWAY_PORT, "--gateway-port");
-  if (typeof gwPort === "string") return fail(gwPort);
-  if (port === gwPort) return fail("--port and --gateway-port must differ.");
+  if (opts.gatewayPort !== undefined) {
+    console.log("  Note: --gateway-port is ignored; the stack has no gateway now (one port: --port).");
+  }
   const image = opts.image || env.MEMBRAL_IMAGE || stored.MEMBRAL_IMAGE || DEFAULT_IMAGE;
   const explicitImage = Boolean(opts.image || env.MEMBRAL_IMAGE);
   if (!validImage(image)) return fail(`Invalid image reference "${image}" (--image / MEMBRAL_IMAGE).`);
@@ -602,9 +783,6 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   if (!ours.has(port) && !(await isPortFree(port))) {
     return fail(`Port ${port} is in use. Run \`membral local up --port <free port>\`.`);
   }
-  if (!ours.has(gwPort) && !(await isPortFree(gwPort))) {
-    return fail(`Port ${gwPort} (auth/data gateway) is in use. Run \`membral local up --gateway-port <free port>\`.`);
-  }
 
   // Secrets are generated once. If the database outlived them, new ones would lock us out of it.
   let passwordUnknown = false;
@@ -623,12 +801,20 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
     }
   }
 
-  // 1. files
+  // 1. files. An upgrade rewrites .env and the compose file before the image is known to carry the prelude, so the
+  // old shapes are kept as .bak (once; removed when the image check below passes) for a failed `up` to roll back to.
+  const backups = [ctx.paths.env, ctx.paths.compose].map((f) => `${f}.bak`);
+  [ctx.paths.env, ctx.paths.compose].forEach((f, i) => {
+    const bak = backups[i] as string;
+    if (existsSync(f) && !existsSync(bak)) {
+      copyFileSync(f, bak);
+      chmodSync(bak, 0o600);
+    }
+  });
   const { env: localEnv } = ensureEnv(
     ctx.paths,
     {
       MEMBRAL_APP_PORT: String(port),
-      MEMBRAL_GATEWAY_PORT: String(gwPort),
       MEMBRAL_IMAGE: image,
       MEMBRAL_LOCAL_EMAIL: email,
       ...embeddingSettings,
@@ -643,12 +829,24 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   // Provisioning needs some password even for an existing user (it is ignored then).
   const provisionPassword = localEnv.MEMBRAL_LOCAL_PASSWORD ?? randomBytes(18).toString("base64url");
   const llmKeys = LLM_PASSTHROUGH.filter((k) => (localEnv[k] ?? "") !== "");
+  // claude-code is the default extractor when `claude` is on PATH and nothing else is configured.
+  const defaultClaudeCode =
+    !EXPLICIT_LLM_KEYS.some((k) => (localEnv[k] ?? "") !== "") && (deps.claudeOnPath ?? defaultClaudeOnPath)();
   writeIfChanged(
     ctx.paths.compose,
-    renderCompose({ appPort: port, gatewayPort: gwPort, image, llmKeys, project: ctx.paths.project }),
+    renderCompose({ appPort: port, image, llmKeys, project: ctx.paths.project, defaultClaudeCode }),
   );
   const url = appUrl(port);
   console.log(`Membral local: ${url} (files in ${ctx.paths.dir})`);
+  if (defaultClaudeCode)
+    console.log("  Extractor: claude-code (found `claude` on PATH; needs CLAUDE_CODE_OAUTH_TOKEN in .env)");
+
+  const failKept = (message: string): void =>
+    fail(
+      backups.some((f) => existsSync(f))
+        ? `${message} The previous .env and compose file are kept as ${backups.map((f) => basename(f)).join(" and ")}.`
+        : message,
+    );
 
   // 2. image + fresh migrations
   const pull = await ctx.runner.run(["pull", image]);
@@ -660,7 +858,7 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
           `${image} has no build for this platform. Build it here with \`docker build -f apps/cloud/Dockerfile -t membral-cloud:dev .\` from a clone, then run \`membral local up --image membral-cloud:dev\`.`,
         );
       }
-      return fail(`Could not pull ${image}: ${lastLine(pull)}`);
+      return failKept(`Could not pull ${image}: ${lastLine(pull)}`);
     }
     console.log(
       `  Image: ${image} (${explicitImage ? "local image, not pulled" : "pull failed, using the local copy"})`,
@@ -669,27 +867,38 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
     console.log(`  Image: ${image}`);
   }
   const created = await ctx.runner.run(["create", image]);
-  if (created.code !== 0) return fail(`Could not read migrations from ${image}: ${lastLine(created)}`);
+  if (created.code !== 0) return failKept(`Could not read migrations from ${image}: ${lastLine(created)}`);
   const cid = created.stdout.trim();
   try {
     rmSync(ctx.paths.migrations, { recursive: true, force: true });
     const cp = await ctx.runner.run(["cp", `${cid}:/app/migrations`, ctx.paths.migrations]);
-    if (cp.code !== 0) return fail(`Could not copy migrations out of ${image}: ${lastLine(cp)}`);
+    if (cp.code !== 0) return failKept(`Could not copy migrations out of ${image}: ${lastLine(cp)}`);
+    const pre = await ctx.runner.run(["cp", `${cid}:/app/local/auth-prelude.sql`, ctx.paths.prelude]);
+    if (pre.code !== 0) {
+      return failKept(
+        `${image} carries no auth prelude (/app/local/auth-prelude.sql): ${lastLine(pre)}. Use an image built from this version.`,
+      );
+    }
   } finally {
     await ctx.runner.run(["rm", "-f", cid]);
   }
+  for (const bak of backups) rmSync(bak, { force: true });
 
-  // 3. db + auth (auth healthy = its own auth schema is migrated)
+  // 3. db. --remove-orphans retires the auth, gateway and kicker containers of a stack made by an
+  // older version (the database volume is untouched); on a fresh install it removes nothing.
   const base = await ctx.runner.run(
-    composeArgs(ctx.paths, "up", "-d", "--wait", "--wait-timeout", WAIT_TIMEOUT_S, "db", "auth"),
+    composeArgs(ctx.paths, "up", "-d", "--wait", "--wait-timeout", WAIT_TIMEOUT_S, "--remove-orphans", "db"),
   );
   if (base.code !== 0) {
     return fail(
-      `Database or auth did not become healthy (${lastLine(base)}). See \`membral local logs db\` and \`membral local logs auth\`; also check free disk space.`,
+      `The database did not become healthy (${lastLine(base)}). See \`membral local logs db\`; also check free disk space.`,
     );
   }
 
-  // 4. migrations
+  // 4. the auth prelude (the `auth` schema GoTrue used to migrate), then the app migrations
+  // As supabase_admin: the image's `postgres` role cannot create objects in the image-owned `auth` schema.
+  const prel = await psql(ctx, ["-f", "-"], readFileSync(ctx.paths.prelude, "utf8"), "supabase_admin");
+  if (prel.code !== 0) return fail(`The auth prelude failed: ${lastLine(prel)}`);
   const mig = await applyMigrations(ctx);
   if (typeof mig === "string") return fail(mig);
   console.log(
@@ -701,7 +910,7 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
 
   // 5. the rest
   const rest = await ctx.runner.run(
-    composeArgs(ctx.paths, "up", "-d", "--wait", "--wait-timeout", WAIT_TIMEOUT_S, "rest", "gateway", "app", "kicker"),
+    composeArgs(ctx.paths, "up", "-d", "--wait", "--wait-timeout", WAIT_TIMEOUT_S, "--remove-orphans", "rest", "app"),
   );
   if (rest.code !== 0) {
     return fail(`The app did not become healthy (${lastLine(rest)}). See \`membral local logs app\`.`);
@@ -714,100 +923,23 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   if (!health.ok) return fail(`${url}/api/health is not answering 200. See \`membral local logs app\`.`);
   console.log("  Stack: healthy");
 
-  // 6. provision the one local user (+ a key only when we lack a working one)
-  const state = loadProfiles(ctx.credsPath);
-  const existing = state?.profiles[LOCAL_PROFILE];
-  const ownsLocal = existing?.source === LOCAL_STACK_SOURCE && existing.apiUrl.replace(/\/+$/, "") === url;
-  let mintKey = true;
-  if (ownsLocal && existing.apiKey) {
-    const v = await (deps.validateKey ?? ((u, k) => validateApiKey(u, k, ctx.fetchImpl)))(url, existing.apiKey);
-    mintKey = v.status === "invalid";
-  }
-  const provision = async (mint: boolean): Promise<ProvisionResponse | string> => {
-    try {
-      const res = await ctx.fetchImpl(`${url}/api/internal/local/provision`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${localEnv.SERVICE_ROLE_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password: provisionPassword,
-          deviceName: `local-${(deps.hostname ?? osHostname)()}`,
-          mintKey: mint,
-        }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (!res.ok) return `Provisioning the local user failed (HTTP ${res.status}). See \`membral local logs app\`.`;
-      return (await res.json()) as ProvisionResponse;
-    } catch (err) {
-      return `Provisioning the local user failed: ${err instanceof Error ? err.message : String(err)}`;
-    }
-  };
-  let prov = await provision(mintKey);
-  if (typeof prov === "string") return fail(prov);
-  // A valid key for a different user (e.g. --email changed) is the wrong key.
-  if (!mintKey && existing?.userId && prov.userId !== existing.userId) {
-    mintKey = true;
-    const again = await provision(true);
-    if (typeof again === "string") return fail(again);
-    prov = { ...again, created: prov.created || again.created };
-  }
-  if (mintKey && !prov.apiKey) return fail("Provisioning returned no API key. See `membral local logs app`.");
-
-  console.log(`  User: ${prov.email}${prov.created ? " (created)" : ""}`);
-  if (prov.created && passwordUnknown) {
-    // The user did not exist after all, so the password we just set is the real one: keep it.
-    ensureEnv(ctx.paths, { MEMBRAL_LOCAL_PASSWORD: provisionPassword });
-  }
-  if (prov.created) {
-    console.log(`  Password: ${provisionPassword}  (shown once; \`membral local status --show-password\`)`);
-  }
-
-  // 7. profile → active → hooks/MCP
-  if (prov.apiKey) {
-    const s = loadProfiles(ctx.credsPath) ?? { activeProfile: LOCAL_PROFILE, profiles: {} };
-    const old = s.profiles[LOCAL_PROFILE];
-    if (old && (old.source !== LOCAL_STACK_SOURCE || old.apiUrl.replace(/\/+$/, "") !== url)) {
-      const aside = freePreviousName(s.profiles);
-      s.profiles[aside] = old;
-      if (s.activeProfile === LOCAL_PROFILE) s.activeProfile = aside;
-      console.log(`  Kept your existing "local" profile (${old.apiUrl}) as "${aside}".`);
-    }
-    s.profiles[LOCAL_PROFILE] = {
-      apiUrl: url,
-      apiKey: prov.apiKey,
-      email: prov.email,
-      userId: prov.userId,
-      createdAt: new Date().toISOString(),
-      source: LOCAL_STACK_SOURCE,
-    };
-    saveProfiles(s, ctx.credsPath);
-    setActiveProfile(LOCAL_PROFILE, ctx.credsPath);
-    console.log(`  Profile: "local" saved and active`);
-    console.log("");
-    const runSetup =
-      deps.runSetup ?? ((o: { apiUrl: string; yes: boolean; profile: string; noSweep?: boolean }) => setup(o));
-    await runSetup({
-      apiUrl: url,
-      yes: opts.yes ?? false,
-      profile: LOCAL_PROFILE,
-      ...(opts.noSweep ? { noSweep: true } : {}),
-    });
-  } else if (loadProfiles(ctx.credsPath)?.activeProfile !== LOCAL_PROFILE) {
-    const activate = deps.activate ?? ((name: string) => useCommand(name, { credentialsPath: ctx.credsPath }));
-    await activate(LOCAL_PROFILE);
-  } else {
-    console.log(`  Profile: "local" is active`);
-  }
-
-  if (prov.apiKey && !opts.noSweep) {
-    const problem = await (deps.sweepCheck ?? defaultSweepCheck)();
-    if (problem) {
-      console.error(
-        `Sweep agent not installed (${problem}): uploads will not be swept. Run \`membral setup\` again from a login shell, or pass --no-sweep to skip it.`,
-      );
-      process.exitCode = 1;
-    }
-  }
+  const provisioned = await provisionAndSetup(
+    {
+      url,
+      email,
+      serviceRoleKey: localEnv.SERVICE_ROLE_KEY,
+      provisionPassword,
+      passwordUnknown,
+      envPaths: ctx.paths,
+      credsPath: ctx.credsPath,
+      fetchImpl: ctx.fetchImpl,
+      yes: opts.yes,
+      noSweep: opts.noSweep,
+      logsHint: "`membral local logs app`",
+    },
+    deps,
+  );
+  if (!provisioned) return;
 
   console.log(`  ${embeddingsLine(localEnv)}`);
   const line = extractionLine(health.llm);
@@ -868,6 +1000,243 @@ export async function localStatus(
   if (!healthy) process.exitCode = 1;
 }
 
+// --- reembed ------------------------------------------------------------------
+
+const REEMBED_TABLES = ["session_memories", "conversations", "conversation_chunks", "session_raw_units"] as const;
+type ReembedTableName = (typeof REEMBED_TABLES)[number];
+const REEMBED_PROGRESS_EVERY_MS = 3000;
+const REEMBED_MAX_BATCH = 256;
+/** Consecutive 429 / 5xx / network failures tolerated before the run gives up (progress is kept; rerun resumes). */
+const REEMBED_MAX_FAILURES = 8;
+
+interface ReembedResponse {
+  table: ReembedTableName | null;
+  done: number;
+  failed: number;
+  /** Rows left selected after a transient embedder error (5xx, timeout); a rerun retries them. */
+  deferred?: number;
+  /** Only the first call, a dry run and the last call carry counts; later calls send null. */
+  remaining_by_table: Record<ReembedTableName, number> | null;
+  finished: boolean;
+  next: { table: ReembedTableName; after: string | null } | null;
+  family: string;
+  counts?: Record<
+    ReembedTableName,
+    { remaining: number; missing: number; foreign_default: number; foreign_other: number }
+  >;
+}
+
+function fmtDuration(ms: number): string {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m${String(s % 60).padStart(2, "0")}s`;
+  return `${Math.floor(s / 3600)}h${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}m`;
+}
+
+/**
+ * `membral local reembed`: moves every stored vector to the embedding model the stack is configured with
+ * (after `membral local up --embeddings ollama --embedding-model <name>`). Drives POST /api/internal/local/reembed,
+ * one batch per request, until the server reports it is finished. Resumable: Ctrl-C (or any failure) keeps what is
+ * done, and a rerun picks up the rest. 429s back off per CLAUDE.md rule 4. Only the app URL is used (no Docker).
+ */
+export async function localReembed(
+  opts: { project?: string; batch?: string; dryRun?: boolean } = {},
+  deps: LocalDeps = {},
+): Promise<void> {
+  const proj = resolveProject(opts.project, deps.env ?? process.env);
+  if ("error" in proj) return fail(proj.error);
+  let batch: number | undefined;
+  if (opts.batch !== undefined) {
+    batch = Number(opts.batch);
+    if (!Number.isInteger(batch) || batch < 1 || batch > REEMBED_MAX_BATCH) {
+      return fail(`Invalid --batch "${opts.batch}": pass a whole number from 1 to ${REEMBED_MAX_BATCH}.`);
+    }
+  }
+  const ctx = ctxOf(deps, proj.project);
+  if (!existsSync(ctx.paths.compose) || !existsSync(ctx.paths.env)) {
+    return fail("No local stack yet. Run `membral local up`.");
+  }
+  const env = readEnvFile(ctx.paths);
+  const key = env.SERVICE_ROLE_KEY;
+  if (!key) return fail(`No SERVICE_ROLE_KEY in ${ctx.paths.env}; run \`membral local up\` to repair the stack files.`);
+  const url = appUrl(Number(env.MEMBRAL_APP_PORT) || DEFAULT_APP_PORT);
+  const now = deps.now ?? Date.now;
+
+  // Ctrl-C: finish the batch in flight, then stop. A second Ctrl-C quits at once.
+  let stopped = deps.stopSignal?.aborted ?? false;
+  deps.stopSignal?.addEventListener("abort", () => {
+    stopped = true;
+  });
+  let onSigint: (() => void) | undefined;
+  if (!deps.stopSignal) {
+    onSigint = () => {
+      if (stopped) process.exit(130);
+      stopped = true;
+      console.error("\nStopping after this batch (Ctrl-C again to quit now). Run the command again to resume.");
+    };
+    process.on("SIGINT", onSigint);
+  }
+
+  const bucket = createBucketState();
+  let failures = 0;
+  /** null = failed (already reported); "stopped" = Ctrl-C arrived while waiting out a retry. */
+  const call = async (query: URLSearchParams): Promise<ReembedResponse | "stopped" | null> => {
+    for (;;) {
+      const epoch = bucket.epoch;
+      let res: Response;
+      try {
+        res = await ctx.fetchImpl(`${url}/api/internal/local/reembed?${query}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${key}` },
+          signal: AbortSignal.timeout(10 * 60_000),
+        });
+      } catch (err) {
+        if (++failures >= REEMBED_MAX_FAILURES) {
+          fail(`The app at ${url} is not answering: ${err instanceof Error ? err.message : String(err)}`);
+          return null;
+        }
+        growBucketState(bucket, epoch, false);
+        await ctx.sleep(RULE4_BACKOFF.retryWaitMs(bucket.delayMs));
+        if (stopped) return "stopped";
+        continue;
+      }
+      if (res.ok) {
+        failures = 0;
+        decayBucketState(bucket);
+        return (await res.json()) as ReembedResponse;
+      }
+      const body = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+      if (res.status === 429) {
+        if (++failures >= REEMBED_MAX_FAILURES) {
+          fail("The embedding provider keeps rate-limiting; progress is kept, run the command again later.");
+          return null;
+        }
+        growBucketState(bucket, epoch, false);
+        const wait = RULE4_BACKOFF.rateLimitWaitMs(parseRetryAfterMs(res.headers.get("retry-after")), bucket.delayMs);
+        console.error(`  rate limited; waiting ${fmtDuration(wait)}`);
+        await ctx.sleep(wait);
+        if (stopped) return "stopped";
+        continue;
+      }
+      if (res.status === 401) fail("The app rejected the stack's service key. Run `membral local up` to repair it.");
+      else if (res.status === 404)
+        fail("This app has no re-embed route (is it an older image? run `membral local up --image <newer>`).");
+      else if (res.status === 409) fail(body.message ?? "No embedding provider is configured for this stack.");
+      else if (res.status === 422 && body.error === "embedding_dimension") {
+        fail(
+          `${body.message ?? "The embedding model returns vectors wider than the store holds."} Nothing was written. Pick a model with 1536 or fewer dimensions (\`membral local up --embedding-model <name>\`).`,
+        );
+      } else if (res.status === 502) fail(body.message ?? "The embedding server did not answer; nothing was changed.");
+      else
+        fail(
+          `Re-embed failed (HTTP ${res.status})${body.message ? `: ${body.message}` : ""}. See \`membral local logs app\`.`,
+        );
+      return null;
+    }
+  };
+
+  try {
+    if (opts.dryRun) {
+      const r = await call(new URLSearchParams({ dry_run: "1" }));
+      if (r === "stopped") {
+        console.log("Stopped.");
+        process.exitCode = 130;
+        return;
+      }
+      if (!r?.counts) return;
+      console.log(`Target embedding model: ${r.family}`);
+      console.log(
+        `${"table".padEnd(22)}${"to re-embed".padStart(12)}${"no vector".padStart(11)}${"default model".padStart(15)}${"other model".padStart(13)}`,
+      );
+      let total = 0;
+      for (const t of REEMBED_TABLES) {
+        const c = r.counts[t];
+        total += c.remaining;
+        console.log(
+          `${t.padEnd(22)}${String(c.remaining).padStart(12)}${String(c.missing).padStart(11)}${String(c.foreign_default).padStart(15)}${String(c.foreign_other).padStart(13)}`,
+        );
+      }
+      console.log(
+        total === 0 ? "Nothing to re-embed." : `Dry run: ${total} vector(s) would be re-embedded. Nothing was written.`,
+      );
+      return;
+    }
+
+    const started = now();
+    let cursor: ReembedResponse["next"] = null;
+    const totals = {} as Record<ReembedTableName, number>;
+    const processed = {} as Record<ReembedTableName, number>;
+    let done = 0;
+    let failed = 0;
+    let deferred = 0;
+    let finished = false;
+    let lastPrint = 0;
+    let first = true;
+    while (!stopped) {
+      const q = new URLSearchParams();
+      if (batch !== undefined) q.set("batch", String(batch));
+      if (cursor) {
+        q.set("table", cursor.table);
+        if (cursor.after) q.set("after", cursor.after);
+      }
+      const r = await call(q);
+      if (r === "stopped") break;
+      if (!r) return;
+      const handled = r.done + r.failed + (r.deferred ?? 0);
+      done += r.done;
+      failed += r.failed;
+      deferred += r.deferred ?? 0;
+      if (first) {
+        first = false;
+        for (const t of REEMBED_TABLES) {
+          // Deferred rows are still selected, so `remaining` already counts them.
+          totals[t] = (r.remaining_by_table?.[t] ?? 0) + (t === r.table ? r.done + r.failed : 0);
+          processed[t] = 0;
+        }
+        const all = REEMBED_TABLES.reduce((n, t) => n + totals[t], 0);
+        if (all === 0) {
+          console.log(`Nothing to re-embed: every vector is already ${r.family}.`);
+          return;
+        }
+        console.log(`Re-embedding ${all} row(s) to ${r.family}. Ctrl-C stops cleanly; rerun resumes.`);
+      }
+      if (r.table) processed[r.table] += handled;
+      if (r.finished) {
+        finished = true;
+        break;
+      }
+      cursor = r.next;
+      if (r.table && now() - lastPrint >= REEMBED_PROGRESS_EVERY_MS) {
+        lastPrint = now();
+        const elapsed = Math.max(1, now() - started);
+        const rate = ((done + failed + deferred) * 1000) / elapsed;
+        const left = REEMBED_TABLES.reduce((n, t) => n + Math.max(0, totals[t] - processed[t]), 0);
+        const eta = rate > 0 ? ` eta ${fmtDuration((left / rate) * 1000)}` : "";
+        console.log(
+          `  ${r.table.padEnd(20)} ${processed[r.table]}/${totals[r.table]}  ${rate.toFixed(1)} rows/s${eta}`,
+        );
+      }
+    }
+    const elapsed = fmtDuration(now() - started);
+    if (!finished) {
+      console.log(`Stopped after ${done} re-embedded in ${elapsed}. Run \`membral local reembed\` again to resume.`);
+      process.exitCode = 130;
+      return;
+    }
+    console.log(`Done: ${done} re-embedded in ${elapsed}.`);
+    if (failed > 0) {
+      console.log(`${failed} row(s) had text the model rejected; they stay keyword-searchable only.`);
+    }
+    if (deferred > 0) {
+      console.log(
+        `${deferred} row(s) were skipped after transient embedding-server errors and were left as they were; run \`membral local reembed\` again to retry them.`,
+      );
+    }
+  } finally {
+    if (onSigint) process.off("SIGINT", onSigint);
+  }
+}
+
 // --- down / logs --------------------------------------------------------------
 
 async function defaultConfirm(question: string): Promise<boolean> {
@@ -901,11 +1270,11 @@ export async function localDown(
       console.log("Not wiping. Stopping the stack and keeping the data.");
     }
   }
-  const r = await ctx.runner.run(composeArgs(ctx.paths, "down", ...(wipe ? ["-v"] : [])));
+  const r = await ctx.runner.run(composeArgs(ctx.paths, "down", "--remove-orphans", ...(wipe ? ["-v"] : [])));
   if (r.code !== 0) return fail(`docker compose down failed: ${lastLine(r)}`);
   console.log(
     wipe
-      ? "Stopped and wiped the local database and the downloaded Claude Code volume."
+      ? "Stopped and wiped the local database and the downloaded Claude Code and embedding-model volumes."
       : "Stopped. Data kept; `membral local up` resumes.",
   );
 }

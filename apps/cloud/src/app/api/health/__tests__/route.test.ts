@@ -14,6 +14,7 @@ vi.mock("@supabase/supabase-js", () => ({
 process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
 
+import { setStoreState } from "@/lib/local/store/registry";
 import { GET } from "../route";
 
 describe("GET /api/health", () => {
@@ -83,6 +84,25 @@ describe("GET /api/health", () => {
       expect(await res.text()).toBe(JSON.stringify({ status: "ok", checks: { supabase: "ok" } }));
     });
 
+    it("adds store only in local pglite mode", async () => {
+      vi.stubEnv("MEMBRAL_LOCAL", "1");
+      let body = await (await GET(new Request("http://x/api/health"))).json();
+      expect(body.store).toBeUndefined(); // local without MEMBRAL_STORE=pglite
+      vi.stubEnv("MEMBRAL_STORE", "pglite");
+      body = await (await GET(new Request("http://x/api/health"))).json();
+      expect(body.store).toBe("starting");
+      setStoreState("ready");
+      body = await (await GET(new Request("http://x/api/health"))).json();
+      expect(body.store).toBe("ready");
+      setStoreState("error");
+      body = await (await GET(new Request("http://x/api/health"))).json();
+      expect(body.store).toBe("error");
+      vi.stubEnv("VERCEL", "1");
+      body = await (await GET(new Request("http://x/api/health"))).json();
+      expect(body.store).toBeUndefined();
+      setStoreState(undefined);
+    });
+
     it("omits llm when VERCEL is set, even with MEMBRAL_LOCAL=1", async () => {
       vi.stubEnv("MEMBRAL_LOCAL", "1");
       vi.stubEnv("VERCEL", "1");
@@ -90,7 +110,7 @@ describe("GET /api/health", () => {
       expect(body.llm).toBeUndefined();
     });
 
-    it("local, no key: extraction off, nothing configured", async () => {
+    it("local, no key: extraction off, bundled embeddings on", async () => {
       vi.stubEnv("MEMBRAL_LOCAL", "1");
       const body = await (await GET(new Request("http://x/api/health"))).json();
       expect(body).toEqual({
@@ -101,7 +121,7 @@ describe("GET /api/health", () => {
           provider: null,
           model: null,
           extraction: "off",
-          embeddings: { configured: false, model: null },
+          embeddings: { configured: true, model: "nomic-embed-text-v1.5-onnx-q8" },
         },
       });
     });
@@ -121,14 +141,14 @@ describe("GET /api/health", () => {
       });
     });
 
-    it("local, Anthropic key only: extraction on, embeddings off", async () => {
+    it("local, Anthropic key only: extraction on, embeddings from the bundled model", async () => {
       vi.stubEnv("MEMBRAL_LOCAL", "1");
       vi.stubEnv("ANTHROPIC_API_KEY", "sk-ant-secret");
       const body = await (await GET(new Request("http://x/api/health"))).json();
       expect(body.llm).toMatchObject({
         provider: "anthropic",
         extraction: "on",
-        embeddings: { configured: false, model: null },
+        embeddings: { configured: true, model: "nomic-embed-text-v1.5-onnx-q8" },
       });
     });
   });

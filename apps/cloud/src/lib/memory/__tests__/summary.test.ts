@@ -106,6 +106,38 @@ describe("sessionSummary", () => {
     expect(result?.header.cost_usd).toBeNull();
   });
 
+  it("2.3c: with a handoff flag on, never lists the synthesized handoff note as a journey record", async () => {
+    vi.stubEnv("MEMBRAL_HANDOFF_SYNTHESIS", "1");
+    onTestFinished(() => {
+      vi.unstubAllEnvs();
+    });
+    const supabase = makeFakeSupabase({
+      code_sessions: [session({ id: "sess-1" })],
+      code_projects: [],
+      session_memories: [
+        record({ id: "dec", kind: "decision", turn_idx: 0 }),
+        record({ id: "ho", kind: "handoff", turn_idx: 1, text: "Next steps: ..." }),
+      ],
+      code_session_turns: [],
+    });
+    const result = await sessionSummary(supabase, USER, null, { session_id: "sess-1" });
+    expect((result?.journey ?? []).flatMap((j) => j.records).map((r) => r.id)).toEqual(["dec"]);
+  });
+
+  it("both handoff flags off: the journey read sends no kind filter, as main did", async () => {
+    const supabase = makeFakeSupabase({
+      code_sessions: [session({ id: "sess-1" })],
+      code_projects: [],
+      session_memories: [
+        record({ id: "dec", kind: "decision", turn_idx: 0 }),
+        record({ id: "ho", kind: "handoff", turn_idx: 1, text: "Next steps: ..." }),
+      ],
+      code_session_turns: [],
+    });
+    const result = await sessionSummary(supabase, USER, null, { session_id: "sess-1" });
+    expect((result?.journey ?? []).flatMap((j) => j.records).map((r) => r.id)).toEqual(["dec", "ho"]);
+  });
+
   it("#436: leaves out a blocker older than 7 days, keeps a fresh one", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-09-15T00:00:00Z"));

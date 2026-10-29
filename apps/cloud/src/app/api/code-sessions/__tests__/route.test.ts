@@ -217,7 +217,7 @@ describe("POST /api/code-sessions", () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ imported: 1, skipped: 0, total: 1, errors: [] });
+    expect(body).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true });
     expect(mockImportCodeSession).toHaveBeenCalledWith(
       expect.anything(),
       "user-1",
@@ -282,7 +282,7 @@ describe("POST /api/code-sessions", () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ imported: 1, skipped: 0, total: 1, errors: [] });
+    expect(body).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true });
   });
 
   describe("memory extraction queue (goal 2026-09-24 review B1)", () => {
@@ -367,7 +367,7 @@ describe("POST /api/code-sessions", () => {
 
       const res = await POST(makeRequest({ sessions: [validSession()] }, { token: "lls_ok" }));
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ imported: 1, skipped: 0, total: 1, errors: [] });
+      expect(await res.json()).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true });
       expect(capturedAfterCallbacks).toHaveLength(1);
       expect(mockTrigger).not.toHaveBeenCalled();
 
@@ -388,7 +388,7 @@ describe("POST /api/code-sessions", () => {
 
         const res = await POST(makeRequest({ sessions: [validSession()] }, { token: "lls_ok" }));
         expect(res.status).toBe(200);
-        expect(await res.json()).toEqual({ imported: 1, skipped: 0, total: 1, errors: [] });
+        expect(await res.json()).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true });
         // No trigger (nothing was queued) ...
         expect(capturedAfterCallbacks).toHaveLength(0);
         expect(mockTrigger).not.toHaveBeenCalled();
@@ -694,7 +694,7 @@ describe("POST /api/code-sessions", () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ imported: 0, skipped: 0, total: 0, errors: [] });
+    expect(body).toEqual({ imported: 0, skipped: 0, total: 0, errors: [], open_supported: true });
     expect(mockImportCodeSession).not.toHaveBeenCalled();
   });
 
@@ -810,7 +810,7 @@ describe("POST /api/code-sessions", () => {
       const res = await POST(req);
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body).toEqual({ imported: 0, skipped: 0, total: 0, errors: [] });
+      expect(body).toEqual({ imported: 0, skipped: 0, total: 0, errors: [], open_supported: true });
       expect(mockImportCodeSession).not.toHaveBeenCalled();
 
       expect(mockHeartbeatUpsert).toHaveBeenCalledTimes(1);

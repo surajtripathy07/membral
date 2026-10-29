@@ -458,11 +458,12 @@ describe("checkFeature characterization (step 1.3 lock)", () => {
         "query_embedding",
         "memory_embedding",
         "memory_backfill",
+        "memory_handoff",
         "session_assoc",
       ],
     ],
     ["embeddings", ["chunk_embedding", "conversation_embedding", "query_embedding", "memory_embedding"], null],
-    ["memory", ["memory_backfill", "session_assoc"], null],
+    ["memory", ["memory_backfill", "memory_handoff", "session_assoc"], null],
   ] as const)("spend RPC pass-group params [%s]", async (feature, include, exclude) => {
     current = {
       name: "pass group",

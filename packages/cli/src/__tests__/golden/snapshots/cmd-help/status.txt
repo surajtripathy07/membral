@@ -2,14 +2,17 @@ EXIT: 0
 --- STDOUT ---
 Usage
   membral status [--api-url <url>] [--api-key <key>] [--rename <name>]
+  membral status --server
 
 Show your account, this device, and what synced last: signed-in account and
 user id, device identity, the ~/.membral/sync.json allowlist, and the last
-successful sweep.
+successful sweep. When a `membral up` server is running, its process, port,
+health, store and data size come first; --server shows only that.
 
 Flags
   --api-url <url>   Overrides the default API URL
   --api-key <key>   Overrides the saved/env credentials for this run
   --rename <name>   Persist a new name to this machine's device.json
+  --server          Show only the `membral up` server's state
 
 --- STDERR ---

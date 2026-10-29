@@ -22,6 +22,7 @@ export type PassName =
   | "g3_retry" // issue #98: bounded one-shot re-ask for an owner-turn quote after a G3 assistant-voice-quote rejection
   | "claims_verify" // ADR 0030 D4 rule 5 / D5, goal step 12b: batched entailment check of an accepted extraction claim against its own receipt
   | "memory_backfill" // memory v1 §8.2 (#151): source C's per-window extraction chat call (lib/memory/extract.ts)
+  | "memory_handoff" // goal 2026-10-25 box 2.3: the session handoff note's chunk-summary and merge calls (lib/memory/session-handoff.ts)
   | "session_assoc" // D-057: one call per candidate session linking build segments to issues/PRs (lib/memory/session-association.ts)
   | "memory_embedding"; // memory v1 §8.2 (#151): source C's record/query embedding calls (lib/memory/embed.ts)
 

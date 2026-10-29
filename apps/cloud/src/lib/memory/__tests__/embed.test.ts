@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { BUNDLED_EMBEDDING_MODEL, setBundledPipelineLoaderForTests } from "@/lib/llm/bundled-embedder";
 import { LlmClient, type OpenAILike } from "@/lib/llm/client";
 import type { ModelConfig } from "@/lib/llm/config";
 import { EMBED_BATCH_SIZE, embedTexts } from "../embed";
@@ -77,5 +78,42 @@ describe("embedTexts (step2d finding 8)", () => {
     expect(result.failedCount).toBe(EMBED_BATCH_SIZE);
     expect(result.vectors.slice(0, EMBED_BATCH_SIZE).every((v) => v === null)).toBe(true);
     expect(result.vectors.slice(EMBED_BATCH_SIZE).every((v) => v !== null)).toBe(true);
+  });
+});
+
+describe("embedTexts with the bundled model under the claude-code provider (ADV B1)", () => {
+  it("returns 1536-d vectors at $0 without an embeddings client or key", async () => {
+    const extractor = vi.fn(async (texts: string[]) => ({
+      tolist: () => texts.map(() => Array.from({ length: 768 }, (_, i) => (i === 0 ? 1 : 0))),
+    }));
+    setBundledPipelineLoaderForTests(async () => extractor);
+    try {
+      const create = vi.fn();
+      const client: OpenAILike = { chat: { completions: { create: vi.fn() } }, embeddings: { create } };
+      const llm = new LlmClient(
+        {
+          model: "claude-code/default",
+          provider: "claude-code",
+          baseURL: undefined,
+          apiKey: "not-needed",
+          embedModel: BUNDLED_EMBEDDING_MODEL,
+          embedDimensions: 1536,
+          embedSelfHosted: true,
+        } as ModelConfig,
+        { client },
+      );
+      const result = await embedTexts(llm, ["alpha", "beta"], "s1");
+      expect(result.failedCount).toBe(0);
+      expect(result.costUsd).toBe(0);
+      expect(result.vectors).toHaveLength(2);
+      for (const v of result.vectors) {
+        expect(v).toHaveLength(1536);
+        expect(v?.[0]).toBe(1);
+      }
+      expect(create).not.toHaveBeenCalled();
+      expect(extractor).toHaveBeenCalledTimes(1);
+    } finally {
+      setBundledPipelineLoaderForTests(null);
+    }
   });
 });

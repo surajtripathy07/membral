@@ -6,11 +6,12 @@ Usage
                    [--project <name>]
   membral local status [--show-password] [--project <name>]
   membral local down [--wipe [--yes]] [--project <name>]
-  membral local logs [db|auth|rest|gateway|app|kicker] [-f] [--project <name>]
+  membral local logs [db|rest|app] [-f] [--project <name>]
+  membral local reembed [--batch <n>] [--dry-run] [--project <name>]
 
 Run Membral entirely on this machine with Docker. `up` writes a compose
-stack to ~/.membral/local (Postgres, auth, data API, a gateway and the
-Membral app), applies migrations, creates your one local user and an API
+stack to ~/.membral/local (Postgres, the data API and the Membral app,
+which also serves sign-in and runs extraction), applies migrations, creates your one local user and an API
 key, saves the "local" profile, makes it active, and points hooks and MCP
 at it. Running it again changes nothing. Ports bind 127.0.0.1 only.
 
@@ -19,7 +20,7 @@ Nothing leaves the machine unless you add an LLM key to
 
 Flags
   --port <n>          App port (default 3000)
-  --gateway-port <n>  Auth/data gateway port (default 54421)
+  --gateway-port <n>  Ignored (there is no gateway); kept so old commands run
   --image <ref>       App image (also MEMBRAL_IMAGE)
   --email <addr>      Local user's email (default you@membral.local)
   --embeddings ollama Local embeddings through the Ollama on this machine:
@@ -29,18 +30,25 @@ Flags
                       and MEMBRAL_EMBEDDING_MODEL to ~/.membral/local/.env.
                       Kept by later plain `up` runs. The app container must
                       reach the host's Ollama through host.docker.internal.
-  --embeddings none   Remove those two lines (search is keyword only)
+  --embeddings none   Remove those two lines (back to the bundled model)
   --embedding-model <name>
                       Pulled Ollama model to use (default nomic-embed-text)
   --project <name>    Run a second stack beside the default one (also
                       MEMBRAL_LOCAL_PROJECT): compose project <name>, files in
                       ~/.membral/local-<name>, volumes suffixed -<name>. Pass
-                      --port and --gateway-port that are free; give every
-                      command the same name. kicker is the extraction runner.
+                      a --port that is free; give every command the same
+                      name.
   --show-password     status: print the local user's password
   --wipe              down: also delete the database volume and the downloaded
                       Claude Code volume (asks first)
   --yes               up: accept setup defaults; down --wipe: skip the question
   --no-sweep          up: don't schedule the backstop sweep
+  --batch <n>         reembed: rows per request (1-256, default 64)
+  --dry-run           reembed: print counts per table and model; write nothing
+
+reembed moves every stored vector to the embedding model the stack is now
+configured with, after `up --embeddings ollama --embedding-model <name>`.
+It runs one batch at a time against the app, prints progress, and can be
+stopped with Ctrl-C and rerun: finished rows are never redone.
 
 --- STDERR ---

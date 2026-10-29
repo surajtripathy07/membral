@@ -141,3 +141,4 @@ apps/cloud/public/downloads/manifest.json
 # pack.mjs directly is gitignored too.
 apps/cloud/public/membral-cli.tgz
 packages/cli/dist-pack/
+!packages/cli/src/__tests__/fixtures/claude-mem/claude-mem.db

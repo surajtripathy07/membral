@@ -29,15 +29,8 @@ import {
   localUp,
   migrationVersion,
 } from "../local-command.js";
-import {
-  KICK_INTERVAL_S,
-  kickerScript,
-  localDirFor,
-  localPaths,
-  parseEnv,
-  renderCompose,
-  signSupabaseJwt,
-} from "../local-stack.js";
+import { EMBEDDINGS_BUNDLED_LINE } from "../local-embeddings.js";
+import { localDirFor, localPaths, parseEnv, renderCompose, signSupabaseJwt } from "../local-stack.js";
 
 interface Call {
   args: string[];
@@ -59,6 +52,7 @@ function makeFakeDocker(
     contextInspect?: string;
     pullCode?: number;
     baseUpCode?: number;
+    preludeMissing?: boolean;
   } = {},
 ) {
   const calls: Call[] = [];
@@ -78,6 +72,11 @@ function makeFakeDocker(
       if (args[0] === "volume") return { code: opts.volumeExists ? 0 : 1, stdout: "", stderr: "no such volume" };
       if (args[0] === "cp") {
         const dest = args[2];
+        if (dest.endsWith(".sql")) {
+          if (opts.preludeMissing) return { code: 1, stdout: "", stderr: "no such file" };
+          writeFileSync(dest, "-- prelude");
+          return ok();
+        }
         mkdirSync(dest, { recursive: true });
         for (const [f, body] of Object.entries(MIGRATIONS)) writeFileSync(join(dest, f), body);
         return ok();
@@ -98,12 +97,12 @@ function makeFakeDocker(
             .join("\n"),
         );
       }
-      if (sub[0] === "up" && sub.includes("auth") && opts.baseUpCode) {
+      if (sub[0] === "up" && sub.includes("db") && opts.baseUpCode) {
         return { code: opts.baseUpCode, stdout: "", stderr: "container db is unhealthy" };
       }
       if (sub[0] === "up") {
-        for (const svc of sub.filter((s) => ["db", "auth", "rest", "gateway", "app", "kicker"].includes(s))) {
-          running.set(svc, svc === "app" ? [3000] : svc === "gateway" ? [54421] : []);
+        for (const svc of sub.filter((s) => ["db", "rest", "app"].includes(s))) {
+          running.set(svc, svc === "app" ? [3000] : []);
         }
         return ok();
       }
@@ -189,6 +188,7 @@ describe("membral local", () => {
       sleep: async () => {},
       hostname: () => "testhost",
       env: {},
+      claudeOnPath: () => false,
       validateKey: async (_u, k) => ({ status: validKeys.has(k) ? "valid" : "invalid" }),
       runSetup,
       activate,
@@ -217,13 +217,16 @@ describe("membral local", () => {
     expect(idx("pull ghcr.io/surajtripathy07/membral-cloud:main")).toBeGreaterThan(0);
     expect(idx("create ghcr.io/surajtripathy07/membral-cloud:main")).toBeGreaterThan(idx("pull"));
     expect(v[idx("cp")]).toBe(`cp cid123:/app/migrations ${deps.paths!.migrations}`);
+    expect(v).toContain(`cp cid123:/app/local/auth-prelude.sql ${deps.paths!.prelude}`);
     expect(idx("rm -f cid123")).toBeGreaterThan(idx("cp"));
-    const upBase = idx("compose up -d --wait --wait-timeout 300 db auth");
+    const upBase = idx("compose up -d --wait --wait-timeout 300 --remove-orphans db");
     expect(upBase).toBeGreaterThan(idx("rm -f cid123"));
-    const firstMigration = v.findIndex((s, i) => i > upBase && s.includes("-f -"));
+    const prelude = v.findIndex((s, i) => i > upBase && s.includes("-f -"));
+    const firstMigration = v.findIndex((s, i) => i > prelude && s.includes("-f -"));
     const notify = v.findIndex((s) => s.includes("NOTIFY pgrst"));
-    const upRest = idx("compose up -d --wait --wait-timeout 300 rest gateway app");
-    expect(firstMigration).toBeGreaterThan(upBase);
+    const upRest = idx("compose up -d --wait --wait-timeout 300 --remove-orphans rest app");
+    expect(prelude).toBeGreaterThan(upBase);
+    expect(firstMigration).toBeGreaterThan(prelude);
     expect(notify).toBeGreaterThan(firstMigration);
     expect(upRest).toBeGreaterThan(notify);
 
@@ -241,10 +244,13 @@ describe("membral local", () => {
 
     // migrations in filename order, each in one transaction with its version row
     const migs = docker.calls.filter((c) => c.args.includes("-f") && c.opts?.input);
-    expect(migs).toHaveLength(2);
-    expect(migs[0].opts!.input).toMatch(/^begin;\ncreate table t1/);
-    expect(migs[0].opts!.input).toContain("values ('001', 'conversations', '{}');\ncommit;");
-    expect(migs[1].opts!.input).toContain("values ('002', 'rls_policies'");
+    expect(migs).toHaveLength(3);
+    expect(migs[0].opts!.input).toBe("-- prelude"); // auth prelude runs before every app migration
+    expect(migs[0].args.join(" ")).toContain("-U supabase_admin"); // the image's postgres role cannot touch auth
+    expect(migs[1].args.join(" ")).toContain("-U postgres");
+    expect(migs[1].opts!.input).toMatch(/^begin;\ncreate table t1/);
+    expect(migs[1].opts!.input).toContain("values ('001', 'conversations', '{}');\ncommit;");
+    expect(migs[2].opts!.input).toContain("values ('002', 'rls_policies'");
     expect([...docker.applied]).toEqual(["001", "002"]);
 
     // provision
@@ -282,6 +288,48 @@ describe("membral local", () => {
     expect(statSync(deps.paths!.dir).mode & 0o777).toBe(0o700);
   });
 
+  it("an old six-service stack is migrated by up: orphans removed, db volume and secrets kept", async () => {
+    await localUp({}, deps);
+    const envBefore = readFileSync(deps.paths!.env, "utf8");
+    // simulate a compose file written by the previous version
+    writeFileSync(deps.paths!.compose, "services:\n  auth:\n  gateway:\n  kicker:\n");
+    docker.calls.length = 0;
+    await localUp({}, deps);
+    expect(errors).toEqual([]);
+    expect(readFileSync(deps.paths!.compose, "utf8")).not.toMatch(/^ {2}(auth|gateway|kicker):/m);
+    const ups = verbs().filter((s) => s.startsWith("compose up"));
+    expect(ups).toHaveLength(2);
+    for (const u of ups) expect(u).toContain("--remove-orphans");
+    expect(verbs().some((s) => s.startsWith("volume rm") || s.includes("down -v"))).toBe(false);
+    expect(readFileSync(deps.paths!.env, "utf8")).toBe(envBefore);
+  });
+
+  it("--gateway-port is accepted but ignored, with a note", async () => {
+    await localUp({ gatewayPort: "54999" }, deps);
+    expect(errors).toEqual([]);
+    expect(process.exitCode).toBeUndefined();
+    expect(out()).toContain("--gateway-port is ignored");
+    expect(readFileSync(deps.paths!.compose, "utf8")).not.toContain("54999");
+    expect(readFileSync(deps.paths!.env, "utf8")).not.toContain("54999");
+  });
+
+  it("defaults the extractor to claude-code when claude is on PATH and no key or provider is set", async () => {
+    deps.claudeOnPath = () => true;
+    await localUp({}, deps);
+    expect(readFileSync(deps.paths!.compose, "utf8")).toContain("MEMBRAL_LLM_PROVIDER: claude-code");
+    expect(out()).toContain("Extractor: claude-code");
+    expect(readFileSync(deps.paths!.env, "utf8")).not.toMatch(/^MEMBRAL_LLM_PROVIDER=/m);
+  });
+
+  it("keeps Ollama/key extraction when claude is not on PATH or a key is configured", async () => {
+    await localUp({}, deps);
+    expect(readFileSync(deps.paths!.compose, "utf8")).not.toContain("MEMBRAL_LLM_PROVIDER: claude-code");
+    deps.claudeOnPath = () => true;
+    writeFileSync(deps.paths!.env, `${readFileSync(deps.paths!.env, "utf8")}OPENAI_API_KEY=sk-test\n`);
+    await localUp({}, deps);
+    expect(readFileSync(deps.paths!.compose, "utf8")).not.toContain("MEMBRAL_LLM_PROVIDER: claude-code");
+  });
+
   it("second up is a no-op: no new key, no migrations re-applied, files unchanged, no password", async () => {
     await localUp({}, deps);
     const p = deps.paths!;
@@ -298,7 +346,10 @@ describe("membral local", () => {
     expect(errors).toEqual([]);
     expect(fstate.provisionBodies[1]).toMatchObject({ mintKey: false });
     expect(fstate.minted).toBe(1);
-    expect(docker.calls.filter((c) => c.args.includes("-f") && c.opts?.input)).toHaveLength(0);
+    // only the idempotent auth prelude runs again, never an app migration
+    expect(
+      docker.calls.filter((c) => c.args.includes("-f") && c.opts?.input && c.opts.input !== "-- prelude"),
+    ).toHaveLength(0);
     expect(files.map((f) => ({ body: readFileSync(f, "utf8"), mtime: statSync(f).mtimeMs }))).toEqual(before);
     expect(readFileSync(deps.credentialsPath!, "utf8")).toBe(credsBefore);
     expect(runSetup).not.toHaveBeenCalled();
@@ -306,6 +357,22 @@ describe("membral local", () => {
     const env = parseEnv(before[0].body);
     expect(out()).not.toContain(env.MEMBRAL_LOCAL_PASSWORD);
     expect(out()).toContain("Migrations: up to date (2)");
+  });
+
+  it("keeps .bak copies of .env and the compose file when the image lacks the prelude, and removes them on success", async () => {
+    await localUp({}, deps);
+    const { env, compose } = deps.paths!;
+    expect(existsSync(`${env}.bak`)).toBe(false);
+    const oldEnv = readFileSync(env, "utf8");
+    const oldCompose = readFileSync(compose, "utf8");
+    docker = makeFakeDocker({ preludeMissing: true });
+    deps.runner = docker.runner;
+    await localUp({ image: "membral-cloud:old" }, deps);
+    expect(process.exitCode).toBe(1);
+    expect(out()).toContain("kept as .env.bak and");
+    expect(readFileSync(`${env}.bak`, "utf8")).toBe(oldEnv);
+    expect(readFileSync(`${compose}.bak`, "utf8")).toBe(oldCompose);
+    expect(readFileSync(env, "utf8")).toContain("membral-cloud:old");
   });
 
   it("re-activates local (membral use local) when another profile became active", async () => {
@@ -450,7 +517,6 @@ describe("membral local", () => {
       [{}, { MEMBRAL_IMAGE: 'img"\nx' }, /Invalid image reference/],
       [{ email: "not an email" }, {}, /Invalid email/],
       [{ port: "80" }, {}, /pass a port from 1024 to 65535/],
-      [{ gatewayPort: "70000" }, {}, /pass a port from 1024 to 65535/],
     ] as const) {
       deps.env = env;
       await localUp(o, deps);
@@ -575,12 +641,11 @@ describe("membral local", () => {
     expect(errors.at(-1)).toContain("tried DOCKER_HOST unix:///tmp/other.sock");
   });
 
-  it("points a db/auth failure at the db log and free disk", async () => {
+  it("points a db failure at the db log and free disk", async () => {
     deps.runner = makeFakeDocker({ baseUpCode: 1 }).runner;
     await localUp({}, deps);
     expect(process.exitCode).toBe(1);
     expect(errors.at(-1)).toContain("`membral local logs db`");
-    expect(errors.at(-1)).toContain("`membral local logs auth`");
     expect(errors.at(-1)).toContain("free disk space");
   });
 
@@ -735,7 +800,7 @@ describe("membral local", () => {
       expect(once.match(/^MEMBRAL_EMBEDDINGS_BASE_URL=/gm)).toHaveLength(1);
     });
 
-    it("none: removes the two lines and reports keyword-only search", async () => {
+    it("none: removes the two lines and falls back to the bundled model", async () => {
       withOllama(["nomic-embed-text"]);
       await localUp({ embeddings: "ollama" }, deps);
       logs.length = 0;
@@ -744,7 +809,7 @@ describe("membral local", () => {
       expect(env.MEMBRAL_EMBEDDINGS_BASE_URL).toBeUndefined();
       expect(env.MEMBRAL_EMBEDDING_MODEL).toBeUndefined();
       expect(env.JWT_SECRET).toBeTruthy();
-      expect(out()).toContain("Embeddings: none — search is keyword only. Run: membral local up --embeddings ollama");
+      expect(out()).toContain(EMBEDDINGS_BUNDLED_LINE);
     });
 
     it("rejects an unknown mode, and --embedding-model without ollama", async () => {
@@ -758,11 +823,11 @@ describe("membral local", () => {
       expect(out()).toContain("--embedding-model only applies with --embeddings ollama");
     });
 
-    it("status prints one embeddings line: none by default, Ollama once enabled", async () => {
+    it("status prints one embeddings line: bundled by default, Ollama once enabled", async () => {
       await localUp({}, deps);
       logs.length = 0;
       await localStatus({}, deps);
-      expect(out()).toContain("Embeddings: none — search is keyword only. Run: membral local up --embeddings ollama");
+      expect(out()).toContain(EMBEDDINGS_BUNDLED_LINE);
       withOllama(["nomic-embed-text"]);
       await localUp({ embeddings: "ollama" }, deps);
       logs.length = 0;
@@ -785,7 +850,12 @@ describe("membral local", () => {
     confirm.mockClear();
     await localDown({ wipe: true, yes: true }, deps);
     expect(confirm).not.toHaveBeenCalled();
-    expect(downCalls()).toEqual([["down"], ["down"], ["down", "-v"], ["down", "-v"]]);
+    expect(downCalls()).toEqual([
+      ["down", "--remove-orphans"],
+      ["down", "--remove-orphans"],
+      ["down", "--remove-orphans", "-v"],
+      ["down", "--remove-orphans", "-v"],
+    ]);
   });
 
   it("status shows the app's reason when extraction is off (Claude Code could not be downloaded)", async () => {
@@ -875,54 +945,69 @@ describe("membral local", () => {
 });
 
 describe("local stack files", () => {
-  it("binds every published port to 127.0.0.1 and passes only the LLM keys that are set", () => {
-    const yml = renderCompose({ appPort: 3000, gatewayPort: 54421, image: "img:x", llmKeys: ["OPENAI_API_KEY"] });
-    const ports = yml.match(/- "[^"]*:\d+:\d+"/g) ?? [];
-    expect(ports).toEqual(['- "127.0.0.1:54421:8000"', '- "127.0.0.1:3000:3000"']);
-    expect(renderCompose({ appPort: 3940, gatewayPort: 54431, image: "img:x", llmKeys: [] })).toContain(
-      '- "127.0.0.1:3940:3940"',
-    );
+  const base = { appPort: 3940, image: "img:x", llmKeys: [] as string[] };
+  const svcNames = (yml: string) =>
+    [...yml.slice(0, yml.indexOf("\nvolumes:")).matchAll(/^ {2}([a-z]+):$/gm)].map((m) => m[1]);
+
+  it("runs exactly db, rest and app: no auth, gateway or kicker service", () => {
+    const yml = renderCompose(base);
+    expect(
+      yml
+        .slice(yml.indexOf("\nservices:"), yml.indexOf("\nvolumes:"))
+        .match(/^ {2}(db|rest|app|auth|gateway|kicker):$/gm),
+    ).toEqual(["  db:", "  rest:", "  app:"]);
+    expect(svcNames(yml)).toEqual(expect.arrayContaining(["db", "rest", "app"]));
+    expect(yml).not.toMatch(/image:.*(caddy|gotrue|kong)/i);
+    expect(yml).not.toContain("kick");
+  });
+
+  it("binds the only published port to 127.0.0.1 and passes only the LLM keys that are set", () => {
+    const yml = renderCompose({ ...base, appPort: 3000, llmKeys: ["OPENAI_API_KEY"] });
+    expect(yml.match(/- "[^"]*:\d+:\d+"/g) ?? []).toEqual(['- "127.0.0.1:3000:3000"']);
+    expect(renderCompose(base)).toContain('- "127.0.0.1:3940:3940"');
     expect(yml).toContain(`OPENAI_API_KEY: "$` + `{OPENAI_API_KEY}"`);
     expect(yml).not.toContain("ANTHROPIC_API_KEY");
     expect(yml).toContain("image: img:x");
     expect(yml).toContain("name: membral-local-db");
   });
 
-  it("mounts the claude-cli volume (Claude Code downloaded on first start) on the app only, never the kicker", () => {
-    const yml = renderCompose({ appPort: 3940, gatewayPort: 54431, image: "img:x", llmKeys: [] });
-    const app = yml.slice(yml.indexOf("\n  app:"), yml.indexOf("\n  kicker:"));
-    const kicker = yml.slice(yml.indexOf("\n  kicker:"), yml.indexOf("\nvolumes:"));
+  it("the app talks to PostgREST directly and serves its own auth origin", () => {
+    const yml = renderCompose(base);
+    const app = yml.slice(yml.indexOf("\n  app:"), yml.indexOf("\nvolumes:"));
+    expect(app).toContain('NEXT_PUBLIC_SUPABASE_URL: "http://localhost:3940"');
+    expect(app).toContain("SUPABASE_INTERNAL_URL: http://rest:3000");
+    expect(app).toContain('MEMBRAL_POSTGREST_DIRECT: "1"');
+    expect(app).toContain(`SUPABASE_JWT_SECRET: "$` + `{JWT_SECRET}"`);
+    expect(app).toContain(`CRON_SECRET: "$` + `{CRON_SECRET}"`);
+    expect(app).toContain("condition: service_started");
+  });
+
+  it("mounts claude-cli and models volumes on the app only; the model cache points at the volume", () => {
+    const yml = renderCompose(base);
+    const app = yml.slice(yml.indexOf("\n  app:"), yml.indexOf("\nvolumes:"));
     const volumes = yml.slice(yml.indexOf("\nvolumes:"), yml.indexOf("\nconfigs:"));
     expect(app).toContain("- claude-cli:/claude-cli");
-    expect(kicker).not.toContain("claude-cli");
+    expect(app).toContain("- models:/models");
+    expect(app).toContain("MEMBRAL_MODEL_CACHE_DIR: /models");
     expect(yml.match(/claude-cli:\/claude-cli/g)).toHaveLength(1);
     expect(volumes).toContain("  claude-cli:\n    name: membral-local-claude-cli");
+    expect(volumes).toContain("  models:\n    name: membral-local-models");
     expect(volumes).toContain("  db-data:\n    name: membral-local-db");
   });
 
   it("the app listens on the host port inside the container, so NEXT_PUBLIC_APP_URL reaches it from there too", () => {
-    const yml = renderCompose({ appPort: 3940, gatewayPort: 54431, image: "img:x", llmKeys: [] });
+    const yml = renderCompose(base);
     expect(yml).toContain('NEXT_PUBLIC_APP_URL: "http://localhost:3940"');
     expect(yml).toContain('PORT: "3940"');
     expect(yml).toContain("fetch('http://127.0.0.1:3940/api/health')");
   });
 
-  it("a kicker service on the app image calls the memory-extraction kick route with CRON_SECRET", () => {
-    const yml = renderCompose({ appPort: 3940, gatewayPort: 54431, image: "img:x", llmKeys: [] });
-    const kicker = yml.slice(yml.indexOf("\n  kicker:"), yml.indexOf("\nvolumes:"));
-    expect(kicker).toContain("image: img:x");
-    expect(kicker).toContain("condition: service_healthy");
-    expect(kicker).toContain(`CRON_SECRET: "$` + `{CRON_SECRET}"`);
-    expect(kicker).not.toContain("ports:");
-    const script = kickerScript(3940);
-    expect(script).toContain("http://app:3940/api/internal/cron/memory-extraction?kick=1");
-    expect(script).toContain(`setInterval(kick, ${KICK_INTERVAL_S * 1000})`);
-    expect(script).not.toContain("$");
-    expect(kicker).toContain(`entrypoint: ["node", "-e", ${JSON.stringify(script)}]`);
-    // The app gets the same secret, so the cron route accepts the kick.
-    expect(yml.slice(yml.indexOf("\n  app:"), yml.indexOf("\n  kicker:"))).toContain(
-      `CRON_SECRET: "$` + `{CRON_SECRET}"`,
-    );
+  it("defaultClaudeCode sets the provider unless the user already chose one", () => {
+    expect(renderCompose({ ...base, defaultClaudeCode: true })).toContain("MEMBRAL_LLM_PROVIDER: claude-code");
+    expect(renderCompose(base)).not.toContain("MEMBRAL_LLM_PROVIDER:");
+    const chosen = renderCompose({ ...base, defaultClaudeCode: true, llmKeys: ["MEMBRAL_LLM_PROVIDER"] });
+    expect(chosen.match(/MEMBRAL_LLM_PROVIDER:/g)).toHaveLength(1);
+    expect(chosen).not.toContain("MEMBRAL_LLM_PROVIDER: claude-code");
   });
 
   it("migration versions come from the filename prefix", () => {

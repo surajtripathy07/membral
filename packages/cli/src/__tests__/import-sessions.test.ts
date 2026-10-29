@@ -185,6 +185,56 @@ describe("importSessions", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("--since mtime prefilter also looks inside subagents/workflows/wf_* (a fresh workflow agent file keeps the session)", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const old = new Date("2020-01-01T00:00:00.000Z");
+    await utimes(join(root, "sessions", "old-session.jsonl"), old, old);
+    await utimes(join(root, "sessions", "recent-session.jsonl"), old, old);
+    const subDir = join(root, "sessions", "recent-session", "subagents");
+    const wfDir = join(subDir, "workflows", "wf_run-001");
+    await mkdir(wfDir, { recursive: true });
+    await writeFile(join(wfDir, "agent-w.meta.json"), "{}");
+    await writeFile(join(wfDir, "agent-w.jsonl"), "{}\n"); // fresh: written after the cutoff
+    // Everything on the direct path is old, so only the workflow file can keep the session.
+    for (const p of [wfDir, join(subDir, "workflows"), subDir, join(root, "sessions", "recent-session")]) {
+      await utimes(p, old, old);
+    }
+    await utimes(join(wfDir, "agent-w.meta.json"), old, old);
+
+    await importSessions({ root, dryRun: true, since: "2026-01-15T00:00:00.000Z" });
+    let out = output(logSpy);
+    expect(out).toContain("Skipped 1 session file(s) not modified since");
+    expect(out).toContain("Ready to import 3 session(s) (incl. sub-agents) across 2 project(s).");
+
+    await utimes(join(wfDir, "agent-w.jsonl"), old, old);
+    logSpy.mockClear();
+    await importSessions({ root, dryRun: true, since: "2026-01-15T00:00:00.000Z" });
+    out = output(logSpy);
+    expect(out).toContain("Skipped 2 session file(s) not modified since");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("skipLiveMs leaves a transcript written within the window for a later sweep; force ignores it", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const old = new Date("2020-01-01T00:00:00.000Z");
+    await utimes(join(root, "sessions", "old-session.jsonl"), old, old);
+    await utimes(join(root, "sessions", "recent-session.jsonl"), old, old);
+    // other-project-session keeps its fresh mtime (just written): it is a live session.
+    await importSessions({ root, dryRun: true, skipLiveMs: 30 * 60_000 });
+    let out = output(logSpy);
+    expect(out).toContain("Left 1 live session file(s)");
+    expect(out).toContain("Ready to import 2 session(s) (incl. sub-agents) across 1 project(s).");
+
+    logSpy.mockClear();
+    await importSessions({ root, dryRun: true, skipLiveMs: 30 * 60_000, force: true });
+    out = output(logSpy);
+    expect(out).not.toContain("live session file(s)");
+    expect(out).toContain("Ready to import 3 session(s)");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("missingHarnessOk: an absent root or missing node:sqlite counts as 'not installed' — ok, no HTTP, exit 0", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

@@ -35,6 +35,7 @@ interface ExistingSessionRow {
   id: string;
   content_hash: string;
   code_project_id: string;
+  turn_count: number | null;
   props: Record<string, unknown> | null;
 }
 
@@ -107,7 +108,27 @@ export async function importCodeSession(
     // re-import writes props.actions_version (buildSessionProps), so the next
     // /known check answers "known" and it does not loop.
     const staleParser = needsParserRefresh(existing?.props?.actions_version, session.actionsVersion);
-    if (existing && existing.content_hash === session.contentHash && !force && !staleParser) {
+    // An open (Stop-hook) upload stamps props.open_upload; a later non-open upload of identical content (SessionEnd,
+    // sweep) must NOT short-circuit, or the session would never be queued for extraction (the route queues only
+    // "imported" sessions). It re-imports once, which clears the stamp.
+    const open = importOpts.open === true;
+    const wasOpen = existing?.props?.open_upload === true;
+    // Out-of-order guard: a delayed OPEN upload carrying fewer turns than what is stored (a slow Stop child
+    // overtaken by a later one, or by the closing upload) must not replace the newer turns or stamp the row open.
+    // The same holds for a delayed NON-open upload (a slow SessionEnd or sweep child) when the stored row is open: it
+    // must not replace the newer turns of a later open upload, nor clear the stamp over them.
+    const incomingTurns = sessionTurnCount(session);
+    const behindStored =
+      existing?.turn_count != null &&
+      (open
+        ? wasOpen
+          ? incomingTurns < existing.turn_count
+          : incomingTurns <= existing.turn_count
+        : wasOpen && !force && incomingTurns < existing.turn_count);
+    if (existing && behindStored) {
+      return { status: "skipped", sessionId: existing.id, codeProjectId: existing.code_project_id };
+    }
+    if (existing && existing.content_hash === session.contentHash && !force && !staleParser && !(wasOpen && !open)) {
       // A crash after the turns were stored and before the units were written leaves a final content_hash and stale
       // units: heal them here (units are tested by source_hash, not content_hash). Never fails the import.
       await writeRawUnits(supabase, userId, existing.id, session.turns, session.contentHash, importOpts);
@@ -117,7 +138,7 @@ export async function importCodeSession(
     const repoIdentity = normalizeRepoIdentity(session.repo);
     const codeProjectId = await upsertCodeProject(supabase, userId, repoIdentity, session);
 
-    const sessionId = await upsertCodeSessionRow(supabase, userId, codeProjectId, session, existing);
+    const sessionId = await upsertCodeSessionRow(supabase, userId, codeProjectId, session, existing, open, wasOpen);
 
     // W3 D9: the session's observed forge refs, written in the turns RPC's transaction (null on failure).
     const forgeRefs = await forgeRefsForImport(supabase, userId, {
@@ -204,6 +225,8 @@ export interface ImportOptions {
    * runs inside the HTTP response). Omitted = the work is awaited inline (tests, scripts).
    */
   deferRawUnits?: (task: () => Promise<void>, sessionId: string) => void;
+  /** The upload is from a still-open session (Stop hook): stamps props.open_upload; see the short-circuit above. */
+  open?: boolean;
 }
 
 /**
@@ -250,7 +273,7 @@ async function findExistingSession(
 ): Promise<ExistingSessionRow | null> {
   const res = await supabase
     .from("code_sessions")
-    .select("id, content_hash, code_project_id, props")
+    .select("id, content_hash, code_project_id, turn_count, props")
     .eq("user_id", userId)
     .eq("source", source)
     .eq("source_session_id", sourceSessionId)
@@ -330,6 +353,8 @@ async function upsertCodeSessionRow(
   codeProjectId: string,
   session: RawCodeSessionPayload,
   existing: ExistingSessionRow | null,
+  open = false,
+  wasOpen = false,
 ): Promise<string> {
   // Only genuine human prose counts as a "user turn" — tool_result rows also
   // arrive on role:"user" lines in CC transcripts, and counting them would
@@ -382,7 +407,11 @@ async function upsertCodeSessionRow(
     // (usage/models/subAgents/…) with a key-level patch (migration 109), never
     // a whole-props write from `existing.props`: memory extraction writes its
     // `memory_*` keys concurrently, and a stale snapshot would revert them.
-    props: buildSessionProps(session),
+    props: {
+      ...buildSessionProps(session),
+      // Stamp while open; clear only when it was set, so ordinary sessions never gain the key.
+      ...(open ? { open_upload: true } : wasOpen ? { open_upload: false } : {}),
+    },
   };
 
   if (existing) {

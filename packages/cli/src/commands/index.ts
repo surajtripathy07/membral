@@ -22,6 +22,7 @@ import { setupCommand } from "./setup.js";
 import { statusCommand } from "./status.js";
 import { sweepCommand } from "./sweep.js";
 import type { Command } from "./types.js";
+import { downCmd, logsCmd, upCmd } from "./up.js";
 import { useCommand } from "./use.js";
 import { whoamiCommand } from "./whoami.js";
 
@@ -36,6 +37,9 @@ export const COMMANDS: readonly Command[] = [
   statusCommand,
   sessionsCommand,
   localCommand,
+  upCmd,
+  downCmd,
+  logsCmd,
   importSessionCommand,
   sessionEndHookCommand,
   preambleCommand,

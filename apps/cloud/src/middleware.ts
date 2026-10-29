@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { providerErrorKey } from "./app/auth/messages";
-import { serverSupabaseUrl, sessionCookieOptions } from "./lib/supabase/url";
+import { serverSupabaseClientOptions, serverSupabaseUrl, sessionCookieOptions } from "./lib/supabase/url";
 
 // `publicPaths` ALSO bounces an authenticated user away (see the
 // "Redirect authenticated users away from auth pages" check below) — only
@@ -32,6 +32,7 @@ export async function middleware(request: NextRequest) {
 
   const cookieOptions = sessionCookieOptions();
   const supabase = createServerClient(url, anonKey, {
+    ...serverSupabaseClientOptions(),
     ...(cookieOptions ? { cookieOptions } : {}),
     cookies: {
       getAll() {
@@ -135,7 +136,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - auth/v1/ (the local GoTrue stub: its own getUser() would call back into the app and loop)
      */
-    "/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/|auth/v1/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm)$).*)",
   ],
 };

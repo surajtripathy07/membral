@@ -91,7 +91,7 @@ const PUSH_KIND_ORDER: Record<MemoryKind, number> = {
   outcome: 9, // never selected for a push line by a correct caller -- see header
 };
 
-const SOURCE_ORDER: Record<MemorySource, number> = { hook: 0, agent: 1, extractor: 2 };
+const SOURCE_ORDER: Record<MemorySource, number> = { hook: 0, agent: 1, extractor: 2, "claude-mem": 3 };
 
 /** Rule 5: "user-voiced verified > main-transcript assistant verified > sub-agent", `source` only as the very last tiebreak below. */
 function voiceReceiptRank(r: RankableRecord): number {

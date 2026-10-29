@@ -1,0 +1,14 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral down [--wipe [--yes]]
+
+Stops the server started by `membral up` (SIGTERM, then waits up to 30 s for
+it to exit and release the database lock). The data stays.
+
+Flags
+  --wipe   Also delete ~/.membral/local/pgdata (asks first; needs --yes when
+           stdin is not a terminal)
+  --yes    Skip the --wipe question
+
+--- STDERR ---

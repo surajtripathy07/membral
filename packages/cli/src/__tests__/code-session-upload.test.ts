@@ -219,6 +219,22 @@ describe("uploadBatch", () => {
     vi.unstubAllGlobals();
   });
 
+  it("openSupported is true only for an explicit open_supported: true ack", async () => {
+    const run = async (body: unknown) => {
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValue({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }),
+      );
+      return uploadBatch(config, [makeSession()], undefined, undefined, false, undefined, true);
+    };
+    expect((await run({ imported: 1, open_supported: true })).openSupported).toBe(true);
+    expect((await run({ imported: 1, open_supported: "true" })).openSupported).toBe(false);
+    expect((await run({ imported: 1 })).openSupported).toBe(false);
+    expect((await run([])).openSupported).toBe(false);
+  });
+
   it("returns the parsed outcome on a 2xx response and posts the right request shape", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -231,7 +247,7 @@ describe("uploadBatch", () => {
     const session = makeSession();
     const result = await uploadBatch(config, [session]);
 
-    expect(result).toEqual({ imported: 1, skipped: 0, total: 1, errors: [] });
+    expect(result).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], openSupported: false });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://cloud.example.com/api/code-sessions");

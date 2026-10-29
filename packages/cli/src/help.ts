@@ -20,6 +20,9 @@ export const PUBLIC_COMMANDS = [
   "import",
   "sessions",
   "local",
+  "up",
+  "down",
+  "logs",
   "help",
 ] as const;
 
@@ -58,9 +61,10 @@ Commands
   logout     Sign out and forget the saved credentials
   use        List profiles, or switch between servers
   status     Show your account, this device, and what synced last
-  import     Import a ChatGPT or Claude.ai export file
+  import     Import a ChatGPT or Claude.ai export, or a claude-mem store
   sessions   Upload this machine's coding-session transcripts
   local      Run the whole server on this machine with Docker
+  up         Run the whole server on this machine, no Docker (down, logs)
   help       Print this help, a command's help, or --all for hook internals
 
 Flags
@@ -176,25 +180,38 @@ Sign out and forget the saved credentials — deletes
 
   status: `Usage
   membral status [--api-url <url>] [--api-key <key>] [--rename <name>]
+  membral status --server
 
 Show your account, this device, and what synced last: signed-in account and
 user id, device identity, the ~/.membral/sync.json allowlist, and the last
-successful sweep.
+successful sweep. When a \`membral up\` server is running, its process, port,
+health, store and data size come first; --server shows only that.
 
 Flags
   --api-url <url>   Overrides the default API URL
   --api-key <key>   Overrides the saved/env credentials for this run
-  --rename <name>   Persist a new name to this machine's device.json`,
+  --rename <name>   Persist a new name to this machine's device.json
+  --server          Show only the \`membral up\` server's state`,
 
   import: `Usage
   membral import <file.json> [--api-url <url>] [--api-key <key>]
+  membral import claude-mem [--db <path>] [--api-url <url>] [--api-key <key>]
 
 Import a ChatGPT or Claude.ai export file — a conversations.json export
 (detected automatically), uploaded in batches of 100 with a progress line.
 A .zip export isn't unzipped automatically; extract conversations.json
 first (the command prints the exact steps if it sees one).
 
+\`import claude-mem\` reads a claude-mem SQLite store (default
+~/.claude-mem/claude-mem.db; needs Node >= 22.5) and stores its observations
+as Membral records labelled source claude-mem. Each links to the Membral
+session with the same session id, so upload those transcripts first
+(\`membral sessions\`); observations with no matching session are skipped and
+counted. A record carries a quote only when its text appears verbatim in that
+session's transcript. Re-running imports nothing twice.
+
 Flags
+  --db <path>       claude-mem database (import claude-mem only)
   --api-url <url>   Overrides the default API URL
   --api-key <key>   Overrides the saved/env credentials for this run`,
 
@@ -252,13 +269,16 @@ SessionEnd hook (installed by install-session-hook) shells out to after
 every Claude Code session. Never exits non-zero and never blocks.`,
 
   "session-end-hook": `Usage
-  membral session-end-hook [--source copilot-cli|agy] [--api-url <url>] [--api-key <key>]
+  membral session-end-hook [--stop] [--source copilot-cli|agy] [--api-url <url>] [--api-key <key>]
 
 Not for interactive use — this is the command install-session-hook wires
-into Claude Code's SessionEnd hook. Reads the hook's JSON off stdin and
-uploads the session it names. Never exits non-zero, never blocks.
+into Claude Code's SessionEnd and Stop hooks. Reads the hook's JSON off stdin
+and uploads the session it names. Never exits non-zero, never blocks.
 
 Flags
+  --stop                 Read Claude Code's Stop input (session still open):
+                         upload the transcript so far in a detached child,
+                         at most once a minute, without queueing extraction
   --source copilot-cli   Read Copilot CLI's sessionEnd input (setup --copilot-cli)
   --source agy           Read Antigravity's Stop input (setup --agy)`,
 
@@ -361,11 +381,12 @@ sets "dogfood": {"issue": <n>, "repo": "owner/name"} and/or
                    [--project <name>]
   membral local status [--show-password] [--project <name>]
   membral local down [--wipe [--yes]] [--project <name>]
-  membral local logs [db|auth|rest|gateway|app|kicker] [-f] [--project <name>]
+  membral local logs [db|rest|app] [-f] [--project <name>]
+  membral local reembed [--batch <n>] [--dry-run] [--project <name>]
 
 Run Membral entirely on this machine with Docker. \`up\` writes a compose
-stack to ~/.membral/local (Postgres, auth, data API, a gateway and the
-Membral app), applies migrations, creates your one local user and an API
+stack to ~/.membral/local (Postgres, the data API and the Membral app,
+which also serves sign-in and runs extraction), applies migrations, creates your one local user and an API
 key, saves the "local" profile, makes it active, and points hooks and MCP
 at it. Running it again changes nothing. Ports bind 127.0.0.1 only.
 
@@ -374,7 +395,7 @@ Nothing leaves the machine unless you add an LLM key to
 
 Flags
   --port <n>          App port (default 3000)
-  --gateway-port <n>  Auth/data gateway port (default 54421)
+  --gateway-port <n>  Ignored (there is no gateway); kept so old commands run
   --image <ref>       App image (also MEMBRAL_IMAGE)
   --email <addr>      Local user's email (default you@membral.local)
   --embeddings ollama Local embeddings through the Ollama on this machine:
@@ -384,19 +405,66 @@ Flags
                       and MEMBRAL_EMBEDDING_MODEL to ~/.membral/local/.env.
                       Kept by later plain \`up\` runs. The app container must
                       reach the host's Ollama through host.docker.internal.
-  --embeddings none   Remove those two lines (search is keyword only)
+  --embeddings none   Remove those two lines (back to the bundled model)
   --embedding-model <name>
                       Pulled Ollama model to use (default nomic-embed-text)
   --project <name>    Run a second stack beside the default one (also
                       MEMBRAL_LOCAL_PROJECT): compose project <name>, files in
                       ~/.membral/local-<name>, volumes suffixed -<name>. Pass
-                      --port and --gateway-port that are free; give every
-                      command the same name. kicker is the extraction runner.
+                      a --port that is free; give every command the same
+                      name.
   --show-password     status: print the local user's password
   --wipe              down: also delete the database volume and the downloaded
                       Claude Code volume (asks first)
   --yes               up: accept setup defaults; down --wipe: skip the question
-  --no-sweep          up: don't schedule the backstop sweep`,
+  --no-sweep          up: don't schedule the backstop sweep
+  --batch <n>         reembed: rows per request (1-256, default 64)
+  --dry-run           reembed: print counts per table and model; write nothing
+
+reembed moves every stored vector to the embedding model the stack is now
+configured with, after \`up --embeddings ollama --embedding-model <name>\`.
+It runs one batch at a time against the app, prints progress, and can be
+stopped with Ctrl-C and rerun: finished rows are never redone.`,
+
+  up: `Usage
+  membral up [--port <n>] [--server-dir <dir>] [--foreground] [--email <addr>] [--yes] [--no-sweep]
+
+Runs the whole server on this machine as one process, with no Docker: the
+Membral app on an embedded Postgres (PGlite) keeping its data in
+~/.membral/local/pgdata. Starts it detached (log: ~/.membral/local/logs/server.log,
+rotated at 10 MB, 3 kept), waits until its store is ready, creates your one
+local user and an API key, saves the "local" profile, makes it active, and
+points hooks and MCP at it. A second \`up\` while it runs just prints status.
+
+The server build is looked up in --server-dir, then MEMBRAL_SERVER_DIR, then
+apps/cloud/.next/standalone of the checkout you run this from.
+Extraction uses \`claude\` when it is on PATH; otherwise put an API key in
+~/.membral/local/.env (it stays off without one).
+
+Flags
+  --port <n>          Port on 127.0.0.1 (default 3000, then the saved one)
+  --server-dir <dir>  Directory holding apps/cloud/server.js
+  --foreground        Stay attached; Ctrl-C stops the server
+  --email <addr>      Local user's email (default you@membral.local)
+  --yes               Accept setup defaults (implied when stdin is not a terminal)
+  --no-sweep          Don't schedule the backstop sweep`,
+
+  down: `Usage
+  membral down [--wipe [--yes]]
+
+Stops the server started by \`membral up\` (SIGTERM, then waits up to 30 s for
+it to exit and release the database lock). The data stays.
+
+Flags
+  --wipe   Also delete ~/.membral/local/pgdata (asks first; needs --yes when
+           stdin is not a terminal)
+  --yes    Skip the --wipe question`,
+
+  logs: `Usage
+  membral logs [-f]
+
+Prints the last 50 lines of ~/.membral/local/logs/server.log. -f keeps
+following it until Ctrl-C. For the Docker stack use \`membral local logs\`.`,
 
   help: `Usage
   membral help [<command>] [--all]
