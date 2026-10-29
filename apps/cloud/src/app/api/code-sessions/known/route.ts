@@ -62,6 +62,8 @@ interface StoredRow {
   ended_at: string | null;
   content_hash: string | null;
   actions_version: unknown;
+  /** props.open_upload: a Stop-hook upload of a still-open session; never "known" so the closing upload runs. */
+  open_upload?: unknown;
 }
 
 function chunkIds(ids: string[]): string[][] {
@@ -141,6 +143,7 @@ export const POST = withRoute(
     sessions.forEach((probe, index) => {
       const row = stored.get(`${probe.source}\u0000${probe.source_session_id}`);
       if (!row || !row.content_hash) return; // absent, or mid-import (pending sentinel)
+      if (row.open_upload === true) return; // stamped open: the closing upload / sweep must re-send it
       if (isKnownStoredSession(probe, row)) known.push(index);
     });
 

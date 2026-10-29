@@ -1,0 +1,9 @@
+EXIT: 0
+--- STDOUT ---
+Usage
+  membral logs [-f]
+
+Prints the last 50 lines of ~/.membral/local/logs/server.log. -f keeps
+following it until Ctrl-C. For the Docker stack use `membral local logs`.
+
+--- STDERR ---

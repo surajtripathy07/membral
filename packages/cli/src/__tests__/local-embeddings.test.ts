@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   checkOllama,
-  EMBEDDINGS_NONE_LINE,
+  EMBEDDINGS_BUNDLED_LINE,
   embeddingsLine,
   ollamaEndpoint,
   parseEmbeddingsMode,
@@ -141,9 +141,7 @@ describe("embeddingsLine", () => {
   });
 
   it("says none, with the command to fix it, when nothing is configured", () => {
-    expect(embeddingsLine({})).toBe(EMBEDDINGS_NONE_LINE);
-    expect(EMBEDDINGS_NONE_LINE).toBe(
-      "Embeddings: none — search is keyword only. Run: membral local up --embeddings ollama",
-    );
+    expect(embeddingsLine({})).toBe(EMBEDDINGS_BUNDLED_LINE);
+    expect(EMBEDDINGS_BUNDLED_LINE).toContain("nomic-embed-text-v1.5-onnx-q8 (bundled");
   });
 });

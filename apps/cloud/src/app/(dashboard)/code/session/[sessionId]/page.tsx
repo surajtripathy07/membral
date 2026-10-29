@@ -18,6 +18,7 @@ import { notFound } from "next/navigation";
 import { isUuid } from "@/lib/device-auth";
 import { ModelBreakdownTable } from "@/lib/agent-stats/model-breakdown-table";
 import { Disclosure } from "@/components/ui/disclosure";
+import { parseQuoteParam } from "@/lib/code-sessions/quote-highlight";
 import { parseTurnParam, type CodeSessionRow } from "@/lib/code-sessions/queries";
 import {
   type ChildSessionForMatch,
@@ -43,6 +44,8 @@ function SpineGroupView({
   isSubAgentSession,
   projectIdentity,
   glabHosts,
+  focusTurn,
+  quote,
 }: {
   group: SpineGroup;
   index: number;
@@ -50,6 +53,9 @@ function SpineGroupView({
   isSubAgentSession: boolean;
   projectIdentity: string | null;
   glabHosts: readonly string[];
+  /** The `?turn=` deep-link target; `quote` (the `?quote=` param) is marked in that turn only. */
+  focusTurn: number | null;
+  quote: string | null;
 }) {
   return (
     <div
@@ -59,7 +65,11 @@ function SpineGroupView({
       <span className="absolute left-0 top-1.5 h-2 w-2 rounded-full bg-accent" />
       {index > 0 && <span className="absolute left-[3px] top-[-8px] h-3 w-px bg-line" />}
       {group.anchor ? (
-        <PromptText text={group.anchor.text ?? ""} fromParentAgent={isSubAgentSession} />
+        <PromptText
+          text={group.anchor.text ?? ""}
+          fromParentAgent={isSubAgentSession}
+          quote={focusTurn === group.anchor.idx ? quote : null}
+        />
       ) : (
         <div className="rounded-card border border-line-soft bg-raised p-4">
           <p className="text-body-sm font-medium text-ink-2">No prompt recorded</p>
@@ -82,6 +92,7 @@ function SpineGroupView({
                 subAgent={subAgentsByTurnIdx.get(turn.idx)}
                 projectIdentity={projectIdentity}
                 glabHosts={glabHosts}
+                quote={focusTurn === turn.idx ? quote : null}
               />
             ))}
           </div>
@@ -101,7 +112,7 @@ export default async function CodeSessionPage({
   searchParams,
 }: {
   params: Promise<{ sessionId: string }>;
-  searchParams: Promise<{ all?: string; turn?: string }>;
+  searchParams: Promise<{ all?: string; turn?: string; quote?: string }>;
 }) {
   const { sessionId } = await params;
   // A non-uuid segment (e.g. /code/issues) is a 404, never a Postgres uuid-cast 500.
@@ -110,6 +121,8 @@ export default async function CodeSessionPage({
   const loadAll = sp.all === "1";
   // v4 item 6: a deep link (`?turn=N#turn-N`) loads the activity window around that turn.
   const aroundTurn = loadAll ? null : parseTurnParam(sp.turn);
+  // Verify affordance: a memory record's `?quote=` is marked in the `?turn=` turn (only meaningful with a turn).
+  const citedQuote = aroundTurn !== null ? parseQuoteParam(sp.quote) : null;
 
   const {
     session,
@@ -261,6 +274,8 @@ export default async function CodeSessionPage({
                 isSubAgentSession={isSubAgentSession}
                 projectIdentity={session.project_repo_identity}
                 glabHosts={glabHosts}
+                focusTurn={aroundTurn}
+                quote={citedQuote}
               />
             ))
           )}

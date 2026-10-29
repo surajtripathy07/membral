@@ -39,7 +39,7 @@ async function run(
 }
 
 describe("membral mcp offline (no profile, no key)", () => {
-  it("answers initialize, drops the notification, and lists the 9 built-in tools", async () => {
+  it("answers initialize, drops the notification, and lists the 10 built-in tools", async () => {
     const { replies } = await run([
       INIT,
       { jsonrpc: "2.0", method: "notifications/initialized" },
@@ -50,7 +50,7 @@ describe("membral mcp offline (no profile, no key)", () => {
     expect(replies[0].result.protocolVersion).toBe("2025-03-26");
     expect(replies[0].result.capabilities).toEqual({ tools: {} });
     expect(replies[0].result.serverInfo.name).toBe("membral-cloud");
-    expect(replies[1].result.tools).toHaveLength(9);
+    expect(replies[1].result.tools).toHaveLength(10);
     expect(replies[1].result.tools.map((t: { name: string }) => t.name)).toEqual(MCP_TOOL_MANIFEST.map((t) => t.name));
   });
 
@@ -150,7 +150,7 @@ describe("membral mcp proxy", () => {
       { apiUrl: "http://stack.test", apiKey: "k", fetchImpl: f as unknown as typeof fetch },
     );
     const byId = Object.fromEntries(replies.map((r) => [r.id, r]));
-    expect(byId[1].result.tools).toHaveLength(9);
+    expect(byId[1].result.tools).toHaveLength(10);
     expect(byId[2].result.isError).toBe(true);
     expect(logs.length).toBeGreaterThan(0);
   });
@@ -168,7 +168,7 @@ describe("membral mcp proxy", () => {
     expect(byId[1].result.isError).toBe(true);
     expect(byId[1].result.content[0].text).toContain("rejected the API key");
     expect(byId[1].result.content[0].text).not.toContain("no Membral stack");
-    expect(byId[2].result.tools).toHaveLength(9);
+    expect(byId[2].result.tools).toHaveLength(10);
     expect(logs.some((l) => l.includes("401"))).toBe(true);
     expect(logs.join("\n")).not.toContain("lls_secret");
   });
@@ -217,7 +217,7 @@ describe("membral mcp proxy", () => {
       fetchImpl: f as unknown as typeof fetch,
       quickTimeoutMs: 20,
     });
-    expect(replies[0].result.tools).toHaveLength(9);
+    expect(replies[0].result.tools).toHaveLength(10);
   });
 });
 

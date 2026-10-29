@@ -875,7 +875,7 @@ describe("per-session spend cap (review M2) and monthly budget", () => {
       p_include_passes: MEMORY_SPEND_PASSES,
     });
     // D-057: the session-issue association runs inside extraction and answers to the same budgets.
-    expect(MEMORY_SPEND_PASSES).toEqual(["memory_backfill", "session_assoc", "memory_embedding"]);
+    expect(MEMORY_SPEND_PASSES).toEqual(["memory_backfill", "memory_handoff", "session_assoc", "memory_embedding"]);
   });
 
   it("month boundary: September's spend no longer counts on 1 October", async () => {
@@ -1157,6 +1157,26 @@ describe("reconcileMemoryExtractionQueue (P10 round 3 R3-M1 / N-m4)", () => {
     // Never extracted (no checkpoint) with turns -> grew; empty session -> not.
     expect(sessionGrewSinceExtraction(3, null, undefined)).toBe(true);
     expect(sessionGrewSinceExtraction(0, null, undefined)).toBe(false);
+  });
+
+  it("skips a fresh open_upload row (under 6 h) and still queues a stale one (crash safety net)", async () => {
+    const rows: Record<string, Row[]> = {
+      code_sessions: [
+        sessionRow("s-open-fresh", "u1", {
+          open_upload: true,
+          ended_at: "2026-09-25T00:00:00.000Z",
+          started_at: "2026-09-24T23:00:00.000Z",
+        }),
+        sessionRow("s-open-stale", "u1", { open_upload: true }), // ended 17.5 h before NOW_R
+        sessionRow("s-closed", "u1", { open_upload: false }),
+      ],
+      memory_extraction_queue: [],
+    };
+    fakeSupabase = makeFakeSupabase(rows, { rpc: queueRpcs(rows) });
+    const summary = await reconcileMemoryExtractionQueue(fakeSupabase, { env: {}, now: NOW_R });
+    expect(summary.ensured).toBe(2);
+    const queued = rows.memory_extraction_queue.map((r) => r.session_id).sort();
+    expect(queued).toEqual(["s-closed", "s-open-stale"]);
   });
 
   it("ensures missing rows, requeues grown done rows, leaves the rest, through the enqueue RPC", async () => {

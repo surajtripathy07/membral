@@ -1239,7 +1239,9 @@ export async function getKnownSessionDigests(
 ): Promise<PageResult<unknown>> {
   return await supabase
     .from("code_sessions")
-    .select("source, source_session_id, turn_count, ended_at, content_hash, actions_version:props->actions_version")
+    .select(
+      "source, source_session_id, turn_count, ended_at, content_hash, actions_version:props->actions_version, open_upload:props->open_upload",
+    )
     .eq("user_id", userId)
     .in("source_session_id", sourceSessionIds);
 }

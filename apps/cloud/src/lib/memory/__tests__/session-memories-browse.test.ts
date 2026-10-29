@@ -90,6 +90,15 @@ describe("param helpers", () => {
     expect(receiptHref({ code_session_id: "abc", turn_idx: 12 })).toBe("/code/session/abc?turn=12#turn-12");
   });
 
+  it("receiptHref adds the quote (squashed, encoded, capped) so the session page can mark it", () => {
+    expect(receiptHref({ code_session_id: "abc", turn_idx: 3, quote: "keep it\n  inline & simple" })).toBe(
+      "/code/session/abc?turn=3&quote=keep%20it%20inline%20%26%20simple#turn-3",
+    );
+    expect(receiptHref({ code_session_id: "abc", turn_idx: 3, quote: null })).toBe("/code/session/abc?turn=3#turn-3");
+    const long = receiptHref({ code_session_id: "abc", turn_idx: 3, quote: "x".repeat(1000) });
+    expect(long.length).toBeLessThan(400);
+  });
+
   it("v4 item 6: receiptHref always asks for the window around the turn, past the default cap too", () => {
     expect(receiptHref({ code_session_id: "abc", turn_idx: 499 })).toBe("/code/session/abc?turn=499#turn-499");
     expect(receiptHref({ code_session_id: "abc", turn_idx: 500 })).toBe("/code/session/abc?turn=500#turn-500");
@@ -148,6 +157,18 @@ describe("listSessionMemories", () => {
     expect((await listSessionMemories(supabase, USER, projects, { kind: "blocker" })).records.map((r) => r.id)).toEqual(
       ["c"],
     );
+  });
+
+  it("2.3c: with a handoff flag on, the default (All) view never lists a handoff note", async () => {
+    vi.stubEnv("MEMBRAL_HANDOFF_SYNTHESIS", "1");
+    const supabase = db([memory("a"), memory("h", { kind: "handoff" })]);
+    expect((await listSessionMemories(supabase, USER, projects)).records.map((r) => r.id)).toEqual(["a"]);
+    vi.unstubAllEnvs();
+  });
+
+  it("both handoff flags off: the default view sends no kind filter, as main did (a stray note is not filtered here)", async () => {
+    const supabase = db([memory("a"), memory("h", { kind: "handoff" })]);
+    expect((await listSessionMemories(supabase, USER, projects)).records.map((r) => r.id).sort()).toEqual(["a", "h"]);
   });
 
   it("pages with limit/offset and reports hasMore from one extra row", async () => {

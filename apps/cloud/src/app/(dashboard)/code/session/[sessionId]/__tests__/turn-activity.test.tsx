@@ -82,3 +82,28 @@ describe("ActivityLine — observed actions on a tool_use turn", () => {
     expect(html).not.toContain("turn-digest");
   });
 });
+
+describe("ActivityLine — cited quote (verify affordance)", () => {
+  it("marks the quote in an assistant turn and escapes the rest of the text", () => {
+    const text = "Decided: **retry the import once** then stop <script>x</script>";
+    const html = renderToStaticMarkup(<ActivityLine turn={turn({ text })} quote="retry the import once" />);
+    expect(html).toContain('<mark class="rounded-xs bg-accent-soft');
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).not.toContain("<script>");
+  });
+
+  it("marks the quote in a thinking turn", () => {
+    const html = renderToStaticMarkup(
+      <ActivityLine turn={turn({ kind: "thinking", text: "maybe retry the import once" })} quote="retry the import once" />,
+    );
+    expect(html).toContain("<mark");
+  });
+
+  it("keeps markdown rendering when no quote is given or it is not in the turn", () => {
+    const text = "**Done.** Ran it.";
+    expect(renderToStaticMarkup(<ActivityLine turn={turn({ text })} quote="not present anywhere" />)).toContain(
+      "<strong>Done.</strong>",
+    );
+    expect(renderToStaticMarkup(<ActivityLine turn={turn({ text })} />)).toContain("<strong>Done.</strong>");
+  });
+});

@@ -4,13 +4,11 @@
 // `transcript_path`, and delegates the actual upload to `importSession`
 // (import-session.ts) — no parsing/upload logic is duplicated here.
 //
-// Why SessionEnd, not Stop (ADR open question 5): Stop fires after every
-// turn-group — many times per session — with no benefit to us (we only
-// need one upload per finished session, and SessionEnd's lack of decision
-// control is fine since we never want to block the session from ending
-// anyway). SessionEnd fires once, when the session actually ends, which is
-// exactly the "session finished, upload it" semantics we want, and it's
-// far cheaper (one hook process spawn per session instead of per turn).
+// Why SessionEnd is the closing upload: it fires once, when the session actually
+// ends, and the one upload of a finished transcript is what queues paid memory
+// extraction. Stop (`--stop`, see the Stop hook section at the bottom) fires after
+// every turn group while the session is still open; it also uploads, but flagged
+// `open`, so the server stores the turns without queueing extraction.
 //
 // Verified against the Claude Code hooks reference
 // (https://code.claude.com/docs/en/hooks, fetched 2026-07-24): SessionEnd's
@@ -125,7 +123,7 @@
 // the sweep. A lock whose pid is dead is stale at once; a timed-out child
 // removes its own lock before exiting.
 import { spawn } from "node:child_process";
-import { appendFile, mkdir, open, readdir, readFile, stat, unlink } from "node:fs/promises";
+import { appendFile, mkdir, open, readdir, readFile, stat, unlink, utimes, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { agyInstallRoot } from "./detect.js";
@@ -155,6 +153,8 @@ export const HOOK_TIMEOUT_MS = 30_000;
 export const CHILD_UPLOAD_BUDGET_MS = 20_000;
 /** In-flight uploads are cut this long before the hook's own cap, so the hook still logs its line. */
 export const UPLOAD_ABORT_HEADROOM_MS = 2_000;
+/** A closing (SessionEnd) child waits for a Stop child's lock this long: the Stop cap plus a margin, so it is not abandoned. */
+export const DEFERRED_LOCK_WAIT_MS = HOOK_TIMEOUT_MS + 5_000;
 
 /**
  * The upload phase's two deadlines (design note §4), both anchored at `t0`,
@@ -379,6 +379,8 @@ export interface SessionEndHookOptions {
   deferredStableMs?: number;
   /** Injected in tests; Claude Code child: how long to wait for another child's lock (default CHILD_UPLOAD_BUDGET_MS). */
   deferredLockWaitMs?: number;
+  /** Injected in tests; how long a missing open ack keeps Stop uploads off (default STOP_DISABLE_MS). */
+  stopDisableMs?: number;
   /**
    * `--questionnaire <session_id>` (child only, with `--deferred-path`): this
    * process IS the detached questionnaire child (questionnaire.ts).
@@ -386,6 +388,19 @@ export interface SessionEndHookOptions {
   questionnaireSession?: string;
   /** `--cwd` (questionnaire child): the session's cwd, where `claude --resume` finds it. */
   cwd?: string;
+  /**
+   * `--stop`: this process is Claude Code's Stop hook (fires after every turn group, session still
+   * open). It hands a detached `--deferred-path` child the transcript so far and returns; see stopHook.
+   */
+  stop?: boolean;
+  /** Injected in tests; default STOP_THROTTLE_MS. */
+  stopThrottleMs?: number;
+  /**
+   * `--open` (child only, with `--deferred-path`): the Stop hook's child. The session is still running, so the
+   * upload is flagged `open` (the server stores turns but queues no paid extraction), the deferred lock is taken
+   * without waiting, and a held lock makes it exit silently (and clear the throttle stamp).
+   */
+  open?: boolean;
   /** Injected in tests; defaults to ~/.membral/config.json. */
   cliConfigPath?: string;
   /** Injected in tests; defaults to process.env (the MEMBRAL_QUESTIONNAIRE recursion guard). */
@@ -443,6 +458,7 @@ export async function sessionEndHook(opts: SessionEndHookOptions = {}): Promise<
   // Recursion guard: the questionnaire's forked claude ends with its own
   // SessionEnd; it must neither upload nor ask again.
   if (isQuestionnaireRun(opts.env)) return;
+  if (opts.stop && opts.deferredPath === undefined) return stopHook(opts);
   if (opts.source === "copilot-cli" && opts.deferredPath !== undefined) return deferredCopilotHook(opts);
   const body = opts.deferredPath !== undefined ? runClaudeChild : runHookInner;
   const logPath = opts.hookLogPath ?? DEFAULT_HOOK_LOG_PATH;
@@ -704,6 +720,12 @@ async function runClaudeChild(
   // A resumed session can end while the previous child still uploads the same
   // file: wait for that lock to clear, then import the (now longer) transcript.
   let lock = lockPath ? await acquireDeferredLock(lockPath) : "unlocked";
+  if (opts.open && lock === "held") {
+    // Stop child: never queue behind another upload; stay silent. The parent refreshed the throttle stamp before
+    // spawning us, but nothing was uploaded, so clear it and let the next Stop retry instead of waiting a window.
+    await clearStopStamp(logPath, sessionId);
+    return;
+  }
   const waitUntil = Date.now() + lockWaitOf(opts);
   const pollMs = opts.deferredPollMs ?? DEFERRED_POLL_MS;
   while (lock === "held" && lockPath && Date.now() < waitUntil) {
@@ -726,7 +748,8 @@ async function runClaudeChild(
 }
 
 function lockWaitOf(opts: SessionEndHookOptions): number {
-  return opts.deferredLockWaitMs ?? CHILD_UPLOAD_BUDGET_MS;
+  if (opts.open) return 0;
+  return opts.deferredLockWaitMs ?? DEFERRED_LOCK_WAIT_MS;
 }
 
 /** Removes the lock this process holds, once (the timeout branch and the body's finally can both reach here). */
@@ -747,16 +770,26 @@ async function importAndLog(
   t0: number,
 ): Promise<void> {
   const copilot = opts.source === "copilot-cli";
+  let pendingDisable: Promise<void> | undefined;
   const result = await importSessionSilently(
     {
       transcript: transcriptPath,
       ...(copilot ? { source: "copilot-cli" } : opts.source === "agy" ? { source: "agy" } : {}),
       apiUrl: opts.apiUrl,
       apiKey: opts.apiKey,
+      ...(opts.open
+        ? {
+            open: true,
+            onOpenUnsupported: () => {
+              pendingDisable = disableStop(logPath, transcript);
+            },
+          }
+        : {}),
       ...uploadDeadlines(opts, t0),
     },
     known,
   );
+  await pendingDisable;
 
   // `outcome` is the PARENT's: children are reported separately and never
   // turn an uploaded parent into an error (deferred ones reach the sweep).
@@ -1437,4 +1470,154 @@ function debug(message: string): void {
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+// --- Stop hook (Lever 2, goal 2026-10-25 box 2.1) -----------------------------------------------
+//
+// Claude Code fires `Stop` after every turn group while the session is still open. The sweep and
+// SessionEnd upload only finished transcripts, so a parallel session cannot find what an open one
+// has learned. This hook uploads "the transcript so far" by handing a detached
+// `--deferred-path <transcript> --open` child (the SessionEnd child's lock, 30 s cap, hook.log line)
+// the current file.
+//
+// No paid work for an unfinished session: `--open` makes the upload carry `open: true`. The server
+// stores the turns and the raw units (so the session is searchable) but queues no memory extraction
+// and runs no synthesis (apps/cloud route.ts). It stamps code_sessions.props.open_upload; the
+// closing upload (SessionEnd or sweep) of identical content therefore re-imports once instead of
+// short-circuiting on the content hash (import.ts), which queues extraction as usual. A changed
+// hash replaces the turns wholesale, so a later longer upload never duplicates them.
+//
+// Safety: stdout stays empty (Stop output can block the stop); `stop_hook_active` payloads exit at
+// once (loop guard); always exits 0; the parent only reads stdin, checks a throttle file and spawns,
+// under STOP_HOOK_TIMEOUT_MS. The transcript's file name must equal session_id.
+//
+// Throttle: at most one hand-off per session per STOP_THROTTLE_MS, via the mtime of
+// `<hook.log dir>/hook-state/stop/<session>` (a leading throttle: the first Stop uploads at once).
+// ACCEPTED TRADE-OFF: there is no trailing pass, so a Stop swallowed by the throttle is not retried; an
+// idle open session can be up to ~60 s behind until the next Stop, the SessionEnd upload or the sweep.
+// The parent stamps before spawning (it cannot know whether the child gets the lock), so a child that
+// finds the lock held deletes the stamp again, letting the next Stop retry.
+//
+// ACCEPTED TRADE-OFF: against an old server that ignores `open`, N sessions already open each send one
+// probe before the disable marker exists (bounded: one per session, then once per 24 h after the marker
+// ages). A marker write failure is covered by the parent's stamp, which already throttles that session.
+//
+// Locks: the Stop child takes `deferred/<session>.lock` without waiting and exits silently if it is
+// held, so it never queues behind (or ahead of) the SessionEnd child, which still waits for the lock
+// as before. Stop uploads hold it at most the 30 s cap. State files older than 7 days are pruned
+// opportunistically.
+export const STOP_HOOK_TIMEOUT_MS = 5_000;
+export const STOP_THROTTLE_MS = 60_000;
+const STOP_STATE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+/** After a server fails to ack `open`, Stop uploads are off this long; then one probe upload is allowed. */
+export const STOP_DISABLE_MS = 24 * 60 * 60 * 1000;
+
+function stopDisabledPath(logPath: string): string {
+  return join(dirname(logPath), "hook-state", "stop-disabled");
+}
+
+/** Child side: the server ignored `open` (it predates it), so Stop uploads would run paid extraction. */
+async function disableStop(logPath: string, transcript: string): Promise<void> {
+  try {
+    await mkdir(dirname(stopDisabledPath(logPath)), { recursive: true });
+    await writeFile(stopDisabledPath(logPath), `${new Date().toISOString()}\n`);
+  } catch {
+    // unwritable state dir: nothing more to do
+  }
+  await appendHookLog(logPath, {
+    outcome: "skipped",
+    reason: "server does not acknowledge open uploads; Stop uploads disabled for 24 h",
+    transcript,
+  });
+}
+
+function stopStateDir(logPath: string): string {
+  return join(dirname(logPath), "hook-state", "stop");
+}
+
+async function clearStopStamp(logPath: string, sessionId: string): Promise<void> {
+  if (!SAFE_SESSION_ID_RE.test(sessionId) || sessionId.includes("..")) return;
+  await unlink(join(stopStateDir(logPath), sessionId)).catch(() => {});
+}
+
+async function pruneStopState(dir: string): Promise<void> {
+  try {
+    for (const name of await readdir(dir)) {
+      const st = await stat(join(dir, name)).catch(() => undefined);
+      if (st && Date.now() - st.mtimeMs > STOP_STATE_MAX_AGE_MS) await unlink(join(dir, name)).catch(() => {});
+    }
+  } catch {
+    // no state dir yet
+  }
+}
+
+async function stopHook(opts: SessionEndHookOptions): Promise<void> {
+  const logPath = opts.hookLogPath ?? DEFAULT_HOOK_LOG_PATH;
+  const logState: LogState = { writePromise: null };
+  try {
+    const timedOut = await withTimeout(runStop(opts, logPath, logState), opts.timeoutMs ?? STOP_HOOK_TIMEOUT_MS);
+    if (timedOut) await appendHookLogOnce(logState, logPath, { outcome: "error", reason: "stop hook timed out" });
+  } catch (err) {
+    await appendHookLogOnce(logState, logPath, { outcome: "error", reason: `unexpected error: ${errMessage(err)}` });
+  }
+}
+
+async function runStop(opts: SessionEndHookOptions, logPath: string, logState: LogState): Promise<void> {
+  try {
+    const stdinResult = await readStdin(opts.stdin ?? process.stdin);
+    if (stdinResult.errored || !stdinResult.data.trim()) return;
+    let input: SessionEndHookInput & { stop_hook_active?: unknown };
+    try {
+      input = JSON.parse(stdinResult.data);
+    } catch {
+      return;
+    }
+    if (!input || typeof input !== "object" || Array.isArray(input)) return;
+    if (input.stop_hook_active === true) return; // Claude is already continuing because of a Stop hook
+    const transcriptPath = input.transcript_path;
+    const sid = input.session_id;
+    if (typeof transcriptPath !== "string" || !isAbsolute(transcriptPath)) return;
+    if (typeof sid !== "string" || !SAFE_SESSION_ID_RE.test(sid) || sid.includes("..")) return;
+    if (basename(transcriptPath, ".jsonl") !== sid) return; // the child derives the session from the file name
+
+    const disabledAt = await stat(stopDisabledPath(logPath)).then(
+      (st) => st.mtimeMs,
+      () => undefined,
+    );
+    if (disabledAt !== undefined && Date.now() - disabledAt < (opts.stopDisableMs ?? STOP_DISABLE_MS)) return;
+
+    const stateDir = stopStateDir(logPath);
+    const stamp = join(stateDir, sid);
+    const throttleMs = opts.stopThrottleMs ?? STOP_THROTTLE_MS;
+    const last = await stat(stamp).then(
+      (st) => st.mtimeMs,
+      () => undefined,
+    );
+    if (last !== undefined && Date.now() - last < throttleMs) return;
+    try {
+      await mkdir(stateDir, { recursive: true });
+      if (last === undefined) await writeFile(stamp, "");
+      else await utimes(stamp, new Date(), new Date());
+      await pruneStopState(stateDir);
+    } catch (err) {
+      // Fail closed: without a stamp the throttle (and so the cost bound) cannot hold.
+      await appendHookLogOnce(logState, logPath, {
+        outcome: "skipped",
+        reason: `stop throttle stamp not writable: ${errMessage(err)}`,
+        transcript: logName(opts, transcriptPath),
+      });
+      return;
+    }
+
+    if (handOff(["session-end-hook", "--deferred-path", transcriptPath, "--open"], opts, logPath)) {
+      await appendHookLogOnce(logState, logPath, {
+        outcome: "deferred",
+        reason: "stop",
+        transcript: logName(opts, transcriptPath),
+      });
+    }
+  } catch (err) {
+    debug(`stop hook error: ${errMessage(err)}`);
+    await appendHookLogOnce(logState, logPath, { outcome: "error", reason: `unexpected error: ${errMessage(err)}` });
+  }
 }

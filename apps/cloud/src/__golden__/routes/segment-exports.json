@@ -156,6 +156,17 @@
     ]
   },
   {
+    "file": "internal/local/reembed/route.ts",
+    "method": "import",
+    "segment": {
+      "dynamic": "force-dynamic",
+      "maxDuration": 300
+    },
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
     "file": "keys/devices/[id]/route.ts",
     "method": "import",
     "segment": {},
@@ -230,6 +241,16 @@
     "file": "memory/extraction/kick/route.ts",
     "method": "import",
     "segment": {},
+    "handlers": [
+      "POST"
+    ]
+  },
+  {
+    "file": "memory/import-claude-mem/route.ts",
+    "method": "import",
+    "segment": {
+      "maxDuration": 60
+    },
     "handlers": [
       "POST"
     ]

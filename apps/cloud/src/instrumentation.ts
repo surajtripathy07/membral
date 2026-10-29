@@ -11,4 +11,17 @@
 export async function register() {
   const { validateEnvAtBootOnNode } = await import("@/lib/env");
   validateEnvAtBootOnNode();
+  // Local stack only (rung one): the in-process extraction loop replaces the kicker container. A no-op elsewhere.
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { isLocalMode } = await import("@/lib/local/mode");
+    if (!isLocalMode()) return;
+    // Embedded store (rung two): open it BEFORE anything queries. Next waits for register() to finish.
+    const { storeKind } = await import("@/lib/env");
+    if (storeKind() === "pglite") {
+      const { bootEmbeddedStore } = await import("@/lib/local/store/boot");
+      await bootEmbeddedStore();
+    }
+    const { startExtractionLoop } = await import("@/lib/memory/extraction-loop");
+    startExtractionLoop();
+  }
 }

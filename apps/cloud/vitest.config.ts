@@ -1,10 +1,12 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import path from "path";
 
 export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    // B3: the store-parity tests run under vitest.db.config.ts (`npm run test:db`), on both stores.
+    exclude: [...configDefaults.exclude, "**/__db__/**"],
     // Step 0.7 (architecture refactor programme): coverage ratchet. Applies
     // only under `--coverage` (root `npm run coverage`); plain `vitest run` is
     // unchanged. Thresholds are the values measured 2026-09-27 on

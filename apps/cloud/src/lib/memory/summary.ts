@@ -25,7 +25,9 @@ import type { RawUsage } from "@membral/core";
 import { computeCost } from "@/lib/code-sessions/price-table";
 import type { Db } from "@/lib/db/types";
 import { isFreshBlocker } from "@/lib/domain/blockers";
+import { handoffFeatureEnabled } from "@/lib/env";
 import { rankRecords } from "./rank";
+import { MEMORY_KINDS } from "./schema";
 import { recordRecallEvent, resolveProjectId } from "./search";
 import { buildServeContext, type MemoryRow, type ServedRecord, toServedRecord, verifyRecords } from "./verify";
 
@@ -133,15 +135,18 @@ export async function sessionSummary(
   const session = await resolveSession(supabase, userId, codeScopeId, args);
   if (!session) return null;
 
+  let memoriesQuery = supabase
+    .from("session_memories")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("code_session_id", session.id);
+  // Not `handoff` (migration 136): the synthesized note is a summary of these records, never one of them. With both
+  // handoff flags off no note is written, so the query keeps its pre-handoff shape (no kind filter).
+  if (handoffFeatureEnabled()) memoriesQuery = memoriesQuery.in("kind", MEMORY_KINDS);
   const [{ data: repoRows, error: repoErr }, { data: memoryRows, error: memErr }, { data: turnRows, error: turnErr }] =
     await Promise.all([
       supabase.from("code_projects").select("id, display_name, repo_identity").eq("id", session.code_project_id),
-      supabase
-        .from("session_memories")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("code_session_id", session.id)
-        .is("retired_at", null),
+      memoriesQuery.is("retired_at", null),
       supabase
         .from("code_session_turns")
         .select("idx, file_path")

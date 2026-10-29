@@ -310,9 +310,22 @@ describe("TOP_LEVEL_HELP copy rules", () => {
     }
   });
 
-  it("PUBLIC_COMMANDS is exactly the 9 public names (2026-09-12 refocus goal W4/D5 — 'help' is now one of them; 'use' added for profiles; 'local' — W7)", () => {
+  it("PUBLIC_COMMANDS is exactly the 12 public names (2026-09-12 refocus goal W4/D5 — 'help' is now one of them; 'use' added for profiles; 'local' — W7; 'up', 'down', 'logs' — embedded-store server)", () => {
     expect(new Set(PUBLIC_COMMANDS)).toEqual(
-      new Set(["setup", "login", "logout", "use", "status", "import", "sessions", "local", "help"]),
+      new Set([
+        "setup",
+        "login",
+        "logout",
+        "use",
+        "status",
+        "import",
+        "sessions",
+        "local",
+        "up",
+        "down",
+        "logs",
+        "help",
+      ]),
     );
   });
 
@@ -320,6 +333,10 @@ describe("TOP_LEVEL_HELP copy rules", () => {
     const text = HELP.sweep;
     expect(text).toContain("MEMBRAL_SWEEP_FETCH=1");
     expect(text).toContain("git fetch --prune origin");
+  });
+
+  it("session-end-hook help documents --stop", () => {
+    expect(HELP["session-end-hook"]).toContain("--stop");
   });
 
   it("HIDDEN_COMMANDS is exactly the 10 hidden names ('dogfood' — recall-precision W3b) ('sweep' added for the launchd backstop; 'mcp' — stdio MCP server; 'mcp-headers' — W9, Codex's http_headers_helper; 'prompt-hook' — prompt-time recall) (import-sessions is REMOVED, not hidden — D7(c); start/continue/agent/context/render-membral-md/draft-handoff removed with the bridge — 2026-09-12 refocus goal's kill list; 'preamble' added — P4, memory-on-prod-new-user goal)", () => {
@@ -356,7 +373,7 @@ describe("command registry — the only non-vacuous way to assert 'hidden but st
     // P4, memory-on-prod-new-user goal; 'use' + 'sweep' added for profiles;
     // 'mcp-headers' added — W9, Codex http_headers_helper; 'local' added — W7;
     // 'prompt-hook' added — prompt-time recall; 'dogfood' — recall-precision W3b).
-    expect(names).toHaveLength(19);
+    expect(names).toHaveLength(22); // + up/down/logs (embedded-store server)
     expect(new Set(names).size).toBe(names.length); // no duplicate registry entries
   });
 

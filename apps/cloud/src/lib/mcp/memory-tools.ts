@@ -19,6 +19,7 @@ import type { FreshnessPayload } from "@/lib/freshness";
 import { formatFreshnessPrefix } from "@/lib/freshness";
 import { isLocalRuntime } from "@/lib/llm/embedding-family";
 import { MAX_RESOLVE_QUOTE_CHARS, MIN_RESOLVE_QUOTE_CHARS, resolveBlockerByAgent } from "@/lib/memory/agent-resolve";
+import { memoryGet } from "@/lib/memory/memory-get";
 import { packLines } from "@/lib/memory/raw-units/search/pack";
 import { memoryRecallWithStats } from "@/lib/memory/recall";
 import { logSearchRecall, memorySearch } from "@/lib/memory/search";
@@ -46,7 +47,10 @@ export const RECORD_LINKS_CLAUSE =
 /** I33 (docs/design/i33-port.md D7): the tool's default budget, measured on the lab surface (maintainer gate G4). */
 export const SEARCH_DEFAULT_MAX_TOKENS = 3000;
 
-const kindDescription = "One or more of: outcome, decision, learning, blocker, preference";
+const kindDescription =
+  "One or more of: outcome, decision, learning, blocker, preference, handoff (a session's end-of-session summary note)";
+/** memory_recall reads the extracted kinds only: a `handoff` kind is dropped there, so it is not advertised. */
+const recallKindDescription = "One or more of: outcome, decision, learning, blocker, preference";
 
 export function registerMemoryTools(
   server: McpServer,
@@ -69,6 +73,7 @@ export function registerMemoryTools(
         "Else (hosted; raw_reason says why) ranked `records` cut at max_tokens (dropped_for_budget). " +
         "A record's session_id is a code session: read the turns around it with get_code_session id=<session_id> turn=<turn_idx>, or session_summary session_id=<session_id>. " +
         RECORD_LINKS_CLAUSE +
+        "Expand with memory_get(ids). " +
         RECALL_RESULTS_CLAUSE,
       inputSchema: {
         query: z.string().describe("What to search for"),
@@ -228,7 +233,7 @@ export function registerMemoryTools(
         kind: z
           .union([z.string(), z.array(z.string())])
           .optional()
-          .describe(kindDescription),
+          .describe(recallKindDescription),
         path: z.string().optional().describe("Only records whose paths[] includes this file"),
         recall_token: z
           .string()
@@ -266,6 +271,36 @@ export function registerMemoryTools(
         // #436: blockers older than BLOCKER_FRESH_DAYS are hidden and counted.
         return { records: compact, stale_blockers_hidden: staleBlockersHidden };
       }),
+  );
+
+  server.registerTool(
+    "memory_get",
+    {
+      description:
+        "Expand memory records by id (the id field of a memory_search/memory_recall record): each comes back with its record fields, its verbatim quote (the receipt from the transcript) and a source window, the session's turns around the record's turn_idx. " +
+        "Use it to check a record against what was actually said before you rely on it; verified:false means the quote was not found in the session and its window is centred on an approximate turn. " +
+        "Unknown, out-of-scope or retired ids are listed in not_found, not raised. " +
+        'Omit `include` for both parts, or pass ["quote"] or ["window"]; `window` is how many turns either side (default 4, clamped to 1-40). ' +
+        RECALL_RESULTS_CLAUSE,
+      inputSchema: {
+        ids: z
+          .array(z.string().max(64))
+          .min(1)
+          .max(10)
+          .describe("One to ten record ids (uuids) from memory_search or memory_recall"),
+        include: z
+          .array(z.enum(["quote", "window"]))
+          .optional()
+          .describe('Parts to return besides the record: "quote", "window" (default both)'),
+        window: z
+          .number()
+          .int()
+          .optional()
+          .describe("With the window part: turns either side of the record's turn (default 4, clamped to 1-40)."),
+        // biome-ignore lint/suspicious/noExplicitAny: see file header
+      } as any,
+    },
+    async (args: unknown) => toolResult(() => memoryGet(getServiceClient(), userId, codeScopeId, args)),
   );
 
   server.registerTool(

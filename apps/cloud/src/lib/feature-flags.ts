@@ -447,7 +447,7 @@ const EMBEDDING_PASSES = ["chunk_embedding", "conversation_embedding", "query_em
 // group, so memory spend never eats a KG/synthesis/portrait (`llm`) budget
 // and `llm` spend never starves memory. `llm` excludes both groups.
 /** D-057: `session_assoc` runs inside memory extraction and answers to the same budgets. */
-export const MEMORY_PASSES = ["memory_backfill", "session_assoc"];
+export const MEMORY_PASSES = ["memory_backfill", "memory_handoff", "session_assoc"];
 
 function passGroupParams(feature: Feature): { include?: string[]; exclude?: string[] } {
   if (feature === "embeddings") return { include: EMBEDDING_PASSES };

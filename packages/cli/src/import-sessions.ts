@@ -104,6 +104,14 @@ export interface ImportSessionsOptions extends UploadFlags {
    * incremental syncs never need it. */
   force?: boolean;
   /**
+   * Skip a transcript written within this many ms (the unattended sweep sets it). A session still being written is
+   * an OPEN session: its Stop hook uploads it with `open: true` (no extraction). An unattended sweep upload carries no
+   * `open`, so on a live session it would clear the server's open stamp and queue paid extraction mid-session. A
+   * skipped session is picked up by a later sweep once it has gone quiet (the sweep's overlap covers the window).
+   * Ignored with `force`. File-backed sources only.
+   */
+  skipLiveMs?: number;
+  /**
    * Resume/skip-unchanged escape hatch (the crash-at-900/1166 report): skips
    * the POST /api/code-sessions/known check and re-uploads every session in
    * scope. Off by default — ordinary runs ask the server which sessions it
@@ -239,9 +247,12 @@ async function parseSessionWithSubAgents(
   parser: CodeSessionParser,
   ref: SessionRef,
   raw: string,
+  warn?: (message: string) => void,
 ): Promise<{ session: RawCodeSession; extras?: ParseExtras }> {
   if (!ref.subAgentsDir) return { session: parser.parse(ref, raw) };
-  const subAgents = await readSubAgentFiles(ref.subAgentsDir);
+  const subAgents = await readSubAgentFiles(ref.subAgentsDir, (n) =>
+    warn?.(`${n} sub-agent transcript(s) with no meta.json were skipped under ${ref.subAgentsDir}`),
+  );
   const extras = subAgents.length > 0 ? { subAgents } : undefined;
   return { session: parser.parse(ref, raw, extras), extras };
 }
@@ -256,7 +267,8 @@ async function mtimeMs(path: string): Promise<number | undefined> {
 
 /**
  * --since prefilter: true when a Claude Code transcript AND its
- * `<id>/subagents/` dir (and every file in it) were last written before
+ * `<id>/subagents/` dir (every file in it, and every `workflows/wf_*` dir
+ * and file under it) were last written before
  * `sinceMs`. A session's endedAt is never later than its last write, so
  * such a session would be dropped by the endedAt check anyway — skipping it
  * here saves reading and parsing it. Any stat failure answers "not old".
@@ -268,15 +280,38 @@ async function untouchedSince(ref: SessionRef, sinceMs: number): Promise<boolean
   const dirMtime = await mtimeMs(subDir);
   if (dirMtime === undefined) return true; // no sub-agents dir
   if (dirMtime >= sinceMs) return false;
+  // Direct children, then the workflow runs under subagents/workflows/wf_* and the files inside each: a workflow's
+  // sub-agent transcript is uploaded with the parent, and writing it touches only its own directory.
+  return (await dirUntouched(subDir, sinceMs, true)) ?? false;
+}
+
+/** true when every entry under `dir` (and, at the top level, each workflows/wf_* directory) is older than sinceMs; undefined = a stat/read failed. */
+async function dirUntouched(dir: string, sinceMs: number, top: boolean): Promise<boolean | undefined> {
   let names: string[];
   try {
-    names = await readdir(subDir);
+    names = await readdir(dir);
   } catch {
-    return false;
+    return undefined;
   }
   for (const name of names) {
-    const m = await mtimeMs(join(subDir, name));
+    const path = join(dir, name);
+    const m = await mtimeMs(path);
     if (m === undefined || m >= sinceMs) return false;
+    if (top && name === "workflows") {
+      let wfs: string[];
+      try {
+        wfs = await readdir(path);
+      } catch {
+        return undefined;
+      }
+      for (const wf of wfs) {
+        if (!wf.startsWith("wf_")) continue;
+        const wm = await mtimeMs(join(path, wf));
+        if (wm === undefined || wm >= sinceMs) return false;
+        const inner = await dirUntouched(join(path, wf), sinceMs, false);
+        if (inner !== true) return false;
+      }
+    }
   }
   return true;
 }
@@ -520,13 +555,23 @@ export async function importSessions(opts: ImportSessionsOptions, client?: ApiCl
     }
 
     let untouched = 0;
+    let skippedLive = 0;
     let parsedSoFar = 0;
+    const liveCutoffMs =
+      opts.skipLiveMs !== undefined && opts.skipLiveMs > 0 && !opts.force ? Date.now() - opts.skipLiveMs : undefined;
     for (const ref of refs) {
       parsedSoFar++;
       progress?.update(formatParseLine(source, parsedSoFar, refs.length), (parsedSoFar / refs.length) * 100);
       if (sinceMs !== undefined && (await untouchedSince(ref, sinceMs))) {
         untouched++;
         continue;
+      }
+      if (liveCutoffMs !== undefined) {
+        const written = await mtimeMs(ref.path);
+        if (written !== undefined && written >= liveCutoffMs) {
+          skippedLive++;
+          continue;
+        }
       }
       let raw: string;
       try {
@@ -539,7 +584,7 @@ export async function importSessions(opts: ImportSessionsOptions, client?: ApiCl
       let session: RawCodeSession;
       let extras: ParseExtras | undefined;
       try {
-        ({ session, extras } = await parseSessionWithSubAgents(parser, ref, raw));
+        ({ session, extras } = await parseSessionWithSubAgents(parser, ref, raw, (m) => logWarn(`  ! ${m}`)));
       } catch (err) {
         logWarn(`  ! failed to parse ${ref.path}: ${errMessage(err)}`);
         continue;
@@ -565,6 +610,11 @@ export async function importSessions(opts: ImportSessionsOptions, client?: ApiCl
     }
     progress?.finish();
     if (untouched > 0) log(`Skipped ${untouched} session file(s) not modified since ${opts.since}.`);
+    if (skippedLive > 0) {
+      log(
+        `Left ${skippedLive} live session file(s) (written in the last ${Math.round((opts.skipLiveMs ?? 0) / 60_000)} min) for a later sweep.`,
+      );
+    }
   }
 
   let totalToUpload = [...byProject.values()].reduce((sum, list) => sum + list.length, 0);

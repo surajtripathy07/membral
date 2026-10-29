@@ -60,6 +60,8 @@ export interface SessionUploadOutcome {
   skipped: number;
   total: number;
   errors: { sourceSessionId: string; error: string }[];
+  /** The server acknowledged the `open` flag (`open_supported: true`); anything else, including legacy shapes, is false. */
+  openSupported: boolean;
 }
 
 /**
@@ -245,10 +247,12 @@ export async function uploadBatch(
   log: (message: string) => void = () => {},
   force = false,
   client?: ApiClient,
+  open = false,
 ): Promise<SessionUploadOutcome> {
   const api = client ?? createUploadClient(config);
   const wire = sessions.map(sessionForWire);
-  const requestBody = force ? { sessions: wire, force: true } : { sessions: wire };
+  // `open`: the session is still running (Stop hook); the server stores the turns but queues no paid extraction.
+  const requestBody = { sessions: wire, ...(force ? { force: true } : {}), ...(open ? { open: true } : {}) };
 
   const result = await api.call<Partial<SessionUploadOutcome>>("upload", {
     json: requestBody,
@@ -264,6 +268,7 @@ export async function uploadBatch(
       skipped: body.skipped ?? 0,
       total: body.total ?? sessions.length,
       errors: body.errors ?? [],
+      openSupported: (body as { open_supported?: unknown }).open_supported === true,
     };
   }
   switch (result.kind) {

@@ -23,6 +23,7 @@ describe("PassName", () => {
       | "g3_retry"
       | "claims_verify"
       | "memory_backfill"
+      | "memory_handoff"
       | "session_assoc"
       | "memory_embedding"
     >();

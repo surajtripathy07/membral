@@ -127,7 +127,7 @@ describe("code-session-upload.ts uploadBatch (:268)", () => {
     expect(JSON.parse(init.body as string)).toEqual({
       sessions: [expect.objectContaining({ contentHash: session.contentHash })],
     });
-    expect(result).toEqual({ imported: 1, skipped: 0, total: 1, errors: [] });
+    expect(result).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], openSupported: false });
   });
 
   it("401: throws UploadAuthError immediately, no retry", async () => {

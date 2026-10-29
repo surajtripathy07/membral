@@ -184,7 +184,12 @@ interface ReconcileSessionRow {
   source: string;
   source_session_id: string;
   parent_source_session_id: string | null;
+  /** props.open_upload: stamped by a Stop-hook (open) upload, cleared by the closing upload. */
+  open_upload?: unknown;
 }
+
+/** A session stamped open whose last activity is younger than this is presumed still running: reconcile leaves it. */
+export const OPEN_UPLOAD_FRESH_MS = 6 * 60 * 60 * 1000;
 
 export interface ReconcileSummary {
   users: number;
@@ -225,7 +230,7 @@ export async function reconcileMemoryExtractionQueue(
     supabase
       .from("code_sessions")
       .select(
-        "id, user_id, turn_count, ended_at, started_at, created_at, checkpoint:props->memory_checkpoint_turn_idx, uncovered:props->memory_extraction->tail_turns_uncovered, source, source_session_id, parent_source_session_id",
+        "id, user_id, turn_count, ended_at, started_at, created_at, checkpoint:props->memory_checkpoint_turn_idx, uncovered:props->memory_extraction->tail_turns_uncovered, source, source_session_id, parent_source_session_id, open_upload:props->open_upload",
       )
       .or(
         `ended_at.gte.${cutoff},and(ended_at.is.null,started_at.gte.${cutoff}),and(ended_at.is.null,started_at.is.null,created_at.gte.${cutoff})`,
@@ -284,6 +289,15 @@ export async function reconcileMemoryExtractionQueue(
       const ensure: string[] = [];
       const requeue: string[] = [];
       for (const session of recent) {
+        // Open (Stop-hook) uploads queue no extraction by design; the closing upload does. Skip one whose latest
+        // activity (ended_at tracks the last turn; code_sessions has no updated_at) is under 6 h old. A stamped
+        // row older than that never got its closing upload (crash, killed terminal): fall through, queue it.
+        if (
+          session.open_upload === true &&
+          now.getTime() - new Date(recency(session)).getTime() < OPEN_UPLOAD_FRESH_MS
+        ) {
+          continue;
+        }
         const status = statusBySession.get(session.id);
         if (status === undefined) ensure.push(session.id);
         else if (

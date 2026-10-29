@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "cache-control": "no-cache",
+    "content-type": "text/event-stream"
+  },
+  "afterCalls": 1,
+  "body": "event: message\ndata: {\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"freshness\\\":null,\\\"data\\\":{\\\"records\\\":[],\\\"not_found\\\":[\\\"00000000-0000-4000-8000-000000000000\\\"]}}\"}],\"freshness\":null},\"jsonrpc\":\"2.0\",\"id\":3}\n\n"
+}

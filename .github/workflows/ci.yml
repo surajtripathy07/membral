@@ -54,6 +54,11 @@ jobs:
 
       - run: npx turbo run build test lint typecheck
 
+      # The db tests on the embedded store (in-memory PGlite behind the PostgREST shim). Needs the built
+      # @membral/core from the turbo step above. The smoke job runs the same files against real PostgREST.
+      - name: DB tests on the embedded store (pglite)
+        run: MEMBRAL_TEST_STORE=pglite npm run test:db --workspace=@membral/cloud
+
       # Architecture refactor programme step 0.7 guards (P1, P3, P9, gate G6).
       - name: Mock-path guard (G6)
         run: npm run check:mock-paths
@@ -191,6 +196,19 @@ jobs:
       # gate job's env-less build restored via the `turbo-${os}-` key.
       - name: Build (with the local Supabase env)
         run: npx turbo build
+
+      # The same db tests as the gate job's pglite run, against the real Supabase stack just started.
+      - name: DB tests on real PostgREST
+        working-directory: apps/cloud
+        run: |
+          STATUS_ENV="$(supabase status -o env)"
+          export MEMBRAL_TEST_STORE=postgrest
+          export SUPABASE_URL="$(echo "$STATUS_ENV" | grep '^API_URL=' | cut -d'"' -f2)"
+          export SUPABASE_ANON_KEY="$(echo "$STATUS_ENV" | grep '^ANON_KEY=' | cut -d'"' -f2)"
+          export SUPABASE_SERVICE_ROLE_KEY="$(echo "$STATUS_ENV" | grep '^SERVICE_ROLE_KEY=' | cut -d'"' -f2)"
+          export SUPABASE_DB_URL="$(echo "$STATUS_ENV" | grep '^DB_URL=' | cut -d'"' -f2)"
+          export SUPABASE_JWT_SECRET="$(echo "$STATUS_ENV" | grep '^JWT_SECRET=' | cut -d'"' -f2)"
+          npm run test:db
 
       - run: npx playwright install --with-deps chromium
 

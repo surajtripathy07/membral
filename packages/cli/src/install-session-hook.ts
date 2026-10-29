@@ -14,6 +14,7 @@ import {
   configureAgyHooks,
   configureSessionEndHook,
   configureSessionStartHook,
+  configureStopHook,
   configureUserPromptSubmitHook,
 } from "./configure.js";
 import { agyHooksConfigPath } from "./detect.js";
@@ -72,6 +73,13 @@ export async function installSessionHook(opts: InstallSessionHookOptions = {}): 
   });
   console.log(startResult.message);
 
+  // Open-session upload: Stop fires after each turn group; the hook hands a detached child the transcript so far.
+  const stopResult = await configureStopHook(settingsPath, {
+    remove: opts.remove,
+    cliInvocation: opts.cliInvocation,
+  });
+  console.log(stopResult.message);
+
   // Prompt-time recall (docs/design/prompt-time-recall.md): Claude Code only.
   const promptOn = opts.promptRecall ?? promptRecallEnabled(opts.cliConfigPath);
   const promptResult = await configureUserPromptSubmitHook(settingsPath, {
@@ -92,7 +100,13 @@ export async function installSessionHook(opts: InstallSessionHookOptions = {}): 
     console.log(agyResult.message);
   }
 
-  if (!endResult.success || !startResult.success || !promptResult.success || (agyResult && !agyResult.success)) {
+  if (
+    !endResult.success ||
+    !startResult.success ||
+    !stopResult.success ||
+    !promptResult.success ||
+    (agyResult && !agyResult.success)
+  ) {
     process.exitCode = 1;
   }
 }

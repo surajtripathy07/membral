@@ -15,7 +15,7 @@
 
 import { CLAUDE_CODE_PROVIDER, claudeCodeActivation } from "@/lib/llm/claude-code-provider";
 import { resolveModelConfig } from "@/lib/llm/config";
-import { embeddingsConfigured, resolveEmbeddingConfig } from "@/lib/llm/embedding-client";
+import { embeddingsConfigured, isBundledEmbeddingConfig, resolveEmbeddingConfig } from "@/lib/llm/embedding-client";
 
 export interface LocalLlmStatus {
   configured: boolean;
@@ -57,7 +57,9 @@ export function localLlmStatus(env: Record<string, string | undefined> = process
   // claude-code serves chat only: LlmClient refuses embeddings unless
   // MEMBRAL_EMBEDDINGS_BASE_URL is set (client.ts refuseEmbeddingsWithoutConfig),
   // so the field must be off in that mode without it, whatever key resolves.
-  const embeddingsRefused = provider === CLAUDE_CODE_PROVIDER && !env.MEMBRAL_EMBEDDINGS_BASE_URL?.trim();
+  // The bundled in-process model needs no base URL, so it is never refused.
+  const embeddingsRefused =
+    provider === CLAUDE_CODE_PROVIDER && !env.MEMBRAL_EMBEDDINGS_BASE_URL?.trim() && !isBundledEmbeddingConfig(emb);
   const embConfigured = embeddingsConfigured(env) && !embeddingsRefused;
 
   // claude-code chosen but refused (no token, or Claude Code could not be downloaded): say why.

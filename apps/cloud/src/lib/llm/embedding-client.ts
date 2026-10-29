@@ -31,6 +31,7 @@
 
 import { isLocalMode } from "../local/mode";
 import { log } from "../log";
+import { BUNDLED_EMBEDDING_MODEL, isBundledEmbeddingModel } from "./bundled-embedder";
 
 /**
  * The one source of truth for the embedding vector width — matches the
@@ -202,6 +203,11 @@ export function fitEmbedding(vector: number[], model: string): number[] {
   return requestDimensions(model) === undefined ? padEmbedding(vector) : vector;
 }
 
+/** True when `config` selects the in-process bundled model (no HTTP client is built for it). */
+export function isBundledEmbeddingConfig(config: EmbeddingConfig): boolean {
+  return isBundledEmbeddingModel(config.model);
+}
+
 /**
  * Resolves embeddings client configuration from the environment. Pure and
  * never throws — a missing OPENAI_API_KEY resolves to `apiKey: ""` (or
@@ -217,6 +223,21 @@ export function resolveEmbeddingConfig(env: Record<string, string | undefined> =
   // GEMINI_API_KEY (its vector dimension differs from the kg_conv_embeddings vector(1536) column).
   const openaiKey = env.OPENAI_API_KEY?.trim();
   const openrouterKey = openaiKey ? undefined : env.OPENROUTER_API_KEY?.trim();
+  const explicitModel = env.MEMBRAL_EMBEDDING_MODEL?.trim() || env.MEMBRAL_EMBED_MODEL?.trim();
+  // Bundled in-process model: chosen by naming it, or, in local mode only, when nothing else is configured.
+  // Never on a hosted deploy by default (isLocalMode is false on Vercel), and never over a key or base URL.
+  const bundled = explicitModel
+    ? isBundledEmbeddingModel(explicitModel)
+    : isLocalMode(env) && !explicitBaseURL && !openaiKey && !openrouterKey;
+  if (bundled) {
+    return {
+      model: BUNDLED_EMBEDDING_MODEL,
+      baseURL: undefined,
+      apiKey: DUMMY_API_KEY,
+      dimensions: EMBEDDING_DIMENSIONS,
+      selfHosted: true,
+    };
+  }
   const apiKey = openaiKey || openrouterKey || (explicitBaseURL ? DUMMY_API_KEY : "");
   const baseURL = explicitBaseURL ?? (openrouterKey ? "https://openrouter.ai/api/v1" : undefined);
   const model =

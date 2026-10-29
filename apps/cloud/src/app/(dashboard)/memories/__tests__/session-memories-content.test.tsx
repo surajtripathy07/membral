@@ -63,7 +63,8 @@ describe("SessionMemoriesContent", () => {
     expect(html).toContain("Not verified");
     expect(html).toContain("from a sub-agent");
     expect(html).toContain('data-testid="memory-kind">Blocker<');
-    expect(html).toContain('href="/code/session/sess-a?turn=7#turn-7"');
+    // The receipt link carries the quote so the session page marks it (goal 2026-10-25 box 3.5).
+    expect(html).toContain('href="/code/session/sess-a?turn=7&amp;quote=Quote%20a#turn-7"');
     expect(html).toContain("session, turn 7");
     expect(html).toContain('href="/code/p1"');
     expect(html).not.toContain("Older");

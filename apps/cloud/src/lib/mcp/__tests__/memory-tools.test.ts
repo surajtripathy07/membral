@@ -70,10 +70,11 @@ describe("registerMemoryTools", () => {
     mockSessionSummary.mockReset();
   });
 
-  it("registers memory_search, memory_recall, memory_resolve and session_summary -- never memory_record (that's #153's write tool)", () => {
+  it("registers memory_search, memory_recall, memory_get, memory_resolve and session_summary -- never memory_record (that's #153's write tool)", () => {
     const { server, tools } = fakeServer();
     registerMemoryTools(server, USER, null, toolResult, getFreshnessCached);
     expect(tools.map((t) => t.name).sort()).toEqual([
+      "memory_get",
       "memory_recall",
       "memory_resolve",
       "memory_search",
@@ -103,6 +104,20 @@ describe("registerMemoryTools", () => {
       for (const word of ["sha", "paths", "ref_url", "get_code_session id=<session_id> turn=<turn_idx>"])
         expect(description).toContain(word);
     }
+  });
+
+  it("memory_search points at memory_get; memory_get validates ids and passes userId and codeScopeId straight through", async () => {
+    const { server, tools } = fakeServer();
+    registerMemoryTools(server, USER, PROJECT_SCOPE, toolResult, getFreshnessCached);
+    expect(tools.find((t) => t.name === "memory_search")!.config.description).toContain("memory_get");
+    const tool = tools.find((t) => t.name === "memory_get")!;
+    expect(tool.config.description).toContain("quote");
+    const bad = (await tool.handler({ ids: [] })) as { isError?: boolean };
+    expect(bad.isError).toBe(true);
+    // A syntactically valid call with no uuid reaches no table: unknown ids are reported, not thrown.
+    const ok = (await tool.handler({ ids: ["not-a-record-id"] })) as { content: { text: string }[]; isError?: boolean };
+    expect(ok.isError).toBeUndefined();
+    expect(JSON.parse(ok.content[0].text)).toEqual({ records: [], not_found: ["not-a-record-id"] });
   });
 
   it("memory_search passes userId and codeScopeId straight through, never trusting a client-supplied scope", async () => {

@@ -90,25 +90,27 @@ no team or admin controls yet.
 
 ## Run it locally
 
-You need Node 22.5+ with Git, Docker with Compose 2.23+ (40 GiB of VM disk), [Ollama](https://ollama.com) for
-embeddings, and one extraction model (step 3).
+You need Node 22.5+ with Git, Docker with Compose 2.23+ (40 GiB of VM disk), and one extraction model (step 2).
+`up` starts three containers: Postgres with pgvector, PostgREST, and the Membral app, which serves sign-in itself and
+runs extraction on a timer. Embeddings use a bundled model that downloads on first use (about 137 MB); Ollama is
+optional.
 
 1. Install the CLI from a clone. This builds it and installs it globally:
    `git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install`
-2. Pull the embedding model: `ollama pull nomic-embed-text`
-3. Pick an extraction model by putting one choice in `~/.membral/local/.env` (`mkdir -p ~/.membral/local` first):
-   - Claude subscription: `MEMBRAL_LLM_PROVIDER=claude-code` and `CLAUDE_CODE_OAUTH_TOKEN=<from claude setup-token>`
+2. Pick an extraction model by putting one choice in `~/.membral/local/.env` (`mkdir -p ~/.membral/local` first):
+   - Claude subscription: `CLAUDE_CODE_OAUTH_TOKEN=<from claude setup-token>`. When `claude` is on your PATH and
+     no other choice is set, `up` selects the `claude-code` provider for you.
    - API key: `OPENAI_API_KEY=...` (or `OPENROUTER_API_KEY`)
    - Ollama: a 7B+ model such as `qwen2.5:7b`, run with `OLLAMA_CONTEXT_LENGTH=16384 ollama serve`
-4. Start it: `membral local up --embeddings ollama`
-5. Check it: `membral local status` (it prints an `Embeddings: ...` line).
+3. Start it: `membral local up` (add `--embeddings ollama` to use Ollama's `nomic-embed-text` instead of the bundled model).
+4. Check it: `membral local status` (it prints an `Embeddings: ...` line).
 
 `up` prints a sign-in URL and password and an API key; treat that output as a secret. The app is at
 `http://localhost:3000`. The image is multi-arch (amd64 and arm64); if a pull fails, build it locally and pass `--image`. Image source builds, extraction setup, disk, logs, Linux notes and what works without an
 extraction model are in [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
 
 To run a second stack beside it (for example to test a branch), add `--project <name>` to `local up|down|status|logs`
-(or set `MEMBRAL_LOCAL_PROJECT`) and pass free `--port` and `--gateway-port` values. Its files live in
+(or set `MEMBRAL_LOCAL_PROJECT`) and pass a free `--port` value. Its files live in
 `~/.membral/local-<name>` and its Docker volumes end in `-<name>`; the default stack is untouched. Both stacks write
 the one `local` CLI profile, so the last `up` wins.
 
@@ -156,7 +158,7 @@ To skip throwaway scratch directories, add path patterns to that file (`*` match
 
 ## Commands
 
-- `membral local up | status | logs <service> | down` runs the stack (`down --wipe` deletes the data).
+- `membral local up | status | logs <service> | down` runs the stack (`down --wipe` deletes the data); `membral local reembed` moves stored vectors to a new embedding model.
 - `membral setup`, `login` (default `http://localhost:3000`), `use`, `sessions`, `import <export.json>` and `status`.
 - `membral --help` lists every command. `npm run smoke` checks the dashboard renders the fixtures.
 

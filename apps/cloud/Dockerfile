@@ -58,10 +58,15 @@ ENV NODE_ENV=production \
 # from npm into the /claude-cli volume on first start (docker/claude-cli/install.sh).
 # /claude-cli is created here so a fresh named volume mounted on it is owned by node.
 RUN mkdir -p /claude-cli && chown node:node /claude-cli
+# The bundled embedding model downloads into /models on first use (MEMBRAL_MODEL_CACHE_DIR);
+# created here so a fresh named volume mounted on it is owned by node.
+RUN mkdir -p /models && chown node:node /models
 COPY --from=build --chown=node:node /repo/apps/cloud/.next/standalone ./
 COPY --from=build --chown=node:node /repo/apps/cloud/.next/static ./apps/cloud/.next/static
 COPY --from=build --chown=node:node /repo/apps/cloud/public ./apps/cloud/public
 COPY apps/cloud/supabase/migrations /app/migrations
+# The auth-schema prelude `membral local up` applies before the migrations (the stack has no GoTrue).
+COPY apps/cloud/supabase/local/auth-prelude.sql /app/local/auth-prelude.sql
 COPY apps/cloud/docker/entrypoint.sh /usr/local/bin/membral-entrypoint
 COPY apps/cloud/docker/substitute-env.mjs /app/docker/substitute-env.mjs
 COPY apps/cloud/docker/claude-cli/package.json apps/cloud/docker/claude-cli/package-lock.json apps/cloud/docker/claude-cli/install.sh /app/docker/claude-cli/

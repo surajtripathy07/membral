@@ -9,6 +9,8 @@ export const TOOL_CALLS: Record<string, Record<string, unknown>> = {
   memory_search: { query: "login" },
   // Read session_memories / code_sessions through the fake directly.
   memory_recall: { repo: "acme/webapp" },
+  // Unknown id: locks the not_found shape (no row read, nothing to leak).
+  memory_get: { ids: ["00000000-0000-4000-8000-000000000000"] },
   // #436 write tool: an id that is no live blocker of the caller's gets the one generic error.
   memory_resolve: { id: "00000000-0000-4000-8000-000000000000", quote: "the deploy works again after the fix" },
   session_summary: { last: true, repo: "acme/webapp" },

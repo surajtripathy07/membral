@@ -192,6 +192,41 @@ export function supabaseInternalUrl(): string | undefined {
   return process.env.SUPABASE_INTERNAL_URL?.trim();
 }
 
+/** True when MEMBRAL_POSTGREST_DIRECT=1: SUPABASE_INTERNAL_URL is bare PostgREST (local stack), not a Supabase gateway. */
+export function postgrestDirect(): boolean {
+  return process.env.MEMBRAL_POSTGREST_DIRECT?.trim() === "1";
+}
+
+/** SUPABASE_JWT_SECRET (local auth stub signing key), or undefined when unset or empty. */
+export function supabaseJwtSecret(): string | undefined {
+  return process.env.SUPABASE_JWT_SECRET || undefined;
+}
+
+/** PORT the app listens on, or undefined when unset or empty. */
+export function appPort(): string | undefined {
+  return process.env.PORT || undefined;
+}
+
+/** MEMBRAL_STORE trimmed ("pglite" selects the embedded store), or undefined when unset. */
+export function storeKind(): string | undefined {
+  return process.env.MEMBRAL_STORE?.trim() || undefined;
+}
+
+/** MEMBRAL_PGDATA: the embedded store's data directory ("memory://" for an in-memory store in tests), or undefined. */
+export function pgDataDir(): string | undefined {
+  return process.env.MEMBRAL_PGDATA?.trim() || undefined;
+}
+
+/** MEMBRAL_MIGRATIONS_DIR: where the embedded store reads migrations from, or undefined (boot falls back to ./supabase/migrations). */
+export function migrationsDir(): string | undefined {
+  return process.env.MEMBRAL_MIGRATIONS_DIR?.trim() || undefined;
+}
+
+/** MEMBRAL_PRELUDE_PATH: the auth-prelude.sql file, or undefined (boot looks beside the migrations dir at ../local). */
+export function preludePath(): string | undefined {
+  return process.env.MEMBRAL_PRELUDE_PATH?.trim() || undefined;
+}
+
 /** Raw MEMBRAL_FEATURE_ALLOWLIST, or undefined. */
 export function featureAllowlistRaw(): string | undefined {
   return process.env.MEMBRAL_FEATURE_ALLOWLIST;
@@ -212,7 +247,43 @@ export function inferRefRaw(): string | undefined {
   return process.env.MEMBRAL_INFER_REF;
 }
 
+/**
+ * True when MEMBRAL_HANDOFF_SYNTHESIS is "1" or "true" (call-time read). OFF by default: the end-of-session handoff
+ * note costs one extra stronger-model call per session on a hosted deploy (docs/design/2026-10-25_agent-authored-handoff.md).
+ */
+export function handoffSynthesisEnabled(): boolean {
+  const raw = process.env.MEMBRAL_HANDOFF_SYNTHESIS?.trim().toLowerCase();
+  return raw === "1" || raw === "true";
+}
+
+/**
+ * True when MEMBRAL_HANDOFF_SEARCH is "1" or "true" (call-time read). OFF by default: when ON, handoff notes are
+ * embedded at write time and `memory_search`, `memory_recall` and prompt recall include `handoff` in their default kinds.
+ */
+export function handoffSearchEnabled(): boolean {
+  const raw = process.env.MEMBRAL_HANDOFF_SEARCH?.trim().toLowerCase();
+  return raw === "1" || raw === "true";
+}
+
+/**
+ * True when either handoff flag is on, i.e. `handoff` notes can be written or read. With both off the memory read paths
+ * keep their pre-handoff shape (no kind filter) instead of an explicit kind list.
+ */
+export function handoffFeatureEnabled(): boolean {
+  return handoffSynthesisEnabled() || handoffSearchEnabled();
+}
+
+/** Raw MEMBRAL_HANDOFF_MODEL (strong-tier chat model for the handoff summary on a hosted provider), or undefined. */
+export function handoffModelRaw(): string | undefined {
+  return process.env.MEMBRAL_HANDOFF_MODEL;
+}
+
 /** Boot hook for instrumentation.ts: runs validateEnvAtBoot() only on the Node.js runtime (NEXT_RUNTIME === "nodejs"). */
 export function validateEnvAtBootOnNode(): void {
   if (process.env.NEXT_RUNTIME === "nodejs") validateEnvAtBoot();
+}
+
+/** True when MEMBRAL_STORE=pglite: the app runs on the embedded store (rung two) and serves its REST calls in process. */
+export function embeddedStoreEnabled(): boolean {
+  return process.env.MEMBRAL_STORE?.trim() === "pglite";
 }

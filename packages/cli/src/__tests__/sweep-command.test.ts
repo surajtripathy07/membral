@@ -138,7 +138,7 @@ describe("sweepCommand", () => {
   // (a "did not run" outcome), and the dedicated tests below cover its wiring.
   const noRefCheck = () => vi.fn(async () => ({ ok: true, ran: false, checked: 0, repos: 0, skippedRepos: 0 }));
 
-  it("imports every source since last success minus 5 min, then advances the state", async () => {
+  it("imports every source since last success minus 35 min (30 min live window + 5), then advances the state", async () => {
     await writeSweepState(statePath, {
       last_success_at: "2026-09-25T11:40:00Z",
       run_count: 3,
@@ -154,7 +154,7 @@ describe("sweepCommand", () => {
 
     expect(importFn.mock.calls.map((c) => (c as unknown as [{ source: string; since: string }])[0])).toEqual(
       EXPECTED_SOURCES.map((source) =>
-        expect.objectContaining({ source, since: "2026-09-25T11:35:00Z", heartbeat: false }),
+        expect.objectContaining({ source, since: "2026-09-25T11:05:00Z", skipLiveMs: 30 * 60_000, heartbeat: false }),
       ),
     );
     expect(heartbeatFn).not.toHaveBeenCalled();
@@ -200,7 +200,7 @@ describe("sweepCommand", () => {
       kickFn: vi.fn(async () => ({ ok: true })),
       branchStateFn: noRefCheck(),
     });
-    expect((importFn.mock.calls[0] as unknown as [{ since?: string }])[0].since).toBe("2026-09-25T11:55:00Z");
+    expect((importFn.mock.calls[0] as unknown as [{ since?: string }])[0].since).toBe("2026-09-25T11:25:00Z");
   });
 
   it("first run looks back 24h and sends one heartbeat when nothing was in the window", async () => {

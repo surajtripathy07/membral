@@ -17,10 +17,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { withRoute } from "@/lib/api/route";
 import { getServiceClient } from "@/lib/db/clients";
+import { handoffSynthesisEnabled } from "@/lib/env";
 import { log } from "@/lib/log";
 import { buildPreamble } from "@/lib/memory/preamble";
 import { buildSessionStartSelfRecall } from "@/lib/memory/prompt-recall";
 import { recordRecallEvent } from "@/lib/memory/search";
+import { loadServedHandoff } from "@/lib/memory/session-handoff-serve";
 import { keyBucket } from "@/lib/rate-limit";
 
 // #361: the harness's own session id (Claude Code's SessionStart
@@ -63,7 +65,14 @@ export const GET = withRoute(
     const wantSelf = (selfSource === "compact" || selfSource === "resume") && harnessSessionId !== null;
 
     const db = getServiceClient();
-    const [result, self] = await Promise.all([
+    // Resume and compact only (design section 5): the session's own handoff note, in a response field of its own.
+    // Off with MEMBRAL_HANDOFF_SYNTHESIS (no note is written then either), for a scoped-to-node key, and on a fresh start.
+    // `?handoff=1` is the CLI saying it renders `handoff_text`; an older CLI sends nothing, so it gets no field and no
+    // log entry for a note it never showed.
+    const handoffCapable = req.nextUrl.searchParams.get("handoff") === "1";
+    const wantHandoff =
+      wantSelf && handoffCapable && harnessSessionId !== null && !key.scopeNodeId && handoffSynthesisEnabled();
+    const [result, self, handoff] = await Promise.all([
       buildPreamble(db, userId, { repo, branch, head_sha, session: harnessSessionId }, key.scopeCodeProjectId),
       wantSelf && harnessSessionId && !key.scopeNodeId
         ? buildSessionStartSelfRecall(
@@ -77,6 +86,15 @@ export const GET = withRoute(
             { lineMax: lineMaxParam },
           )
         : Promise.resolve(null),
+      wantHandoff && harnessSessionId
+        ? loadServedHandoff(
+            db,
+            userId,
+            key.scopeCodeProjectId,
+            { sourceSessionId: harnessSessionId, harness: "claude-code" },
+            selfSource === "compact" ? "compact" : "resume",
+          )
+        : Promise.resolve(null),
     ]);
 
     // #361: log what was served (one surface='preamble' event, the record ids
@@ -84,7 +102,7 @@ export const GET = withRoute(
     // influence. A logging failure never changes the response.
     try {
       await recordRecallEvent(db, userId, "preamble", {
-        recordIds: [...(result.record_ids ?? []), ...(self?.record_ids ?? [])],
+        recordIds: [...(result.record_ids ?? []), ...(self?.record_ids ?? []), ...(handoff ? [handoff.id] : [])],
         recallToken: result.recall_token,
         surface: "preamble",
         harnessSessionId,
@@ -103,6 +121,7 @@ export const GET = withRoute(
         recall_token: result.recall_token,
         open_blockers: result.open_blockers,
         ...(wantSelf ? { self_lines: self?.lines ?? [], self_skipped: self?.skipped ?? null } : {}),
+        ...(handoff ? { handoff_text: handoff.text } : {}),
       });
     }
     return new NextResponse(result.lines.join("\n"), {

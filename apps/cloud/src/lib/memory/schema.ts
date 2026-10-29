@@ -9,7 +9,15 @@ import { MEMORY_TEXT_MAX_HARD } from "./memory-limits";
 export const MEMORY_KINDS = ["outcome", "decision", "learning", "blocker", "preference"] as const;
 export type MemoryKind = (typeof MEMORY_KINDS)[number];
 
-export const MEMORY_SOURCES = ["hook", "agent", "extractor"] as const;
+/**
+ * The `session_memories.kind` of a synthesized session handoff (migration 136, docs/design/2026-10-25_agent-authored-handoff.md).
+ * Deliberately NOT in MEMORY_KINDS: that list is what extraction writes and what search, recall and the UI tabs read
+ * by default, and a long per-session note would win relevance matches against the short records. Serving it is
+ * the resume path's job (brief 2.3b).
+ */
+export const HANDOFF_KIND = "handoff" as const;
+
+export const MEMORY_SOURCES = ["hook", "agent", "extractor", "claude-mem"] as const;
 export type MemorySource = (typeof MEMORY_SOURCES)[number];
 
 // Open enum: an unrecognized ref_kind is stored as "other", never dropped.

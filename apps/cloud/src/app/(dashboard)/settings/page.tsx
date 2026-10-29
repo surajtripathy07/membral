@@ -1,4 +1,5 @@
 import { checkFeature } from "@/lib/feature-flags";
+import { isLocalMode } from "@/lib/local/mode";
 import { resolveMcpUrl } from "@/lib/mcp-url";
 import { createClient } from "@/lib/supabase/server";
 import { loadSettingsPage } from "./load";
@@ -42,6 +43,8 @@ export default async function SettingsPage() {
       embeddingsCheck={embeddingsCheck}
       llmCheck={llmCheck}
       mcpUrl={resolveMcpUrl()}
+      // The local auth stub cannot delete users (admin.deleteUser is hosted-only), so the control is hidden there.
+      showDeleteAccount={!isLocalMode()}
     />
   );
 }

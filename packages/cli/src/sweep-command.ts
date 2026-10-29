@@ -46,7 +46,10 @@ export type { SweepInstallResult, SweepScheduler } from "./sweep-linux.js";
 
 export const SWEEP_LABEL = "me.membral.sweep";
 export const SWEEP_INTERVAL_SECONDS = 20 * 60;
-const OVERLAP_MS = 5 * 60_000;
+/** A transcript written this recently is a live session: the sweep leaves it to the Stop hook's open uploads. */
+export const LIVE_TRANSCRIPT_MS = 30 * 60_000;
+/** Delta windows reach back past the live window, so a session skipped as live is revisited once it goes quiet. */
+const OVERLAP_MS = LIVE_TRANSCRIPT_MS + 5 * 60_000;
 /** Every Nth successful run is a full walk (no --since); with a 20-min interval that is every ~4 h. */
 export const SWEEP_FULL_WALK_EVERY = 12;
 const FIRST_RUN_WINDOW_MS = 24 * 60 * 60_000;
@@ -168,6 +171,7 @@ export async function sweepCommand(opts: SweepCommandOptions = {}): Promise<bool
         {
           source,
           since,
+          skipLiveMs: LIVE_TRANSCRIPT_MS,
           heartbeat: false,
           missingHarnessOk: true,
           log,

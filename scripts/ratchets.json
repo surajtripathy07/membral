@@ -37,11 +37,11 @@
     },
     {
       "id": "G4",
-      "description": "server-only env reads only in lib/env and lib/flags (NEXT_PUBLIC_* and NODE_ENV excluded); excludes __tests__ and __golden__ (the golden harness reads its own run knobs)",
+      "description": "server-only env reads only in lib/env and lib/flags (NEXT_PUBLIC_*, NODE_ENV and NEXT_RUNTIME excluded: Next inlines them at build time); excludes __tests__ and __golden__ (the golden harness reads its own run knobs)",
       "root": "apps/cloud/src",
       "extensions": [".ts", ".tsx"],
       "match": "process\\.env\\.[A-Z0-9_]+",
-      "matchExclude": "^process\\.env\\.(NEXT_PUBLIC_[A-Z0-9_]+|NODE_ENV)$",
+      "matchExclude": "^process\\.env\\.(NEXT_PUBLIC_[A-Z0-9_]+|NODE_ENV|NEXT_RUNTIME)$",
       "pathExcludes": ["/__tests__/", "/__golden__/", "^apps/cloud/src/lib/(env\\.ts$|env/|flags/)"],
       "mode": "max",
       "baseline": 0

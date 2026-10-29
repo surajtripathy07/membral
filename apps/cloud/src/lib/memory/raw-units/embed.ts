@@ -11,10 +11,12 @@
 // Failures never throw and never produce a vector: a failed batch is retried one text at a time, and a text that
 // still fails maps to null (the writer stores NULL + embedding_failed_at, never a zero vector, as write/insert.ts).
 
+import { bundledEmbeddingsCreate } from "@/lib/llm/bundled-embedder";
 import {
   callEmbeddingsCreate,
   canonicalEmbeddingFamily,
   EMBEDDING_DIMENSIONS,
+  isBundledEmbeddingConfig,
   isDefaultEmbeddingFamily,
   resolveEmbeddingConfig,
 } from "@/lib/llm/embedding-client";
@@ -104,6 +106,10 @@ export function createDefaultUnitEmbedder(env: Record<string, string | undefined
   return {
     family,
     embedBatch: async (texts) => {
+      if (isBundledEmbeddingConfig(config)) {
+        const res = await callEmbeddingsCreate((body) => bundledEmbeddingsCreate(body), config, texts);
+        return res.data.map((d) => d.embedding);
+      }
       // Imported lazily: lib/openai.ts builds the SDK client on first use.
       const { getOpenAI } = await import("@/lib/openai");
       const openai = getOpenAI();

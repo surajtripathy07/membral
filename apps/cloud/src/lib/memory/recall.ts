@@ -9,8 +9,9 @@
 // "prefer TS" default since nothing here actually requires the database to
 // do it.
 import type { Db } from "@/lib/db/types";
+import { handoffFeatureEnabled, handoffSearchEnabled } from "@/lib/env";
 import { selectAllRows } from "@/lib/util/pagination";
-import { MEMORY_KINDS, type MemoryKind } from "./schema";
+import { HANDOFF_KIND, MEMORY_KINDS, type MemoryKind } from "./schema";
 import { partitionStaleBlockers, recordRecallEvent, resolveProjectId } from "./search";
 import { type MemoryRow, rankAndServe, type ServedRecord } from "./verify";
 
@@ -29,11 +30,17 @@ function clampLimit(limit: number | undefined, fallback = 10, max = 20): number 
   return Math.min(Math.max(Math.trunc(limit ?? fallback), 1), max);
 }
 
-function normalizeKinds(kind: string | string[] | undefined): MemoryKind[] | null {
-  if (!kind) return null;
-  const list = Array.isArray(kind) ? kind : [kind];
+/**
+ * The kinds to read: those asked for (extracted kinds only; `handoff` is dropped), else, with a handoff flag on, every
+ * extracted kind (plus `handoff` when MEMBRAL_HANDOFF_SEARCH is on), keeping notes out unless search is enabled.
+ * Both flags off: null, exactly as before handoff existed (a null `p_kinds` means ALL kinds in the RPC).
+ */
+function normalizeKinds(kind: string | string[] | undefined): (MemoryKind | typeof HANDOFF_KIND)[] | null {
+  const list = kind ? (Array.isArray(kind) ? kind : [kind]) : [];
   const valid = list.filter((k): k is MemoryKind => (MEMORY_KINDS as readonly string[]).includes(k));
-  return valid.length ? valid : null;
+  if (valid.length) return valid;
+  if (handoffSearchEnabled()) return [...MEMORY_KINDS, HANDOFF_KIND];
+  return handoffFeatureEnabled() ? [...MEMORY_KINDS] : null;
 }
 
 /** The ids of every LIVE record another live record supersedes -- these are excluded from serving unless `include_retired` (rule 4). Paginated past PostgREST's 1000-row cap (#165) so a superseded id beyond row 1000 doesn't leak back into recall. */

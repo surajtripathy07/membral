@@ -132,6 +132,42 @@ export const MCP_TOOL_MANIFEST = [
   },
   {
     description:
+      'Expand memory records by id (the id field of a memory_search/memory_recall record): each comes back with its record fields, its verbatim quote (the receipt from the transcript) and a source window, the session\'s turns around the record\'s turn_idx. Use it to check a record against what was actually said before you rely on it; verified:false means the quote was not found in the session and its window is centred on an approximate turn. Unknown, out-of-scope or retired ids are listed in not_found, not raised. Omit `include` for both parts, or pass ["quote"] or ["window"]; `window` is how many turns either side (default 4, clamped to 1-40). Results are dated records of what sessions did, not the current state of a PR or issue; check that live.',
+    inputSchema: {
+      $schema: "http://json-schema.org/draft-07/schema#",
+      properties: {
+        ids: {
+          description: "One to ten record ids (uuids) from memory_search or memory_recall",
+          items: {
+            maxLength: 64,
+            type: "string",
+          },
+          maxItems: 10,
+          minItems: 1,
+          type: "array",
+        },
+        include: {
+          description: 'Parts to return besides the record: "quote", "window" (default both)',
+          items: {
+            enum: ["quote", "window"],
+            type: "string",
+          },
+          type: "array",
+        },
+        window: {
+          description: "With the window part: turns either side of the record's turn (default 4, clamped to 1-40).",
+          maximum: 9007199254740991,
+          minimum: -9007199254740991,
+          type: "integer",
+        },
+      },
+      required: ["ids"],
+      type: "object",
+    },
+    name: "memory_get",
+  },
+  {
+    description:
       "Recall memory records BY REPO OR PATH (not by topic -- use memory_search for that). 'outcome' alone answers 'what shipped here lately'. Ordered kind-priority then recency. Read the turns around a record with get_code_session id=<session_id> turn=<turn_idx>. Records carry links to their sources when known: sha (the commit the session was on), paths (files it names, up to 5), ref_url (the ref's forge page). Open them directly; they locate sources, they do not report current state. Replaced records are hidden and paraphrases of one fact are served once with seen_in; every record carries as_of.",
     inputSchema: {
       $schema: "http://json-schema.org/draft-07/schema#",
@@ -212,7 +248,7 @@ export const MCP_TOOL_MANIFEST = [
   },
   {
     description:
-      "Search past sessions' learnings, decisions, blockers and other memory records by TOPIC (Postgres full-text search fused with semantic similarity) -- the tool for 'what did we decide/learn about X'. Filter by kind, scope, project, path, or since/days. A date phrase in the query (\"last week\", \"yesterday\", \"Sept 20\") is read as a time hint: it is taken out of the search text and records from that window rank higher, but older matches still come back (date_hint shows the reading); since/days are hard filters. Newer records win near-ties. since/days filter on the session's start time; each record's `when` is its session's end time (else start). Covers extracted, quote-verified records (extraction runs on sessions within about 30 days of upload; older extracted records stay searchable); a fact that was said but never extracted is only in the raw turns (search_conversations). When nothing is relevant enough, reason says why -- that is the answer, not an error. Records a newer record replaced are hidden unless include_superseded is true or the query names a past date; paraphrases of one fact are served as one record with seen_in (the number of sessions that said it); every record carries as_of, the day its session recorded it (true when recorded, not current state). Local installs return `served`: lines (records as JSON, raw session excerpts marked \"raw excerpt\") packed whole to max_tokens (default 3000). Else (hosted; raw_reason says why) ranked `records` cut at max_tokens (dropped_for_budget). A record's session_id is a code session: read the turns around it with get_code_session id=<session_id> turn=<turn_idx>, or session_summary session_id=<session_id>. Records carry links to their sources when known: sha (the commit the session was on), paths (files it names, up to 5), ref_url (the ref's forge page). Open them directly; they locate sources, they do not report current state. Results are dated records of what sessions did, not the current state of a PR or issue; check that live.",
+      "Search past sessions' learnings, decisions, blockers and other memory records by TOPIC (Postgres full-text search fused with semantic similarity) -- the tool for 'what did we decide/learn about X'. Filter by kind, scope, project, path, or since/days. A date phrase in the query (\"last week\", \"yesterday\", \"Sept 20\") is read as a time hint: it is taken out of the search text and records from that window rank higher, but older matches still come back (date_hint shows the reading); since/days are hard filters. Newer records win near-ties. since/days filter on the session's start time; each record's `when` is its session's end time (else start). Covers extracted, quote-verified records (extraction runs on sessions within about 30 days of upload; older extracted records stay searchable); a fact that was said but never extracted is only in the raw turns (search_conversations). When nothing is relevant enough, reason says why -- that is the answer, not an error. Records a newer record replaced are hidden unless include_superseded is true or the query names a past date; paraphrases of one fact are served as one record with seen_in (the number of sessions that said it); every record carries as_of, the day its session recorded it (true when recorded, not current state). Local installs return `served`: lines (records as JSON, raw session excerpts marked \"raw excerpt\") packed whole to max_tokens (default 3000). Else (hosted; raw_reason says why) ranked `records` cut at max_tokens (dropped_for_budget). A record's session_id is a code session: read the turns around it with get_code_session id=<session_id> turn=<turn_idx>, or session_summary session_id=<session_id>. Records carry links to their sources when known: sha (the commit the session was on), paths (files it names, up to 5), ref_url (the ref's forge page). Open them directly; they locate sources, they do not report current state. Expand with memory_get(ids). Results are dated records of what sessions did, not the current state of a PR or issue; check that live.",
     inputSchema: {
       $schema: "http://json-schema.org/draft-07/schema#",
       properties: {
@@ -240,7 +276,8 @@ export const MCP_TOOL_MANIFEST = [
               type: "array",
             },
           ],
-          description: "One or more of: outcome, decision, learning, blocker, preference",
+          description:
+            "One or more of: outcome, decision, learning, blocker, preference, handoff (a session's end-of-session summary note)",
         },
         limit: {
           description: "Max records to return, a whole number 1-20 (default 10)",

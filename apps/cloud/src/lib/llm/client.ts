@@ -8,6 +8,7 @@
 
 import OpenAI, { APIConnectionTimeoutError } from "openai";
 import { log } from "../log";
+import { bundledEmbeddingsCreate, isBundledEmbeddingModel } from "./bundled-embedder";
 import { CLAUDE_CODE_MODEL_PREFIX, CLAUDE_CODE_PROVIDER, extractJsonText, runClaudeCode } from "./claude-code-provider";
 import type { ModelConfig } from "./config";
 import { canonicalEmbeddingFamily, embeddingRequestBody, fitEmbedding } from "./embedding-client";
@@ -377,6 +378,7 @@ export class LlmClient {
    * every existing llm.ts/tail-capture test's single-mock expectation).
    */
   private readonly embedClient: OpenAILike;
+  private readonly embedTimeoutMs: number | undefined;
   private readonly config: ModelConfig;
   private readonly logger: ExtractionLogger | null;
   /** Per-run hard cap (issue #21). undefined = no cap (e.g. one-off scripts/tests not wired to a budget). */
@@ -435,6 +437,7 @@ export class LlmClient {
     const embedApiKey = config.embedApiKey ?? config.apiKey;
     const embedMaxRetries = opts?.embedMaxRetries ?? maxRetries;
     const embedTimeout = opts?.embedTimeoutMs ?? timeout;
+    this.embedTimeoutMs = embedTimeout;
     this.embedClient =
       opts?.client ??
       (embedBaseURL === config.baseURL &&
@@ -729,7 +732,7 @@ export class LlmClient {
     conversationId: string;
   }): Promise<{ vector: number[]; record: CostRecord }> {
     const t0 = Date.now();
-    this.refuseEmbeddingsWithoutConfig();
+    if (!this.embedsInProcess()) this.refuseEmbeddingsWithoutConfig();
     const text = opts.text.trim();
     if (!text) {
       const record = this.record(opts.conversationId, opts.pass, this.config.embedModel, 0, 0, 0, 0);
@@ -739,7 +742,7 @@ export class LlmClient {
     // step2d finding 5: fail BEFORE issuing the call, not after paying for a
     // response we'd then refuse to price.
     if (this.embedCost(0) === null) throw new UnpricedModelError(this.config.embedModel);
-    const response = await this.embedClient.embeddings.create(this.embedBody(text));
+    const response = await this.createEmbeddings(text);
     const latencyMs = Date.now() - t0;
     const tokensIn = response.usage?.prompt_tokens ?? 0;
     const costUsd = requirePriced(this.embedCost(tokensIn), this.config.embedModel);
@@ -760,7 +763,7 @@ export class LlmClient {
     conversationId: string;
   }): Promise<{ vectors: number[][]; record: CostRecord }> {
     const t0 = Date.now();
-    this.refuseEmbeddingsWithoutConfig();
+    if (!this.embedsInProcess()) this.refuseEmbeddingsWithoutConfig();
     const zero = (): number[] => new Array(this.config.embedDimensions).fill(0);
     if (opts.texts.length === 0) {
       const record = this.record(opts.conversationId, opts.pass, this.config.embedModel, 0, 0, 0, 0);
@@ -770,7 +773,7 @@ export class LlmClient {
     // step2d finding 5: fail BEFORE issuing the call, not after paying for a
     // response we'd then refuse to price.
     if (this.embedCost(0) === null) throw new UnpricedModelError(this.config.embedModel);
-    const response = await this.embedClient.embeddings.create(this.embedBody(opts.texts));
+    const response = await this.createEmbeddings(opts.texts);
     const latencyMs = Date.now() - t0;
     const tokensIn = response.usage?.prompt_tokens ?? 0;
     const costUsd = requirePriced(this.embedCost(tokensIn), this.config.embedModel);
@@ -793,7 +796,20 @@ export class LlmClient {
     return embeddingRequestBody(this.config.embedModel, input);
   }
 
+  /** The bundled ONNX model runs in this process (bundled-embedder.ts): no client, no key, no refusal under claude-code. */
+  private embedsInProcess(): boolean {
+    return isBundledEmbeddingModel(this.config.embedModel);
+  }
+
+  private createEmbeddings(
+    input: string | string[],
+  ): Promise<{ data: Array<{ embedding: number[] }>; usage?: { prompt_tokens?: number } | null }> {
+    if (this.embedsInProcess()) return bundledEmbeddingsCreate({ input }, { timeoutMs: this.embedTimeoutMs });
+    return this.embedClient.embeddings.create(this.embedBody(input));
+  }
+
   private embedCost(tokensIn: number): number | null {
+    if (this.embedsInProcess()) return 0; // nothing is billed for a model that runs on this machine
     return embedCostUsd(this.config.embedModel, tokensIn, { selfHosted: this.config.embedSelfHosted === true });
   }
 

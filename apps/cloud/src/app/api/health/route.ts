@@ -15,8 +15,10 @@
 import { NextResponse } from "next/server";
 import { pingConversations } from "@/lib/conversations/queries";
 import { tryServiceClient } from "@/lib/db/clients";
+import { storeKind } from "@/lib/env";
 import { localLlmStatus } from "@/lib/local/llm-status";
 import { isLocalMode } from "@/lib/local/mode";
+import { storeState } from "@/lib/local/store/registry";
 import { log, requestId } from "@/lib/log";
 
 // Never cache a health probe — every hit must actually check.
@@ -53,8 +55,14 @@ export async function GET(req: Request) {
 
   // Local stack only (W7 design §10): which LLM is configured and whether
   // extraction runs — env-derived, no network. Hosted output is unchanged.
+  // Embedded store (rung two): also `store`, so `membral up` can wait for "ready".
   const body = isLocalMode()
-    ? { status: healthy ? "ok" : "degraded", checks, llm: localLlmStatus() }
+    ? {
+        status: healthy ? "ok" : "degraded",
+        checks,
+        llm: localLlmStatus(),
+        ...(storeKind() === "pglite" ? { store: storeState() ?? "starting" } : {}),
+      }
     : { status: healthy ? "ok" : "degraded", checks };
 
   return NextResponse.json(body, { status: healthy ? 200 : 503, headers: { "x-request-id": rid } });

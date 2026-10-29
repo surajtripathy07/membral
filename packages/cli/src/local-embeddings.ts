@@ -9,8 +9,9 @@ import type { EnvMap, LocalPaths } from "./local-stack.js";
 export const DEFAULT_EMBEDDING_MODEL = "nomic-embed-text";
 export const EMBEDDINGS_BASE_KEY = "MEMBRAL_EMBEDDINGS_BASE_URL";
 export const EMBEDDINGS_MODEL_KEY = "MEMBRAL_EMBEDDING_MODEL";
-export const EMBEDDINGS_NONE_LINE =
-  "Embeddings: none — search is keyword only. Run: membral local up --embeddings ollama";
+/** Nothing configured: the app's bundled ONNX model (local mode default; downloads on first use, ~137 MB). */
+export const EMBEDDINGS_BUNDLED_LINE =
+  "Embeddings: nomic-embed-text-v1.5-onnx-q8 (bundled; downloads on first use, ~137 MB). Ollama instead: membral local up --embeddings ollama";
 const OLLAMA_TIMEOUT_MS = 3000;
 const DEFAULT_OLLAMA_PORT = 11434;
 
@@ -122,5 +123,5 @@ export function embeddingsLine(env: EnvMap): string {
   }
   if (env.OPENAI_API_KEY?.trim()) return `Embeddings: ${model || "text-embedding-3-small"} via OpenAI`;
   if (env.OPENROUTER_API_KEY?.trim()) return `Embeddings: ${model || "openai/text-embedding-3-small"} via OpenRouter`;
-  return EMBEDDINGS_NONE_LINE;
+  return EMBEDDINGS_BUNDLED_LINE;
 }

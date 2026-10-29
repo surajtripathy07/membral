@@ -32,6 +32,7 @@ import { normalizeRepoArgument } from "@/lib/code-sessions/repo-identity";
 import type { Db } from "@/lib/db/types";
 import { isFreshBlocker } from "@/lib/domain/blockers";
 import { EmbeddingCeilingExceededError, generateEmbedding } from "@/lib/embeddings";
+import { handoffFeatureEnabled, handoffSearchEnabled } from "@/lib/env";
 import { FeatureDisabledError } from "@/lib/feature-flags";
 import {
   currentEmbeddingFamily,
@@ -50,7 +51,7 @@ import { parseQueryDates, type QueryDateWindow } from "./query-dates";
 import { queryEmbedInput } from "./raw-units/embed";
 import { fuseCardsRaw, type ServedCard, type ServedLine, searchRawUnits } from "./raw-units/search";
 import { fetchValidity, mergeOldest } from "./reconcile/validity";
-import { MEMORY_KINDS, type MemoryKind } from "./schema";
+import { HANDOFF_KIND, MEMORY_KINDS, type MemoryKind } from "./schema";
 import { currentOnly, markSuperseded } from "./serve-filter";
 import { type MemoryRow, type RankAndServeTimings, rankAndServe, type ServedRecord } from "./verify";
 
@@ -306,12 +307,26 @@ function clampLimit(limit: number | undefined, fallback = 10, max = 20): number 
   return Math.min(Math.max(Math.trunc(limit ?? fallback), 1), max);
 }
 
-function normalizeKinds(kind: string | string[] | undefined): MemoryKind[] | null {
-  if (!kind) return null;
-  const list = Array.isArray(kind) ? kind : [kind];
-  const valid = list.filter((k): k is MemoryKind => (MEMORY_KINDS as readonly string[]).includes(k));
-  return valid.length ? valid : null;
+/**
+ * The kinds to read: those asked for, else (a handoff flag on) every extracted kind, which keeps `handoff` notes out of
+ * the default list unless MEMBRAL_HANDOFF_SEARCH is on (a null `p_kinds` means ALL kinds in the RPC, migration 136).
+ * Both flags off: null, exactly as before handoff existed. `handoff` named explicitly is accepted only when
+ * MEMBRAL_HANDOFF_SEARCH is on.
+ */
+function normalizeKinds(kind: string | string[] | undefined): (MemoryKind | typeof HANDOFF_KIND)[] | null {
+  const list = kind ? (Array.isArray(kind) ? kind : [kind]) : [];
+  const searchOn = handoffSearchEnabled();
+  const valid = list.filter(
+    (k): k is MemoryKind | typeof HANDOFF_KIND =>
+      (k === HANDOFF_KIND && searchOn) || (MEMORY_KINDS as readonly string[]).includes(k),
+  );
+  if (valid.length) return valid;
+  if (searchOn) return [...MEMORY_KINDS, HANDOFF_KIND];
+  return handoffFeatureEnabled() ? [...MEMORY_KINDS] : null;
 }
+
+/** Candidate pool for the reserved handoff slot: only the top note is served, so a few suffice. */
+const HANDOFF_SLOT_POOL = 5;
 
 /** One of the user's projects, as far as short-name matching needs it (G, 2026-09-25). */
 export interface ProjectNameCandidate {
@@ -642,6 +657,11 @@ export async function memorySearch(
   const sinceIso = resolveSince({ since: args.since, days: args.days }, now) ?? undefined;
   const projectId = await resolveProjectId(supabase, userId, args.project, codeScopeId);
   const kinds = normalizeKinds(args.kind);
+  // Reserved handoff slot (MEMBRAL_HANDOFF_SEARCH on, caller named no kinds): a 2-5 kB note loses to short atomic
+  // records in the shared top-N candidate pool (p_limit below), so notes are searched on their own and at most the top
+  // one is merged in after ranking. The main read then excludes handoff. Flag off or explicit kinds: unchanged.
+  const handoffSlot =
+    kinds?.includes(HANDOFF_KIND) === true && !(args.kind && [args.kind].flat().includes(HANDOFF_KIND));
 
   const { text: searchText, window } = opts.dateHints ? parseQueryDates(query, now) : { text: query, window: null };
   const date_hint = window ? { ...window, applied: "boost" as const } : undefined;
@@ -701,7 +721,7 @@ export async function memorySearch(
     p_user_id: userId,
     p_query: searchText,
     p_code_project_id: projectId,
-    p_kinds: kinds,
+    p_kinds: handoffSlot && kinds ? kinds.filter((k) => k !== HANDOFF_KIND) : kinds,
     p_scope: args.scope ?? null,
     p_path: args.path ?? null,
     // History (include_superseded, or a date phrase in the past) reads replaced rows too; retired rows are dropped below.
@@ -839,6 +859,23 @@ export async function memorySearch(
   const rpcMs = Date.now() - rpcStarted;
 
   const candidates = (data ?? []) as unknown as Array<MemoryRow & ScoredSignals>;
+  // The handoff slot's own pool: same query, vector, floor and filters as the main read, handoff kind only.
+  let handoffPool: Array<MemoryRow & ScoredSignals> = [];
+  if (handoffSlot) {
+    const { data: hData, error: hError } = await timed("search_rpc", async () =>
+      supabase.rpc("memory_search_scored", {
+        ...baseArgs,
+        p_kinds: [HANDOFF_KIND],
+        p_limit: HANDOFF_SLOT_POOL,
+        p_include_retired: false,
+        p_query_embedding: vector ? `[${vector.join(",")}]` : null,
+        p_since: sinceIso ?? null,
+        ...familyRpcArgs(ff),
+      }),
+    );
+    if (hError) log.warn("memory_search: handoff slot read failed, serving without it", { error: hError.message });
+    else handoffPool = (hData ?? []) as unknown as Array<MemoryRow & ScoredSignals>;
+  }
   // The floor needs the cosine leg: keyword-only results keep the pre-W3 behaviour
   // (any lexical match is served) rather than flooring every one away.
   // A deadline skip is the exception: prompt recall serves into a prompt, so it keeps the lexical rule (b) (at least two
@@ -895,18 +932,46 @@ export async function memorySearch(
   // on -- so records carrying the query's distinctive terms are served first;
   // rank.ts's §4 order only breaks ties.
   const timings: RankAndServeTimings = {};
-  const ranked = await rankAndServe(supabase, userId, current as MemoryRow[], "tool", limit, {
+  // The top handoff note that clears the same floor as every other record, placed among the ranked records by cosine
+  // (appended when either side has none), always kept: when the list is full the last atomic record gives way. The
+  // note is already capped at HANDOFF_SERVED_MAX_CHARS when served, and max_tokens packs it like any record.
+  const mergeHandoffSlot = async (base: ServedRecord[]): Promise<ServedRecord[]> => {
+    const passing = handoffPool
+      .filter((r) => !r.retired_at)
+      .filter((r) => !(applyFloor && floorFn) || floorFn(r) || strongHitsOf(r) > 0);
+    const top = passing[0];
+    if (!top) return base;
+    const [note] = await rankAndServe(supabase, userId, [top as MemoryRow], "tool", 1, { relevance: relevanceOf });
+    if (!note) return base;
+    const sim = typeof top.similarity === "number" ? top.similarity : null;
+    const simOf = new Map(candidates.map((c) => [c.id, typeof c.similarity === "number" ? c.similarity : null]));
+    let at = base.length;
+    if (sim !== null) {
+      const i = base.findIndex((r) => {
+        const s = simOf.get(r.id) ?? null;
+        return s !== null && s < sim;
+      });
+      if (i >= 0) at = i;
+    }
+    const out = [...base.slice(0, at), note, ...base.slice(at)];
+    return out.length > limit
+      ? out.filter((_, i) => i !== (at === out.length - 1 ? out.length - 2 : out.length - 1))
+      : out;
+  };
+  const relevanceOf = (r: MemoryRow) => {
+    const { leg_score: score, observed_at } = r as ScoredSignals;
+    if (typeof score !== "number" || !Number.isFinite(score)) return undefined;
+    const rel = boost ? boostedRelevance(score, observed_at ?? r.created_at, window, now) : score;
+    return anchors.length > 0 ? codeAnchorBoost(rel, hitsOf(r).weak) : rel;
+  };
+  const rankedMain = await rankAndServe(supabase, userId, current as MemoryRow[], "tool", limit, {
     supersededBy: history ? supersededBy : undefined,
     collapseByMeaning: opts.collapseByMeaning,
-    relevance: (r) => {
-      const { leg_score: score, observed_at } = r as ScoredSignals;
-      if (typeof score !== "number" || !Number.isFinite(score)) return undefined;
-      const rel = boost ? boostedRelevance(score, observed_at ?? r.created_at, window, now) : score;
-      return anchors.length > 0 ? codeAnchorBoost(rel, hitsOf(r).weak) : rel;
-    },
+    relevance: relevanceOf,
     ...(hasStrongAnchor ? { anchorHits: strongHitsOf } : {}),
     timings,
   });
+  const ranked = await mergeHandoffSlot(rankedMain);
 
   // I33: the records as served lines (no card format exists in the product: compact JSON lines), then the raw excerpts.
   const recordLines: ServedLine[] = !rawWanted

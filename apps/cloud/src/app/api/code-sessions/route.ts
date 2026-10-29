@@ -122,7 +122,7 @@ export const POST = withRoute(
       );
     }
 
-    const { sessions, force } = parsed.data;
+    const { sessions, force, open } = parsed.data;
 
     const supabase = getCodeSessionsServiceClient();
     let imported = 0;
@@ -148,6 +148,7 @@ export const POST = withRoute(
 
     for (const session of sessions) {
       const result = await importCodeSession(supabase, userId, session, force, {
+        open,
         // Embedding runs after the response is sent, never inside the request.
         deferRawUnits: (task, sid) => after(enqueueRawUnitTask(sid, task)),
       });
@@ -187,10 +188,14 @@ export const POST = withRoute(
     // (api/internal/cron/memory-extraction) reconciles: it queues recent
     // sessions with no queue row, and finished ones whose turns grew since
     // their last extraction.
-    for (const id of await parentSessionIds(supabase, userId, importedChildParents)) {
-      if (!tailCaptureSessionIds.includes(id)) tailCaptureSessionIds.push(id);
+    // Open-session upload (Stop hook): turns and raw units are stored above, but no paid extraction is queued or
+    // triggered; the session's closing upload (SessionEnd or sweep) re-imports once and queues it as usual.
+    if (!open) {
+      for (const id of await parentSessionIds(supabase, userId, importedChildParents)) {
+        if (!tailCaptureSessionIds.includes(id)) tailCaptureSessionIds.push(id);
+      }
     }
-    if (tailCaptureSessionIds.length > 0) {
+    if (!open && tailCaptureSessionIds.length > 0) {
       let queued = 0;
       try {
         queued = await enqueueMemoryExtraction(supabase, userId, { requeue: tailCaptureSessionIds });
@@ -260,7 +265,8 @@ export const POST = withRoute(
     // sessions, and only when the server has an LLM key configured (summarize/
     // rollup fall back gracefully with no key, but there's no point starting a
     // run that will only ever hit the heuristic path).
-    if (imported > 0 && chatConfigured()) {
+    // Not for open uploads (Stop hook): summaries are LLM spend and the session is unfinished.
+    if (imported > 0 && !open && chatConfigured()) {
       synthesizeCodeDimensionForUser(userId).catch((err) => {
         rlog.error("code dimension synthesis failed", { err: err instanceof Error ? err.message : String(err) });
       });
@@ -292,6 +298,8 @@ export const POST = withRoute(
       skipped,
       total: sessions.length,
       errors,
+      // Ack for the Stop hook: a server that predates `open` strips the flag and would queue paid extraction.
+      open_supported: true,
     });
   },
 );

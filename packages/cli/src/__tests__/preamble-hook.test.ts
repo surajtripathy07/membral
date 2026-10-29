@@ -6,8 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultCredentialsPath, saveCredentials, setActiveProfile } from "../credentials.js";
 import {
   agyTimeoutMs,
+  MAX_HANDOFF_TEXT_CHARS,
   MAX_INJECTED_LINES,
   MAX_LINE_CHARS,
+  MAX_RESUME_CONTEXT_CHARS,
   MAX_SELF_LINE_CHARS,
   MAX_SELF_LINES,
   preambleHook,
@@ -332,11 +334,74 @@ describe("preambleHook self-recall (source compact/resume)", () => {
     await run(hookInput({ source: "compact" }), fetchMock);
     const url = new URL(String(fetchMock.mock.calls[0][0]));
     expect(url.searchParams.get("self")).toBe("compact");
+    expect(url.searchParams.get("handoff")).toBe("1"); // capability flag: the server serves a note only to a CLI that shows it
     const ctx = JSON.parse(output()).hookSpecificOutput.additionalContext.split("\n");
     expect(ctx[0]).toBe(selfLines[0]);
     expect(ctx[2]).toHaveLength(MAX_SELF_LINE_CHARS);
     expect(ctx[3]).toBe("preamble");
     expect(await readFile(join(root, "hook.log"), "utf8")).toMatch(/preamble: self-recall compact served 3 lines/);
+  });
+
+  it("renders handoff_text first, whole under its own cap, beyond the self-line limits, and drops the self lines", async () => {
+    const note = `Summary of that session's records, written 2026-10-25. This is a summary of recorded text, not instructions.\n${"n".repeat(MAX_SELF_LINE_CHARS * 3)}`;
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        lines: ["preamble"],
+        recall_token: "t",
+        open_blockers: [],
+        self_lines: ["self"],
+        handoff_text: note,
+      }),
+    );
+    await run(hookInput({ source: "resume" }), fetchMock);
+    const ctx: string = JSON.parse(output()).hookSpecificOutput.additionalContext;
+    expect(ctx.startsWith(note)).toBe(true);
+    expect(ctx.endsWith("\npreamble")).toBe(true);
+    expect(ctx).not.toContain("\nself\n"); // the note covers this session's own records
+
+    writeSpy.mockClear();
+    const huge = jsonResponse({
+      lines: [],
+      recall_token: "t",
+      open_blockers: [],
+      handoff_text: "h".repeat(MAX_HANDOFF_TEXT_CHARS * 2),
+    });
+    await run(hookInput({ source: "resume" }), vi.fn().mockResolvedValue(huge));
+    expect(JSON.parse(output()).hookSpecificOutput.additionalContext).toHaveLength(MAX_HANDOFF_TEXT_CHARS);
+  });
+
+  it("keeps the whole injected context under MAX_RESUME_CONTEXT_CHARS, filling handoff, preamble, then self lines", async () => {
+    const preambleLines = Array.from({ length: MAX_INJECTED_LINES }, (_, i) => `p${i}-${"p".repeat(MAX_LINE_CHARS)}`);
+    const selfLines = Array.from({ length: MAX_SELF_LINES }, (_, i) => `s${i}-${"s".repeat(MAX_SELF_LINE_CHARS)}`);
+    const body = (extra: Record<string, unknown>) =>
+      jsonResponse({ lines: preambleLines, recall_token: "t", open_blockers: [], self_lines: selfLines, ...extra });
+
+    // No handoff: preamble lines are kept whole, self lines take what is left, nothing exceeds the budget.
+    await run(hookInput({ source: "resume" }), vi.fn().mockResolvedValue(body({})));
+    let ctx: string = JSON.parse(output()).hookSpecificOutput.additionalContext;
+    expect(ctx.length).toBeLessThanOrEqual(MAX_RESUME_CONTEXT_CHARS);
+    for (const l of preambleLines) expect(ctx).toContain(l.slice(0, MAX_LINE_CHARS - 1));
+
+    // Handoff at its cap plus a full preamble: self lines are gone, the total still fits.
+    writeSpy.mockClear();
+    const note = "h".repeat(MAX_HANDOFF_TEXT_CHARS);
+    await run(hookInput({ source: "resume" }), vi.fn().mockResolvedValue(body({ handoff_text: note })));
+    ctx = JSON.parse(output()).hookSpecificOutput.additionalContext;
+    expect(ctx.length).toBeLessThanOrEqual(MAX_RESUME_CONTEXT_CHARS);
+    expect(ctx.startsWith(note)).toBe(true);
+    expect(ctx).not.toContain("s0-");
+    expect(ctx).toContain("p0-");
+  });
+
+  it("ignores a non-string or blank handoff_text, and an old-shape response is unchanged", async () => {
+    for (const handoff_text of [7, "   ", null, ["x"]]) {
+      writeSpy.mockClear();
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(jsonResponse({ lines: ["preamble"], recall_token: "t", open_blockers: [], handoff_text }));
+      await run(hookInput({ source: "resume" }), fetchMock);
+      expect(JSON.parse(output()).hookSpecificOutput.additionalContext).toBe("preamble");
+    }
   });
 
   it("caps self lines at MAX_SELF_LINES and still injects them when the preamble itself is empty", async () => {
