@@ -14,9 +14,14 @@ function tmp(): string {
   dirs.push(d);
   return d;
 }
-afterEach(() => {
+afterEach(async () => {
   delete process.env.PORT;
-  for (const k of kids.splice(0)) k.kill("SIGKILL");
+  const exits: Promise<unknown>[] = [];
+  for (const k of kids.splice(0)) {
+    if (k.exitCode === null && k.signalCode === null) exits.push(new Promise((r) => k.once("exit", r)));
+    k.kill("SIGKILL");
+  }
+  await Promise.all(exits);
   for (const s of servers.splice(0)) s.close();
   for (const d of dirs.splice(0)) fs.rmSync(d, { recursive: true, force: true });
 });
