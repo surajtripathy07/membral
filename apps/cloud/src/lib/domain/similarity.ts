@@ -100,6 +100,21 @@ export const CALIBRATED_FAMILY_THRESHOLDS: Readonly<Record<string, Readonly<Reco
 };
 
 /**
+ * Chat search (`mcp_search_unified`, `search_conversations`; migration 139): the floors of the families whose vectors
+ * may meet a chat query. Separate from CALIBRATED_FAMILY_THRESHOLDS because chat has its own labelled set and a
+ * family can be calibrated for memories and not for chats: the bundled ONNX family is deliberately absent, so chat
+ * search stays keyword-only on it. The default family is not listed; it keeps the RPCs' own 0.3 cut.
+ * nomic-embed-text: 310 labelled chat hits (0.68 / 0.63 / 0.55 gives precision 0.66, recall 0.90, 0 of 6 negative
+ * queries served). Chat search reads `sem_floor` as the RPC cut; `mixed_sem_floor` and `sql_cut` are recorded with the
+ * measurement but unread (see `chatVectorPlan`).
+ */
+export const CHAT_FAMILY_THRESHOLDS: Readonly<
+  Record<string, Readonly<{ sem_floor: number; mixed_sem_floor: number; sql_cut: number }>>
+> = {
+  "nomic-embed-text": { sem_floor: 0.68, mixed_sem_floor: 0.63, sql_cut: 0.55 },
+};
+
+/**
  * L5 abstention floor: the fewest query lexemes a record must contain to be served on lexical evidence alone (the
  * floor's coverage rules (b) and (c); the cosine rule (a) is unaffected). A short query matched on two or three of its
  * words is the commonest way an off-topic query still serves ("decide ... queue" for a question about a tool the

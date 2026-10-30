@@ -23,8 +23,8 @@ import {
   EMBEDDING_FAMILY_KEYWORD_ONLY_MESSAGE,
   EMBEDDINGS_NOT_CONFIGURED_MESSAGE,
   embeddingsConfigured,
-  queryVectorsAllowed,
 } from "@/lib/llm/embedding-client";
+import { chatVectorPlan } from "@/lib/llm/embedding-family";
 import { log } from "@/lib/log";
 
 export class UnknownScopeError extends Error {
@@ -49,6 +49,8 @@ interface EmbedQueryResult {
   vector: string | null;
   /** Set (non-null) whenever `vector` is null — the exact string a call site should put in its own `degraded` field, distinguishing "ceiling exceeded" from "feature not enabled" for the caller, not just the server log. */
   degradedMessage: string | null;
+  /** mcp_search_unified's family args for this query's vector (migration 139); empty for the default family and when `vector` is null. */
+  familyArgs: { p_embedding_model?: string; p_min_similarity?: number };
 }
 
 /**
@@ -68,17 +70,22 @@ interface EmbedQueryResult {
 async function embedQuery(userId: string, text: string): Promise<EmbedQueryResult> {
   // W7 D3: no embedding key at all (explicit config check, never a catch-all)
   // -> keyword-only, not a "Missing OPENAI_API_KEY" tool error.
-  if (!embeddingsConfigured()) return { vector: null, degradedMessage: EMBEDDINGS_NOT_CONFIGURED_MESSAGE };
-  // D-072: mcp_search_unified has no family filter and a 0.3 cut calibrated for
-  // the default model, so another family runs keyword-only (no embed call).
-  if (!queryVectorsAllowed()) return { vector: null, degradedMessage: EMBEDDING_FAMILY_KEYWORD_ONLY_MESSAGE };
+  if (!embeddingsConfigured()) {
+    return { vector: null, degradedMessage: EMBEDDINGS_NOT_CONFIGURED_MESSAGE, familyArgs: {} };
+  }
+  // D-072 / migration 139: the default family and a family with chat floors (CHAT_FAMILY_THRESHOLDS) send a
+  // vector, the latter with its family filter and cut; any other family runs keyword-only (no embed call).
+  const plan = chatVectorPlan();
+  if (!plan.allowed) {
+    return { vector: null, degradedMessage: EMBEDDING_FAMILY_KEYWORD_ONLY_MESSAGE, familyArgs: {} };
+  }
   try {
     // Query-time embed: skip the monthly-ceiling preflight (skipCeiling — see
     // embeddings.ts's doc comment). A search query costs ~$0.000003 to embed;
     // blocking it once the ceiling (meant for bulk ingest spend) is hit
     // degrades this whole tool to keyword-only for nothing saved.
     const vec = await generateEmbedding(text, { userId, pass: "query_embedding", skipCeiling: true });
-    return { vector: `[${vec.join(",")}]`, degradedMessage: null };
+    return { vector: `[${vec.join(",")}]`, degradedMessage: null, familyArgs: plan.rpcArgs };
   } catch (err) {
     if (err instanceof EmbeddingCeilingExceededError) {
       log.warn("mcp embedQuery degraded: monthly embedding cost ceiling exceeded", {
@@ -86,14 +93,14 @@ async function embedQuery(userId: string, text: string): Promise<EmbedQueryResul
         spent_usd: err.spentUsd,
         ceiling_usd: err.ceilingUsd,
       });
-      return { vector: null, degradedMessage: EMBEDDING_DEGRADED_MESSAGE };
+      return { vector: null, degradedMessage: EMBEDDING_DEGRADED_MESSAGE, familyArgs: {} };
     }
     if (err instanceof FeatureDisabledError) {
       log.warn("mcp embedQuery degraded: embeddings feature not enabled/exhausted for this user", {
         user_id: userId,
         detail: err.reason,
       });
-      return { vector: null, degradedMessage: EMBEDDING_FEATURE_DISABLED_MESSAGE };
+      return { vector: null, degradedMessage: EMBEDDING_FEATURE_DISABLED_MESSAGE, familyArgs: {} };
     }
     throw err;
   }
@@ -418,7 +425,7 @@ export async function searchConversationsScoped(
   // similarity half of that OR evaluate to null (never true), so the RPC
   // degrades to FTS-only on its own with no extra branching needed here (the
   // code leg was always FTS-only — unaffected).
-  const { vector: embedding, degradedMessage } = await embedQuery(userId, query);
+  const { vector: embedding, degradedMessage, familyArgs } = await embedQuery(userId, query);
   const wanted = clampLimit(limit, 10);
   const { data, error } = await supabase.rpc("mcp_search_unified", {
     p_user_id: userId,
@@ -430,6 +437,7 @@ export async function searchConversationsScoped(
     p_scope_id: scopeId,
     p_include_code: includeCode,
     p_since: since,
+    ...familyArgs,
   });
   if (error) throw new Error(`mcp_search_unified failed: ${error.message}`);
   const mapped = ((data ?? []) as RawUnifiedRow[]).map(toUnifiedResult);
