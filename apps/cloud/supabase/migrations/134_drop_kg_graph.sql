@@ -45,6 +45,9 @@
 -- (mcp_recent_conversations) and 063/064's project_alias_seed.
 -- ============================================================
 
+-- Hosted Supabase keeps pgvector in `extensions`; the `vector` in signatures below resolves on this search_path.
+set search_path = public, extensions;
+
 -- ---- 1. rewrite the readers that survive ----
 
 CREATE OR REPLACE FUNCTION public.mcp_search_unified(p_user_id uuid, p_query text, p_query_embedding vector DEFAULT NULL::vector, p_limit integer DEFAULT 20, p_scope_id uuid DEFAULT NULL::uuid, p_include_code boolean DEFAULT false, p_since timestamp with time zone DEFAULT NULL::timestamp with time zone)

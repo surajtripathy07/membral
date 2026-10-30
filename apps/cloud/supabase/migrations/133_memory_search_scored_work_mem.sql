@@ -15,6 +15,8 @@
 --
 -- Settings only: the body (migration 128) is unchanged. Undo with
 --   alter function ... reset work_mem;
+-- Hosted Supabase keeps pgvector in `extensions`; the `vector` in the signature resolves on this search_path.
+set search_path = public, extensions;
 alter function public.memory_search_scored(
   uuid, text, vector, uuid, text[], text, text, boolean, integer, timestamptz, text, double precision
 ) set work_mem = '16MB';
