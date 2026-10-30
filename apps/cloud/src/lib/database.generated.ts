@@ -2388,8 +2388,10 @@ export type Database = {
       }
       mcp_search_unified: {
         Args: {
+          p_embedding_model?: string
           p_include_code?: boolean
           p_limit?: number
+          p_min_similarity?: number
           p_query: string
           p_query_embedding?: string
           p_scope_id?: string
@@ -2763,7 +2765,9 @@ export type Database = {
       search_conversations: {
         Args: {
           match_count?: number
+          p_embedding_model?: string
           p_lane?: string
+          p_min_similarity?: number
           query_embedding: string
           query_text: string
           search_user_id?: string

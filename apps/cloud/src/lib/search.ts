@@ -1,6 +1,6 @@
 import { getServiceClient } from "@/lib/db/clients";
 import { generateEmbedding } from "@/lib/embeddings";
-import { queryVectorsAllowed } from "@/lib/llm/embedding-client";
+import { chatVectorPlan } from "@/lib/llm/embedding-family";
 
 /**
  * ADR 0039 (W6/D7 follow-up) — 'chat' excludes source='claude-code'
@@ -58,6 +58,7 @@ async function callSearchRpc(
   embeddingStr: string | null,
   limit: number,
   lane: SearchLane,
+  familyArgs: { p_embedding_model?: string; p_min_similarity?: number } = {},
 ): Promise<SearchResult[]> {
   const { data, error } = await supabase.rpc("search_conversations", {
     query_text: query,
@@ -65,6 +66,7 @@ async function callSearchRpc(
     match_count: limit,
     search_user_id: userId,
     p_lane: lane,
+    ...familyArgs,
   });
 
   if (error) {
@@ -113,9 +115,10 @@ export async function searchConversations(userId: string, options: SearchOptions
   if (mode === "keyword") {
     return keywordSearch(supabase, userId, query, limit, lane);
   }
-  // D-072: the search RPC has no family filter and a 0.3 cut calibrated for the
-  // default embedding model, so another family runs keyword-only.
-  if (!queryVectorsAllowed()) {
+  // D-072 / migration 139: the default family and a family with chat floors use the vector leg
+  // (the latter with its family filter and cut); any other family runs keyword-only.
+  const plan = chatVectorPlan();
+  if (!plan.allowed) {
     return keywordSearch(supabase, userId, query, limit, lane);
   }
 
@@ -135,7 +138,15 @@ export async function searchConversations(userId: string, options: SearchOptions
   const embeddingStr = `[${embedding.join(",")}]`;
 
   try {
-    return await callSearchRpc(supabase, userId, mode === "semantic" ? "" : query, embeddingStr, limit, lane);
+    return await callSearchRpc(
+      supabase,
+      userId,
+      mode === "semantic" ? "" : query,
+      embeddingStr,
+      limit,
+      lane,
+      plan.rpcArgs,
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn(`[search] vector RPC failed (${msg}); falling back to keyword search`);

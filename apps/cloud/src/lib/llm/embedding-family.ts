@@ -25,6 +25,7 @@
 import type { Db } from "@/lib/db/types";
 import {
   CALIBRATED_FAMILY_THRESHOLDS,
+  CHAT_FAMILY_THRESHOLDS,
   DEFAULT_FAMILY_THRESHOLDS,
   LEXICAL_MIN_HITS,
   type VectorStep,
@@ -145,6 +146,33 @@ export function vectorThreshold(step: VectorStep, family: string = currentEmbedd
   const value = CALIBRATED_FAMILY_THRESHOLDS[canonicalEmbeddingFamily(family)]?.[step] ?? null;
   if (value === null) logOnce(step, family);
   return value;
+}
+
+/**
+ * Whether chat search (`mcp_search_unified`, `search_conversations`) may send a query vector for `family`, and the
+ * RPC args that go with it (migration 139).
+ * - default family: allowed, no args (the RPCs' own family and 0.3 cut, as before 139).
+ * - a family with a CHAT_FAMILY_THRESHOLDS row: allowed, `p_embedding_model` plus `p_min_similarity`.
+ * - any other family: not allowed; the caller runs keyword-only and says so.
+ *
+ * `p_min_similarity` is the row's `sem_floor`, not `sql_cut`: neither RPC returns which hits matched by keyword, so a
+ * TS floor after the RPC would drop keyword hits with a low cosine. In SQL the cut applies only to rows that enter
+ * through a vector leg (a keyword hit enters through the full-text predicate whatever its cosine), which is exactly
+ * "sem_floor for vector-only hits". `mixed_sem_floor` has no role: both RPCs use an AND of every query lexeme, so a
+ * row with any keyword evidence matches all of them and needs no cosine.
+ */
+export type ChatVectorPlan =
+  | { allowed: false }
+  | { allowed: true; rpcArgs: { p_embedding_model?: string; p_min_similarity?: number } };
+
+export function chatVectorPlan(family: string = currentEmbeddingFamily()): ChatVectorPlan {
+  if (isDefaultEmbeddingFamily(family)) return { allowed: true, rpcArgs: {} };
+  const row = CHAT_FAMILY_THRESHOLDS[canonicalEmbeddingFamily(family)];
+  if (!row) return { allowed: false };
+  return {
+    allowed: true,
+    rpcArgs: { p_embedding_model: canonicalEmbeddingFamily(family), p_min_similarity: row.sem_floor },
+  };
 }
 
 /**

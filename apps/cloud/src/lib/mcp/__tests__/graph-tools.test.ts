@@ -22,13 +22,14 @@ vi.mock("@/lib/embeddings", () => {
   };
 });
 
+// NOT mocked in this file — graph-tools.ts's `instanceof FeatureDisabledError`
+// check is testing against the real class, since @/lib/feature-flags isn't
+// touched by any vi.mock here.
+import { BUNDLED_EMBEDDING_MODEL } from "@/lib/domain/embedding-model-ids";
 // Import the (mocked) error class back from the module — same class
 // graph-tools.ts's `instanceof` check is testing against, since vi.mock
 // intercepts every import of this path, including this one.
 import { EmbeddingCeilingExceededError as FakeEmbeddingCeilingExceededError } from "@/lib/embeddings";
-// NOT mocked in this file — graph-tools.ts's `instanceof FeatureDisabledError`
-// check is testing against the real class, since @/lib/feature-flags isn't
-// touched by any vi.mock here.
 import { FeatureDisabledError } from "@/lib/feature-flags";
 import {
   getScopedConversation,
@@ -495,6 +496,14 @@ describe("query-time embedding", () => {
       expect.objectContaining({ p_query_embedding: "[0.1,0.2,0.3]" }),
     );
   });
+
+  it("default family: sends neither p_embedding_model nor p_min_similarity (migration 139 params stay unset)", async () => {
+    const supabase = makeSupabase();
+    await searchConversationsScoped(supabase, "user-1", "rockets and Mars", undefined, 5);
+    const args = vi.mocked(supabase.rpc).mock.calls[0][1] as Record<string, unknown>;
+    expect(args).not.toHaveProperty("p_embedding_model");
+    expect(args).not.toHaveProperty("p_min_similarity");
+  });
 });
 
 describe("issue #92 — monthly cost ceiling degrades tool calls instead of failing them", () => {
@@ -530,18 +539,37 @@ describe("issue #92 — monthly cost ceiling degrades tool calls instead of fail
   });
 });
 
-describe("D-072 — a non-default embedding family searches keyword-only", () => {
+describe("D-072 / migration 139 — chat search by embedding family", () => {
   afterEach(() => vi.unstubAllEnvs());
-  it("searchConversationsScoped sends a null query vector, never embeds, and flags degraded", async () => {
+
+  it("nomic-embed-text (chat floors measured): embeds and sends its family and sem_floor as the cut", async () => {
     vi.stubEnv("MEMBRAL_EMBEDDING_MODEL", "nomic-embed-text");
+    mockGenerateEmbedding.mockReset();
+    mockGenerateEmbedding.mockResolvedValue([0.1, 0.2, 0.3]);
+    const supabase = makeSupabase();
+    const result = await searchConversationsScoped(supabase, "user-1", "hooks", undefined, 10);
+    expect(mockGenerateEmbedding).toHaveBeenCalledTimes(1);
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "mcp_search_unified",
+      expect.objectContaining({
+        p_query_embedding: "[0.1,0.2,0.3]",
+        p_embedding_model: "nomic-embed-text",
+        p_min_similarity: 0.68,
+      }),
+    );
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it("an uncalibrated family (bundled ONNX): sends a null query vector, never embeds, and flags degraded", async () => {
+    vi.stubEnv("MEMBRAL_EMBEDDING_MODEL", BUNDLED_EMBEDDING_MODEL);
     mockGenerateEmbedding.mockReset();
     const supabase = makeSupabase();
     const result = await searchConversationsScoped(supabase, "user-1", "hooks", undefined, 10);
     expect(mockGenerateEmbedding).not.toHaveBeenCalled();
-    expect(supabase.rpc).toHaveBeenCalledWith(
-      "mcp_search_unified",
-      expect.objectContaining({ p_query_embedding: null }),
-    );
+    const args = vi.mocked(supabase.rpc).mock.calls[0][1] as Record<string, unknown>;
+    expect(args.p_query_embedding).toBeNull();
+    expect(args).not.toHaveProperty("p_embedding_model");
+    expect(args).not.toHaveProperty("p_min_similarity");
     if (Array.isArray(result)) throw new Error("expected the degraded shape");
     expect(result.degraded).toMatch(/local embedding model/);
   });
