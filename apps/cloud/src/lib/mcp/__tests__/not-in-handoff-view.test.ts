@@ -3,7 +3,13 @@
 import { createFakeDb, type Row } from "@membral/test-kit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fitHandoffText } from "@/lib/memory/session-handoff-serve";
-import { HANDOFF_LABEL, handoffViewBudget, loadNotInHandoffSection, UNCOVERED_LABEL } from "../not-in-handoff-view";
+import {
+  HANDOFF_LABEL,
+  handoffViewBudget,
+  loadLiveHandoffBlock,
+  loadNotInHandoffSection,
+  UNCOVERED_LABEL,
+} from "../not-in-handoff-view";
 
 const USER = "u1";
 const SESSION = "s1";
@@ -117,5 +123,34 @@ describe("get_code_session: handoff block and uncovered_records", () => {
   it("budget never exceeds 6000 and is half of max_chars below that", () => {
     expect(handoffViewBudget(1_000_000)).toBe(6000);
     expect(handoffViewBudget(2000)).toBe(1000);
+  });
+});
+
+describe("loadLiveHandoffBlock (session_summary's handoff field)", () => {
+  it("flag on + live note: the same block get_code_session serves, without the uncovered list", async () => {
+    vi.stubEnv("MEMBRAL_HANDOFF_SYNTHESIS", "1");
+    const db = dbOf([note, row("miss", { covered_by_handoff: false })]);
+    const block = await loadLiveHandoffBlock(db.client, USER, SESSION);
+    const section = await loadNotInHandoffSection(db.client, USER, SESSION);
+    expect(block).toEqual(section?.handoff);
+    expect(block?.text.startsWith("<handoff>\n")).toBe(true);
+  });
+
+  it("flag off, no note, retired note or another session: null", async () => {
+    const db = dbOf([note]);
+    expect(await loadLiveHandoffBlock(db.client, USER, SESSION)).toBeNull();
+    vi.stubEnv("MEMBRAL_HANDOFF_SYNTHESIS", "1");
+    expect(await loadLiveHandoffBlock(dbOf([]).client, USER, SESSION)).toBeNull();
+    expect(
+      await loadLiveHandoffBlock(dbOf([{ ...note, retired_at: "2026-10-01T00:00:00Z" }]).client, USER, SESSION),
+    ).toBeNull();
+    expect(await loadLiveHandoffBlock(db.client, USER, "other")).toBeNull();
+  });
+
+  it("is capped at the budget and says so", async () => {
+    vi.stubEnv("MEMBRAL_HANDOFF_SYNTHESIS", "1");
+    const out = await loadLiveHandoffBlock(dbOf([{ ...note, text: "n".repeat(9000) }]).client, USER, SESSION, 1000);
+    expect(out?.text.length).toBeLessThanOrEqual(1000);
+    expect(out?.truncated).toBe(true);
   });
 });

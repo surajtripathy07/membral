@@ -16,6 +16,7 @@ import {
   AmbiguousProjectError,
   boostedRelevance,
   envMinSimilarity,
+  HANDOFF_NOT_SEARCHABLE_REASON,
   matchProjectsByShortName,
   memorySearch,
   passesRelevanceFloor,
@@ -710,6 +711,24 @@ describe("memorySearch embedding family (migration 118, D-072)", () => {
       return memorySearch(supabase, USER, null, { query: "cache key", ...args }, { now: NOW, floor: true });
     };
 
+    it("off: kind handoff alone serves nothing and says where notes are read, with no search at all", async () => {
+      const result = await run([atomic("a", 0.9), note()], { kind: "handoff" });
+      expect(rpcCalls).toHaveLength(0);
+      expect(result.records).toEqual([]);
+      expect(result.served).toEqual([]);
+      expect(result.reason).toBe(HANDOFF_NOT_SEARCHABLE_REASON);
+      expect(result.reason).toMatch(/session_summary/);
+      expect(result.reason).toMatch(/get_code_session/);
+    });
+
+    it("off: kind handoff plus another kind still searches the other kinds, handoff dropped", async () => {
+      const result = await run([atomic("a", 0.9)], { kind: ["handoff", "decision"] });
+      expect(rpcCalls).toHaveLength(1);
+      expect(rpcCalls[0]?.p_kinds).toEqual(["decision"]);
+      expect(result.records.map((r) => r.id)).toEqual(["a"]);
+      expect(result.reason).toBeUndefined();
+    });
+
     it("on: the main read excludes handoff, a second read asks for handoff only", async () => {
       vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
       await run([atomic("a", 0.8)]);
@@ -774,16 +793,17 @@ describe("memorySearch embedding family (migration 118, D-072)", () => {
       expect(result.records.map((r) => r.id)).toEqual(["a"]);
     });
 
-    it("search off: an explicit kind:handoff is not honoured (falls back to the default kinds, no notes)", async () => {
+    it("search off: an explicit kind:handoff with other kinds drops handoff and keeps the rest; handoff alone gets the reason", async () => {
       vi.stubEnv("MEMBRAL_HANDOFF_SYNTHESIS", "1");
-      const r = await run([atomic("a", 0.9), note()], { kind: "handoff" });
+      const r = await run([atomic("a", 0.9), note()], { kind: ["handoff", "decision"] });
       expect(rpcCalls).toHaveLength(1);
-      expect(rpcCalls[0]?.p_kinds).not.toContain("handoff");
+      expect(rpcCalls[0]?.p_kinds).toEqual(["decision"]);
       expect(r.records.map((x) => x.id)).toEqual(["a"]);
       rpcCalls.length = 0;
-      vi.unstubAllEnvs();
-      await run([atomic("a", 0.9)], { kind: "handoff" }); // both flags off: no filter at all
-      expect(rpcCalls[0]?.p_kinds).toBeNull();
+      const alone = await run([atomic("a", 0.9), note()], { kind: "handoff" });
+      expect(rpcCalls).toHaveLength(0);
+      expect(alone.records).toEqual([]);
+      expect(alone.reason).toBe(HANDOFF_NOT_SEARCHABLE_REASON);
     });
 
     it("on: an explicit kind is unchanged (one read, exactly that kind); explicit handoff reads notes only", async () => {

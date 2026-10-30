@@ -1,7 +1,10 @@
 // Code-session id resolution for the MCP session tools (get_code_session,
 // session_summary). Agents copy the 8-char short id a prompt-recall line or
 // the preamble shows (`session abcd1234`), so a unique prefix of at least
-// SESSION_ID_PREFIX_MIN hex chars resolves to the full id.
+// SESSION_ID_PREFIX_MIN hex chars resolves to the full id. The prefix may be of
+// the Membral id (code_sessions.id) or of the harness's own session id
+// (code_sessions.source_session_id, what Claude Code's hooks and transcript
+// file names show); the Membral id wins when both match.
 //
 // The lookup is user-scoped (and project-scoped for a code-scoped key): a
 // prefix never matches another user's session, and an out-of-scope match is
@@ -24,6 +27,24 @@ export type SessionIdResolution =
 
 function asUuid(hex32: string): string {
   return `${hex32.slice(0, 8)}-${hex32.slice(8, 12)}-${hex32.slice(12, 16)}-${hex32.slice(16, 20)}-${hex32.slice(20)}`;
+}
+
+/**
+ * Sessions whose harness id starts with `hex` (a hex-and-dash prefix, so it holds no LIKE wildcard). A main session's
+ * sub-agents carry `<main id>:agent-...`, so the main sessions are tried first: the prefix of a main session's id is
+ * then not ambiguous with its own sub-agents.
+ */
+async function bySourceIdPrefix(db: Db, userId: string, hex: string, codeScopeId: string | null): Promise<string[]> {
+  for (const mainOnly of [true, false]) {
+    let query = db.from("code_sessions").select("id").eq("user_id", userId).like("source_session_id", `${hex}%`);
+    if (mainOnly) query = query.is("parent_source_session_id", null);
+    if (codeScopeId) query = query.eq("code_project_id", codeScopeId);
+    const { data, error } = await query.order("id", { ascending: true }).limit(2);
+    if (error) throw new Error(`code session id lookup failed: ${error.message}`);
+    const ids = ((data ?? []) as { id: string }[]).map((r) => r.id);
+    if (ids.length > 0) return ids;
+  }
+  return [];
 }
 
 /**
@@ -53,7 +74,8 @@ export async function resolveSessionId(
   if (codeScopeId) query = query.eq("code_project_id", codeScopeId);
   const { data, error } = await query.order("id", { ascending: true }).limit(2);
   if (error) throw new Error(`code session id lookup failed: ${error.message}`);
-  const ids = ((data ?? []) as { id: string }[]).map((r) => r.id);
+  let ids = ((data ?? []) as { id: string }[]).map((r) => r.id);
+  if (ids.length === 0) ids = await bySourceIdPrefix(db, userId, hex, codeScopeId);
   if (ids.length === 0) return { ok: false, reason: "not_found" };
   if (ids.length === 1) return { ok: true, id: ids[0] };
   // 13 chars = 12 hex digits plus the dash; longer when the two still match there, up to their first difference.

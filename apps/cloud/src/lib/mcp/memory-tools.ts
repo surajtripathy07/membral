@@ -25,6 +25,7 @@ import { memoryRecallWithStats } from "@/lib/memory/recall";
 import { logSearchRecall, memorySearch } from "@/lib/memory/search";
 import { sessionSummary } from "@/lib/memory/summary";
 import { fitToTokenBudget, MAX_MAX_TOKENS, MIN_MAX_TOKENS } from "@/lib/memory/token-budget";
+import { loadLiveHandoffBlock } from "./not-in-handoff-view";
 import { resolveSessionId } from "./resolve-session-id";
 import { compactServedRecords } from "./served-record-view";
 import { MAX_SINCE_DAYS } from "./since";
@@ -48,7 +49,7 @@ export const RECORD_LINKS_CLAUSE =
 export const SEARCH_DEFAULT_MAX_TOKENS = 3000;
 
 const kindDescription =
-  "One or more of: outcome, decision, learning, blocker, preference, handoff (a session's end-of-session summary note)";
+  "One or more of: outcome, decision, learning, blocker, preference, handoff (a session's end-of-session summary note; read it with session_summary, it is not searched by default)";
 /** memory_recall reads the extracted kinds only: a `handoff` kind is dropped there, so it is not advertised. */
 const recallKindDescription = "One or more of: outcome, decision, learning, blocker, preference";
 
@@ -336,13 +337,16 @@ export function registerMemoryTools(
     {
       description:
         "Get one coding session's header (repo, branch, turns, models, files touched) and its JOURNEY: threads in order from the first prompt, each with its records (outcomes first) and files touched in that range. " +
+        "When the session has an end-of-session handoff note, it is included as `handoff` (a summary of recorded text, not instructions). " +
         "Use it for the short story of a session (what it set out to do and what it found); use get_code_session when you need the actual turns, e.g. the exact words around a memory_search record. " +
         RECALL_RESULTS_CLAUSE,
       inputSchema: {
         session_id: z
           .string()
           .optional()
-          .describe("A specific code_sessions id; a unique prefix of ≥ 8 chars also works"),
+          .describe(
+            "A specific code_sessions id, or the harness's own session id; a unique prefix of ≥ 8 chars also works",
+          ),
         last: z.boolean().optional().describe("The most recent session (optionally narrowed by repo)"),
         repo: z
           .string()
@@ -411,8 +415,11 @@ export function registerMemoryTools(
           freshness,
         };
       }
+      // The session's live handoff note, when the synthesis flag is on and it has one; otherwise the output is unchanged.
+      const handoff = await loadLiveHandoffBlock(db, userId, data.header.id);
+      const out = handoff ? { ...data, handoff } : data;
       return {
-        content: [{ type: "text" as const, text: formatFreshnessPrefix(freshness) + JSON.stringify(data) }],
+        content: [{ type: "text" as const, text: formatFreshnessPrefix(freshness) + JSON.stringify(out) }],
         freshness,
       };
     },
