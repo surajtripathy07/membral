@@ -73,6 +73,16 @@ describe("computeForgeRefs", () => {
     ]);
   });
 
+  it("skips a ref whose turn has no usable time when the session has no start either (observed_at is NOT NULL, #585)", () => {
+    const action = { verb: "viewed", source: "cli", ref: "!9", refKind: "merge_request", state: "opened" };
+    const rows = computeForgeRefs([turn(3, [action], { ts: null }), turn(4, [action])], {
+      projectIdentity: PROJECT,
+      projectIdentities: [PROJECT],
+      startedAt: null,
+    });
+    expect(rows.map((r) => r.turn_idx)).toEqual([4]);
+  });
+
   it("takes no title or state from an MCP list tool, nor a state implied by an MCP verb", () => {
     const listed = {
       verb: "viewed",
