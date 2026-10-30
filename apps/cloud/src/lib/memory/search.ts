@@ -325,6 +325,13 @@ function normalizeKinds(kind: string | string[] | undefined): (MemoryKind | type
   return handoffFeatureEnabled() ? [...MEMORY_KINDS] : null;
 }
 
+/**
+ * Why an explicit `kind: "handoff"` search serves nothing while MEMBRAL_HANDOFF_SEARCH is off: notes are not searchable
+ * then, and silently searching the other kinds (what normalizeKinds' default does) would answer a different question.
+ */
+export const HANDOFF_NOT_SEARCHABLE_REASON =
+  "Handoff notes are not searchable here. Read a session's note with session_summary (session_id) or get_code_session (id, no turn): both carry it as `handoff`. Find the session first with list_recent_conversations.";
+
 /** Candidate pool for the reserved handoff slot: only the top note is served, so a few suffice. */
 const HANDOFF_SLOT_POOL = 5;
 
@@ -651,6 +658,16 @@ export async function memorySearch(
   const query = args.query?.trim();
   if (!query) throw new Error("memory_search: query is required");
   const now = opts.now ?? new Date();
+
+  // Handoff named and nothing else searchable: say where the notes are read instead of searching other kinds.
+  const askedKinds = args.kind ? [args.kind].flat() : [];
+  if (
+    askedKinds.includes(HANDOFF_KIND) &&
+    !handoffSearchEnabled() &&
+    !askedKinds.some((k) => (MEMORY_KINDS as readonly string[]).includes(k))
+  ) {
+    return { records: [], served: [], reason: HANDOFF_NOT_SEARCHABLE_REASON };
+  }
 
   const limit = clampLimit(args.limit);
   // Explicit since/days is a hard filter; a bad value throws a message the tool layer returns as isError.

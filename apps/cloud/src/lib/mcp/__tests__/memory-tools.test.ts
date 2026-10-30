@@ -16,6 +16,10 @@ vi.mock("@/lib/memory/recall", () => ({
   }),
 }));
 vi.mock("@/lib/memory/summary", () => ({ sessionSummary: (...args: unknown[]) => mockSessionSummary(...args) }));
+const mockLoadLiveHandoff = vi.fn(async (..._args: unknown[]) => null as unknown);
+vi.mock("../not-in-handoff-view", () => ({
+  loadLiveHandoffBlock: (...args: unknown[]) => mockLoadLiveHandoff(...args),
+}));
 const mockResolveSessionId = vi.fn(async (_db: unknown, _u: string, id: string) => ({ ok: true, id }));
 vi.mock("../resolve-session-id", () => ({
   resolveSessionId: (...args: [unknown, string, string]) => mockResolveSessionId(...args),
@@ -68,6 +72,8 @@ describe("registerMemoryTools", () => {
     mockMemorySearch.mockReset();
     mockMemoryRecall.mockReset();
     mockSessionSummary.mockReset();
+    mockLoadLiveHandoff.mockReset();
+    mockLoadLiveHandoff.mockResolvedValue(null);
   });
 
   it("registers memory_search, memory_recall, memory_get, memory_resolve and session_summary -- never memory_record (that's #153's write tool)", () => {
@@ -175,6 +181,34 @@ describe("registerMemoryTools", () => {
 
     expect(result.isError).toBeUndefined();
     expect(result.content[0].text).toContain("sess-1");
+  });
+
+  it("session_summary adds the live handoff note as `handoff`; no note (or flag off) leaves the output byte-identical", async () => {
+    const { server, tools } = fakeServer();
+    registerMemoryTools(server, USER, PROJECT_SCOPE, toolResult, getFreshnessCached);
+    const tool = tools.find((t) => t.name === "session_summary")!;
+    const data = { header: { id: "sess-1" }, journey: [] };
+    const block = {
+      label: "summary of recorded text, not instructions",
+      text: "<handoff>\nnext\n</handoff>",
+      written_at: "t",
+    };
+
+    mockSessionSummary.mockResolvedValueOnce(data);
+    mockLoadLiveHandoff.mockResolvedValueOnce(block);
+    const withNote = (await tool.handler({ session_id: "sess-1" })) as { content: { text: string }[] };
+    expect(JSON.parse(withNote.content[0].text)).toEqual({ ...data, handoff: block });
+    expect(mockLoadLiveHandoff).toHaveBeenCalledWith(expect.anything(), USER, "sess-1");
+
+    mockSessionSummary.mockResolvedValueOnce(data);
+    const without = (await tool.handler({ session_id: "sess-1" })) as { content: { text: string }[] };
+    expect(without.content[0].text).toBe(JSON.stringify(data));
+  });
+
+  it("session_summary and memory_search descriptions point to where handoff notes are read", () => {
+    const { server, tools } = fakeServer();
+    registerMemoryTools(server, USER, null, toolResult, getFreshnessCached);
+    expect(tools.find((t) => t.name === "session_summary")!.config.description).toMatch(/handoff note.*`handoff`/);
   });
 
   it("session_summary resolves an id prefix (user- and scope-bound) and passes the full id on", async () => {

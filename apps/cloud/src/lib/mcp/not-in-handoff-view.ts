@@ -41,6 +41,61 @@ const oneLine = (s: string, max: number): string => {
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 };
 
+type LiveNote = { id: string; text: string; turn_idx: number | null; created_at: string };
+
+/** The session's live handoff note row: null when it has none, undefined when the read failed. */
+async function readLiveNote(db: Db, userId: string, sessionId: string): Promise<LiveNote | null | undefined> {
+  const live = await db
+    .from("session_memories")
+    .select("id, text, turn_idx, created_at")
+    .eq("user_id", userId)
+    .eq("code_session_id", sessionId)
+    .eq("kind", "handoff")
+    .is("retired_at", null)
+    .limit(1);
+  if (live.error) return undefined;
+  return (live.data as LiveNote[] | null)?.[0] ?? null;
+}
+
+/**
+ * The note as served: same <handoff> delimiters, header and cut pointer as the preamble/prompt-hook serve
+ * (session-handoff-serve.ts), so a stored note cannot pass as part of the surrounding tool output, nor the reverse.
+ */
+function handoffBlock(note: LiveNote, budget: number): NonNullable<NotInHandoffSection["handoff"]> {
+  const fit = fitHandoffText(note.text, note.id, note.created_at, budget);
+  const handoff: NonNullable<NotInHandoffSection["handoff"]> = {
+    label: HANDOFF_LABEL,
+    text: fit.text,
+    written_at: note.created_at,
+  };
+  if (fit.truncated) handoff.truncated = true;
+  if (typeof note.turn_idx === "number") handoff.turn_idx = note.turn_idx;
+  return handoff;
+}
+
+/**
+ * Just the live note block for `sessionId` (session_summary's `handoff` field), or null, never throwing, when the
+ * synthesis flag is off, the session has no live note, or the read fails. Capped like get_code_session's block.
+ */
+export async function loadLiveHandoffBlock(
+  db: Db,
+  userId: string,
+  sessionId: string,
+  budgetChars: number = HANDOFF_VIEW_MAX_CHARS,
+): Promise<NonNullable<NotInHandoffSection["handoff"]> | null> {
+  if (!handoffSynthesisEnabled()) return null;
+  try {
+    const note = await readLiveNote(db, userId, sessionId);
+    return note ? handoffBlock(note, Math.max(0, Math.min(budgetChars, HANDOFF_VIEW_MAX_CHARS))) : null;
+  } catch (err) {
+    log.warn("mcp: live handoff block failed", {
+      session_id: sessionId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
 /** The section for `sessionId`, or null (and never throws) when there is nothing to show. */
 export async function loadNotInHandoffSection(
   db: Db,
@@ -50,32 +105,13 @@ export async function loadNotInHandoffSection(
 ): Promise<NotInHandoffSection | null> {
   if (!handoffSynthesisEnabled()) return null;
   try {
-    const live = await db
-      .from("session_memories")
-      .select("id, text, turn_idx, created_at")
-      .eq("user_id", userId)
-      .eq("code_session_id", sessionId)
-      .eq("kind", "handoff")
-      .is("retired_at", null)
-      .limit(1);
-    if (live.error) return null;
-    const note = (
-      live.data as Array<{ id: string; text: string; turn_idx: number | null; created_at: string }> | null
-    )?.[0];
+    const note = await readLiveNote(db, userId, sessionId);
+    if (note === undefined) return null;
     if (!note) return { handoff: null };
     // The block and the listed records share one budget; the note is capped first, the records take what is left.
     const budget = Math.max(0, Math.min(budgetChars, HANDOFF_VIEW_MAX_CHARS));
-    // Same <handoff> delimiters, header and cut pointer as the preamble/prompt-hook serve (session-handoff-serve.ts),
-    // so a stored note cannot pass as part of the surrounding tool output, nor the reverse.
-    const fit = fitHandoffText(note.text, note.id, note.created_at, budget);
-    const noteText = fit.text;
-    const handoff: NonNullable<NotInHandoffSection["handoff"]> = {
-      label: HANDOFF_LABEL,
-      text: noteText,
-      written_at: note.created_at,
-    };
-    if (fit.truncated) handoff.truncated = true;
-    if (typeof note.turn_idx === "number") handoff.turn_idx = note.turn_idx;
+    const handoff = handoffBlock(note, budget);
+    const noteText = handoff.text;
     const { data, error } = await db
       .from("session_memories")
       .select("id, kind, quote, text, turn_idx")
