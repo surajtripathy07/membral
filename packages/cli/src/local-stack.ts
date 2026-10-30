@@ -11,6 +11,7 @@ import { createHmac, randomBytes } from "node:crypto";
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { pgTuneArgs } from "./local-pg-tune.js";
 
 export const DEFAULT_IMAGE = "ghcr.io/surajtripathy07/membral-cloud:main";
 export const DEFAULT_APP_PORT = 3000;
@@ -262,6 +263,8 @@ export interface StackSettings {
   project?: string;
   /** Set MEMBRAL_LLM_PROVIDER=claude-code (the CLI found `claude` and no other provider is configured). */
   defaultClaudeCode?: boolean;
+  /** Docker's total memory in bytes (`docker info`); sizes Postgres memory flags. Omitted or junk: stock flags. */
+  dockerMemBytes?: number | null;
 }
 
 export function appUrl(port: number): string {
@@ -306,6 +309,14 @@ export function renderCompose(s: StackSettings): string {
     s.defaultClaudeCode && !s.llmKeys.includes("MEMBRAL_LLM_PROVIDER")
       ? `      MEMBRAL_LLM_PROVIDER: claude-code\n`
       : "";
+  const dbCommand = [
+    "postgres",
+    "-c",
+    "config_file=/etc/postgresql/postgresql.conf",
+    "-c",
+    "log_min_messages=fatal",
+    ...pgTuneArgs(s.dockerMemBytes),
+  ];
   return `# Written by \`membral local up\` — rewritten on every run; edit .env instead.
 name: ${s.project ?? COMPOSE_PROJECT}
 
@@ -313,7 +324,7 @@ services:
   db:
     image: ${IMAGES.db}
     restart: unless-stopped
-    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "log_min_messages=fatal"]
+    command: [${dbCommand.map(q).join(", ")}]
     environment:
       POSTGRES_HOST: /var/run/postgresql
       POSTGRES_PORT: "5432"

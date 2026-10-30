@@ -52,6 +52,7 @@ import {
   parseEmbeddingsMode,
   removeEnvKeys,
 } from "./local-embeddings.js";
+import { prewarmExcerpts, readDockerMemTotal } from "./local-pg-tune.js";
 import {
   appUrl,
   DEFAULT_APP_PORT,
@@ -832,9 +833,10 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   // claude-code is the default extractor when `claude` is on PATH and nothing else is configured.
   const defaultClaudeCode =
     !EXPLICIT_LLM_KEYS.some((k) => (localEnv[k] ?? "") !== "") && (deps.claudeOnPath ?? defaultClaudeOnPath)();
+  const dockerMemBytes = await readDockerMemTotal(ctx.runner);
   writeIfChanged(
     ctx.paths.compose,
-    renderCompose({ appPort: port, image, llmKeys, project: ctx.paths.project, defaultClaudeCode }),
+    renderCompose({ appPort: port, image, llmKeys, project: ctx.paths.project, defaultClaudeCode, dockerMemBytes }),
   );
   const url = appUrl(port);
   console.log(`Membral local: ${url} (files in ${ctx.paths.dir})`);
@@ -922,6 +924,9 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   }
   if (!health.ok) return fail(`${url}/api/health is not answering 200. See \`membral local logs app\`.`);
   console.log("  Stack: healthy");
+  // Warm the excerpts table in the background so the first scoped search is not cold; never fails `up`.
+  const prewarmWarning = await prewarmExcerpts(ctx.runner, (...a) => composeArgs(ctx.paths, ...a));
+  if (prewarmWarning) console.log(prewarmWarning);
 
   const provisioned = await provisionAndSetup(
     {
