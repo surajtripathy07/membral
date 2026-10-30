@@ -80,6 +80,9 @@
       // apps/cloud/package.json depends on "@membral/cli" (below), "^build"
       // already includes @membral/cli#build, which is what makes CLI source
       // changes bust this task's cache key — no separate `inputs` needed.
+      // VERCEL switches pack.mjs to stamp the hosted origin into the CLI tarball
+      // (stamp-default-url.mjs), so it must key this task's cache.
+      "env": ["VERCEL"],
       "dependsOn": ["^build"],
       "outputs": [
         "dist/**",

@@ -51,6 +51,8 @@ export interface InsertContext {
   sessionId: string;
   branch: string | null;
   retiredAt: string;
+  /** Migration 138: set by `planInsert` when any record's embed failed, so EVERY row of the call carries `embedding_failed_at` (column-homogeneous batches; an unmarked call omits the key and works against a pre-138 database). */
+  markEmbedFailed?: boolean;
   /** The session's `short_title`, written as `session_title` (migration 122: lexical index only). */
   sessionTitle?: string | null;
 }
@@ -115,6 +117,9 @@ function toRow(r: InsertableRecord, ctx: InsertContext): InsertRow {
     // The default family omits the key (NULL means default), so the hosted
     // app works against a pre-118 database.
     ...embeddingModelField(r.embedding !== null && r.embedding !== undefined),
+    // Migration 138: the retry's backoff marker. A failed embed stamps it (the app clock is fine here; the retry
+    // compares it inside Postgres), a successful or unconfigured one writes null alongside a marked sibling.
+    ...(ctx.markEmbedFailed ? { embedding_failed_at: r.embeddingFailed && !r.embedding ? ctx.retiredAt : null } : {}),
     // R2-m4: every row carries the key (column-homogeneous batches).
     extraction_pass: r.userPass ? "user" : null,
     // B7: the earliest live row (another session, same kind) this record
@@ -162,19 +167,21 @@ export function planInsert(
   const insertRetired: InsertRow[] = [];
   const matchedOnly: InsertedRow[] = [];
   const reasonBack = new Map<string, string[]>();
+  const markEmbedFailed = records.some((r) => r.embeddingFailed === true);
+  const rowCtx: InsertContext = markEmbedFailed ? { ...ctx, markEmbedFailed } : ctx;
   for (const r of records) {
     const prior = existing.get(r.contentHash);
     if (r.verified && r.retireReason) {
       if (!prior?.retired_at || isLiftableRetireReason(prior.retire_reason)) {
-        insertRetired.push(toRow(r, ctx));
+        insertRetired.push(toRow(r, rowCtx));
       } else {
         matchedOnly.push(prior);
       }
     } else if (r.verified) {
       if (prior?.retired_at && isLiftableRetireReason(prior.retire_reason)) {
-        lift.push({ ...toRow(r, ctx), retired_at: null, retire_reason: null });
+        lift.push({ ...toRow(r, rowCtx), retired_at: null, retire_reason: null });
       } else {
-        keepLive.push(toRow(r, ctx));
+        keepLive.push(toRow(r, rowCtx));
       }
     } else if (prior) {
       matchedOnly.push(prior);
@@ -183,7 +190,7 @@ export function planInsert(
         reasonBack.set(reason, [...(reasonBack.get(reason) ?? []), prior.id]);
       }
     } else {
-      insertRetired.push(toRow(r, ctx));
+      insertRetired.push(toRow(r, rowCtx));
     }
   }
 

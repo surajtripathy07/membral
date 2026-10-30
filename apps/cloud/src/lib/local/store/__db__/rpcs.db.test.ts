@@ -24,6 +24,9 @@ const readers: [string, () => Record<string, unknown>][] = [
     "llm_spend_sum",
     () => ({ p_user_id: U, p_since: since(), p_run_id: null, p_include_passes: null, p_exclude_passes: null }),
   ],
+  ["memory_embed_retry_users", () => ({ p_retry_seconds: 60, p_limit: 5 })],
+  ["memory_embed_retry_batch", () => ({ p_user_id: U, p_retry_seconds: 60, p_limit: 5 })],
+  ["memory_embed_retry_apply", () => ({ p_user_id: U, p_rows: [], p_embedding_model: "m" })],
   ["mcp_freshness", () => ({ p_user_id: U })],
   [
     "mcp_recent_conversations",

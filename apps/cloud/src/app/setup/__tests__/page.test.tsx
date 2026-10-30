@@ -106,7 +106,23 @@ describe("/setup page", () => {
     expect(text).toContain(".vscode/mcp.json");
   });
 
-  it("leads with the plugin path, then the CLI install from a clone", async () => {
+  it("hosted: shows the served tarball install, then membral setup", async () => {
+    manifestExists = false;
+    const text = collectText(await SetupPage()).join(" ");
+    expect(text).toContain("membral-cli.tgz && membral setup");
+    expect(text).not.toContain("npm run cli:install");
+  });
+
+  it("local mode: keeps the clone install", async () => {
+    manifestExists = false;
+    vi.stubEnv("MEMBRAL_LOCAL", "1");
+    const text = collectText(await SetupPage()).join(" ");
+    vi.unstubAllEnvs();
+    expect(text).toContain("npm run cli:install");
+    expect(text).not.toContain("membral-cli.tgz");
+  });
+
+  it("leads with the plugin path, then the CLI install", async () => {
     manifestExists = false;
     const text = collectText(await SetupPage()).join(" ");
     expect(text).toContain("/plugin marketplace add surajtripathy07/membral-plugin");
@@ -119,7 +135,7 @@ describe("/setup page", () => {
     expect(text).toContain("/settings#keys");
     expect(text).toContain("Generate API Key");
     expect(text).toContain("last 30 days");
-    expect(text.indexOf("/plugin marketplace add")).toBeLessThan(text.indexOf("npm run cli:install"));
+    expect(text.indexOf("/plugin marketplace add")).toBeLessThan(text.indexOf("membral-cli.tgz"));
     expect(text).not.toMatch(new RegExp(`npm i -g ${"membral"}(?![-./\\w])`));
   });
 

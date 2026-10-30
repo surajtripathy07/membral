@@ -39,6 +39,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { hostedOrigin, stampDefaultApiUrl } from "./stamp-default-url.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLI_DIR = resolve(__dirname, "..");
@@ -137,6 +138,15 @@ function main() {
     ],
     REPO_ROOT,
   );
+
+  // 2b. On Vercel (the hosted app's prebuild) the tarball must default to the
+  //     hosted origin; any other pack keeps the source default (localhost).
+  const origin = hostedOrigin(process.env);
+  if (origin) {
+    const bundlePath = join(stageDist, "index.js");
+    writeFileSync(bundlePath, stampDefaultApiUrl(readFileSync(bundlePath, "utf8"), origin));
+    console.log(`[pack-cli] stamped default API URL ${origin}`);
+  }
 
   // 3. A clean package.json for the tarball: no workspace "*" dependency
   //    (bundled away), no devDependencies/build scripts that would need the

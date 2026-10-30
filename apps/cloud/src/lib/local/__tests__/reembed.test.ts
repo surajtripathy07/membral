@@ -162,23 +162,26 @@ describe("reembedFilter", () => {
 });
 
 describe("reembedBatch", () => {
-  it("selects only missing or foreign rows and never touches rows of the configured family", async () => {
+  it("selects missing or foreign rows, never rows of the configured family, never a retired row", async () => {
     tables.session_memories = [
       { id: "a", text: "default-family row", embedding: OLD, embedding_model: null },
       { id: "b", text: "already nomic", embedding: OLD, embedding_model: FAMILY },
-      { id: "c", text: "no vector yet", embedding: null, embedding_model: null },
+      { id: "c", text: "no vector yet", embedding: null, embedding_model: null, embedding_failed_at: null },
       { id: "d", text: "other model", embedding: OLD, embedding_model: "all-minilm" },
+      // Migration 138: a retired row (vector null, marker set) is the retry's, not this command's.
+      { id: "e", text: "retired", embedding: null, embedding_model: null, embedding_failed_at: "2026-10-01T00:00:00Z" },
     ];
     const e = embedderFor();
     const r = ok(await reembedBatch(db, { family: FAMILY, embedder: e }));
     expect(r.table).toBe("session_memories");
-    expect(r.done).toBe(2);
-    // session_memories has no failed marker, so a never-embedded row ("c") is left to the normal write path.
-    expect(e.calls[0]).toEqual(["default-family row", "other model"]);
+    expect(r.done).toBe(3);
+    expect(e.calls[0]).toEqual(["default-family row", "no vector yet", "other model"]);
     expect(tables.session_memories.find((x) => x.id === "b")?.embedding).toBe(OLD);
-    expect(tables.session_memories.find((x) => x.id === "c")?.embedding).toBeNull();
-    expect(updates.map((u) => u.id).sort()).toEqual(["a", "d"]);
+    expect(tables.session_memories.find((x) => x.id === "c")?.embedding).not.toBeNull();
+    expect(tables.session_memories.find((x) => x.id === "e")?.embedding).toBeNull();
+    expect(updates.map((u) => u.id).sort()).toEqual(["a", "c", "d"]);
     for (const u of updates) expect(u.payload.embedding_model).toBe(FAMILY);
+    expect(updates.find((u) => u.id === "c")?.payload.embedding_failed_at).toBeNull();
     expect(r.remaining_by_table?.session_memories).toBe(0);
   });
 
@@ -356,12 +359,13 @@ describe("reembedBatch", () => {
       { id: "b", text: "b", embedding: OLD, embedding_model: "all-minilm" },
       { id: "c", text: "c", embedding: null, embedding_model: null },
       { id: "d", text: "d", embedding: OLD, embedding_model: FAMILY },
+      // A retired row (migration 138 marker) is neither missing nor remaining.
+      { id: "e", text: "e", embedding: null, embedding_model: null, embedding_failed_at: "2026-10-01T00:00:00Z" },
     ];
     const e = embedderFor();
     const r = ok(await reembedBatch(db, { family: FAMILY, embedder: e, dryRun: true }));
     expect(r.dry_run).toBe(true);
-    // "c" (never embedded) is reported but not in `remaining`: session_memories has no failed marker.
-    expect(r.counts?.session_memories).toEqual({ remaining: 2, missing: 1, foreign_default: 1, foreign_other: 1 });
+    expect(r.counts?.session_memories).toEqual({ remaining: 3, missing: 1, foreign_default: 1, foreign_other: 1 });
     expect(e.calls).toHaveLength(0);
     expect(updates).toHaveLength(0);
   });
