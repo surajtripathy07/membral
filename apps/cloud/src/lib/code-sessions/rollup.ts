@@ -95,6 +95,8 @@ export interface RollupCodeProjectsResult {
   costUsd: number;
   /** true when the run halted mid-batch on the LlmClient's per-run cost cap (issue #21). Remaining projects were never attempted — still props.portrait_dirty=true, so they're picked up again next run. */
   capped: boolean;
+  /** Ids of the projects whose props.rollup was (re)written this run. Cross-link matching runs only for these. A project left pending (LLM failure, cost cap) is not listed: its rollup did not change. */
+  rolledUpIds: string[];
 }
 
 export interface RollupCodeProjectsDeps {
@@ -291,6 +293,7 @@ export async function rollupCodeProjects(deps: RollupCodeProjectsDeps): Promise<
   let costUsd = 0;
   let capped = false;
   let processedCount = 0;
+  const rolledUpIds: string[] = [];
 
   for (const project of projects) {
     // Preamble check (issue #21) — see kg/pass1.ts's identical pattern.
@@ -379,6 +382,8 @@ export async function rollupCodeProjects(deps: RollupCodeProjectsDeps): Promise<
         .eq("id", project.id);
       if (updateRes.error) {
         log.warn("failed to persist code project rollup", { project_id: project.id, err: updateRes.error.message });
+      } else {
+        rolledUpIds.push(project.id);
       }
       continue;
     }
@@ -411,6 +416,8 @@ export async function rollupCodeProjects(deps: RollupCodeProjectsDeps): Promise<
       .eq("id", project.id);
     if (updateRes.error) {
       log.warn("failed to persist code project rollup", { project_id: project.id, err: updateRes.error.message });
+    } else {
+      rolledUpIds.push(project.id);
     }
   }
 
@@ -422,5 +429,5 @@ export async function rollupCodeProjects(deps: RollupCodeProjectsDeps): Promise<
     capped,
   });
 
-  return { processed: processedCount, llmCalls, costUsd, capped };
+  return { processed: processedCount, llmCalls, costUsd, capped, rolledUpIds };
 }

@@ -58,6 +58,7 @@ export {
   settleActionDir,
 } from "./sessions/forge-actions.js";
 export { harnessDisplayName } from "./sessions/harness-names.js";
+export { isMembralHeadlessRunDir } from "./sessions/headless-runs.js";
 export type { KnownSessionProbe } from "./sessions/known.js";
 export {
   endedAtSecond,

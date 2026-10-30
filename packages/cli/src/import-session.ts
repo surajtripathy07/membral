@@ -12,6 +12,7 @@ import { basename, dirname, join } from "node:path";
 import {
   type CodeSessionParser,
   PARSERS as HARNESS_PARSERS,
+  isMembralHeadlessRunDir,
   type ParseExtras,
   type RawCodeSession,
   type SessionRef,
@@ -143,6 +144,12 @@ async function importSessionInner(opts: ImportSessionOptions): Promise<ChildUplo
   // W3b: a session-end questionnaire fork is never uploaded (questionnaire.ts).
   if (isQuestionnaireSession(session)) {
     warn("session-end questionnaire fork — skipping upload");
+    return;
+  }
+
+  // Membral's own headless `claude -p` runs (extraction provider, eval harness) are never user sessions.
+  if (isMembralHeadlessRunDir(session.repo.path)) {
+    warn("Membral headless run — skipping upload");
     return;
   }
 

@@ -62,6 +62,36 @@ describe("importCodeSession", () => {
     expect(turns.every((t) => t.session_id === result.sessionId)).toBe(true);
   });
 
+  it("HEADLESS RUNS: a session from Membral's own temp-dir `claude -p` run is skipped (reason membral_headless_run), writes nothing; a normal session still imports", async () => {
+    const db = new FakeSupabase();
+    for (const [i, path] of [
+      "/private/var/folders/ab/cd1234/T/membral-claude-AbC123",
+      "/var/folders/ab/cd1234/T/membral-lab-claude-XyZ9",
+    ].entries()) {
+      const result = await importCodeSession(
+        db.asClient(),
+        USER_ID,
+        makeSession({ sourceSessionId: `headless-${i}`, repo: { path } }),
+      );
+      expect(result).toEqual({ status: "skipped", reason: "membral_headless_run" });
+    }
+    expect(db.getRows("code_projects")).toHaveLength(0);
+    expect(db.getRows("code_sessions")).toHaveLength(0);
+    expect(db.getRows("code_session_turns")).toHaveLength(0);
+
+    const normal = await importCodeSession(db.asClient(), USER_ID, makeSession({ sourceSessionId: "real" }));
+    expect(normal.status).toBe("imported");
+    expect(db.getRows("code_projects")).toHaveLength(1);
+
+    // A look-alike outside an OS temp dir is a real project and imports.
+    const lookalike = await importCodeSession(
+      db.asClient(),
+      USER_ID,
+      makeSession({ sourceSessionId: "lookalike", repo: { path: "/Users/dev/membral-claude-AbC123" } }),
+    );
+    expect(lookalike.status).toBe("imported");
+  });
+
   it("clusters two sessions from the same repo into one code_project", async () => {
     const db = new FakeSupabase();
     await importCodeSession(db.asClient(), USER_ID, makeSession({ sourceSessionId: "s1" }));

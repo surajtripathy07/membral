@@ -4,5 +4,5 @@
     "content-type": "application/json"
   },
   "afterCalls": 1,
-  "body": "{\"imported\":1,\"skipped\":0,\"total\":1,\"errors\":[],\"open_supported\":true}"
+  "body": "{\"imported\":1,\"skipped\":0,\"skipped_headless\":0,\"total\":1,\"errors\":[],\"open_supported\":true}"
 }

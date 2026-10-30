@@ -217,7 +217,7 @@ describe("POST /api/code-sessions", () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true });
+    expect(body).toEqual({ imported: 1, skipped: 0, skipped_headless: 0, total: 1, errors: [], open_supported: true });
     expect(mockImportCodeSession).toHaveBeenCalledWith(
       expect.anything(),
       "user-1",
@@ -282,7 +282,7 @@ describe("POST /api/code-sessions", () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true });
+    expect(body).toEqual({ imported: 1, skipped: 0, skipped_headless: 0, total: 1, errors: [], open_supported: true });
   });
 
   describe("memory extraction queue (goal 2026-09-24 review B1)", () => {
@@ -367,7 +367,14 @@ describe("POST /api/code-sessions", () => {
 
       const res = await POST(makeRequest({ sessions: [validSession()] }, { token: "lls_ok" }));
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true });
+      expect(await res.json()).toEqual({
+        imported: 1,
+        skipped: 0,
+        skipped_headless: 0,
+        total: 1,
+        errors: [],
+        open_supported: true,
+      });
       expect(capturedAfterCallbacks).toHaveLength(1);
       expect(mockTrigger).not.toHaveBeenCalled();
 
@@ -388,7 +395,14 @@ describe("POST /api/code-sessions", () => {
 
         const res = await POST(makeRequest({ sessions: [validSession()] }, { token: "lls_ok" }));
         expect(res.status).toBe(200);
-        expect(await res.json()).toEqual({ imported: 1, skipped: 0, total: 1, errors: [], open_supported: true });
+        expect(await res.json()).toEqual({
+          imported: 1,
+          skipped: 0,
+          skipped_headless: 0,
+          total: 1,
+          errors: [],
+          open_supported: true,
+        });
         // No trigger (nothing was queued) ...
         expect(capturedAfterCallbacks).toHaveLength(0);
         expect(mockTrigger).not.toHaveBeenCalled();
@@ -499,6 +513,27 @@ describe("POST /api/code-sessions", () => {
     expect(body.skipped).toBe(1);
     expect(body.total).toBe(3);
     expect(body.errors).toEqual([{ sourceSessionId: "s-3", error: "db exploded" }]);
+  });
+
+  it("counts Membral headless-run sessions as skipped with skipped_headless, and does not mirror or synthesize for them", async () => {
+    mockValidateApiKey.mockResolvedValueOnce({
+      valid: true,
+      userId: "user-1",
+      scopeNodeId: null,
+      scopeCodeProjectId: null,
+    });
+    mockImportCodeSession
+      .mockResolvedValueOnce({ status: "skipped", reason: "membral_headless_run" })
+      .mockResolvedValueOnce({ status: "skipped", sessionId: "s-2" });
+
+    const req = makeRequest(
+      { sessions: [validSession({ sourceSessionId: "h-1" }), validSession({ sourceSessionId: "s-2" })] },
+      { token: "lls_ok" },
+    );
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({ imported: 0, skipped: 2, skipped_headless: 1, total: 2, errors: [] });
   });
 
   it("returns 400 for a malformed body", async () => {
@@ -694,7 +729,7 @@ describe("POST /api/code-sessions", () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ imported: 0, skipped: 0, total: 0, errors: [], open_supported: true });
+    expect(body).toEqual({ imported: 0, skipped: 0, skipped_headless: 0, total: 0, errors: [], open_supported: true });
     expect(mockImportCodeSession).not.toHaveBeenCalled();
   });
 
@@ -810,7 +845,14 @@ describe("POST /api/code-sessions", () => {
       const res = await POST(req);
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body).toEqual({ imported: 0, skipped: 0, total: 0, errors: [], open_supported: true });
+      expect(body).toEqual({
+        imported: 0,
+        skipped: 0,
+        skipped_headless: 0,
+        total: 0,
+        errors: [],
+        open_supported: true,
+      });
       expect(mockImportCodeSession).not.toHaveBeenCalled();
 
       expect(mockHeartbeatUpsert).toHaveBeenCalledTimes(1);

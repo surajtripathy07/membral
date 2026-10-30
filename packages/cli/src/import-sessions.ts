@@ -11,6 +11,7 @@ import { homedir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import {
   type CodeSessionParser,
+  isMembralHeadlessRunDir,
   PARSERS,
   type ParseExtras,
   type RawCodeSession,
@@ -406,6 +407,8 @@ export async function importSessions(opts: ImportSessionsOptions, client?: ApiCl
     // (questionnaire.ts runs it with --no-session-persistence; this is the
     // second guard). Not counted anywhere.
     if (isQuestionnaireSession(session)) return false;
+    // Membral's own headless `claude -p` runs (extraction provider, eval harness) are never user sessions.
+    if (isMembralHeadlessRunDir(session.repo.path)) return false;
     const projectStats = stats.get(key) ?? emptyStats();
     stats.set(key, projectStats);
 

@@ -53,6 +53,7 @@
 // file carries no isolation-gate exception in code-isolation.test.ts.
 import type { Db } from "@/lib/db/types";
 import { EmbeddingCeilingExceededError, generateEmbedding } from "@/lib/embeddings";
+import { queryVectorsAllowed } from "@/lib/llm/embedding-client";
 import { parseVector } from "../llm/vector";
 import { log } from "../log";
 import { selectAllRows } from "../util/pagination";
@@ -111,6 +112,13 @@ export interface MatchCrossLinksDeps {
   userId: string;
   /** Injectable for tests; defaults to the real OpenAI embedding call. */
   embed?: (text: string) => Promise<number[]>;
+  /**
+   * Only these projects are content-matched (one embed each). The synthesis pass hands in the projects whose rollup it
+   * rewrote this run: an unchanged rollup embeds to the same vector, so re-matching it is pure cost (an import used to
+   * embed every project the user has, ~12k calls on a large store). Omitted means every project, for an explicit
+   * full backfill; an empty list means none.
+   */
+  projectIds?: readonly string[];
 }
 
 // Chat sources only (review-084.md finding 2, BLOCKER): `conversations` is
@@ -169,15 +177,35 @@ async function fetchExistingLinkedPairs(supabase: Db, userId: string): Promise<S
   return new Set(rows.map((r) => `${r.code_project_id}::${r.conversation_id}`));
 }
 
-async function fetchProjects(supabase: Db, userId: string): Promise<ProjectRow[]> {
-  return selectAllRows<ProjectRow>((from, to) =>
-    supabase
-      .from("code_projects")
-      .select("id, display_name, repo_identity, summary, props")
-      .eq("user_id", userId)
-      .order("id")
-      .range(from, to),
-  );
+const PROJECT_ID_CHUNK = 200;
+
+async function fetchProjects(supabase: Db, userId: string, ids?: readonly string[]): Promise<ProjectRow[]> {
+  if (ids === undefined) {
+    return selectAllRows<ProjectRow>((from, to) =>
+      supabase
+        .from("code_projects")
+        .select("id, display_name, repo_identity, summary, props")
+        .eq("user_id", userId)
+        .order("id")
+        .range(from, to),
+    );
+  }
+  const rows: ProjectRow[] = [];
+  for (let i = 0; i < ids.length; i += PROJECT_ID_CHUNK) {
+    const chunk = ids.slice(i, i + PROJECT_ID_CHUNK);
+    rows.push(
+      ...(await selectAllRows<ProjectRow>((from, to) =>
+        supabase
+          .from("code_projects")
+          .select("id, display_name, repo_identity, summary, props")
+          .eq("user_id", userId)
+          .in("id", chunk)
+          .order("id")
+          .range(from, to),
+      )),
+    );
+  }
+  return rows;
 }
 
 /** Embeds the project's rollup signal ONCE and scores it against every
@@ -266,8 +294,19 @@ export async function matchCodeProjectCrossLinks(deps: MatchCrossLinksDeps): Pro
   const embed =
     deps.embed ?? ((text: string) => generateEmbedding(text, { userId: deps.userId, pass: "query_embedding" }));
 
+  // The only signal here is content similarity against stored conversations.embedding, which has no model filter and a
+  // threshold calibrated for the default family (D-072; same gate as mcp graph-tools and search.ts). Another family
+  // would compare unlike vectors, so skip the whole pass: zero embeds, zero reads.
+  if (!queryVectorsAllowed()) {
+    log.info("code_cross_links skipped: embedding family is not the default (content match is default-family only)", {
+      user_id: deps.userId,
+    });
+    return { evaluated: 0, created: 0, matches: [] };
+  }
+  if (deps.projectIds?.length === 0) return { evaluated: 0, created: 0, matches: [] };
+
   const [projects, existingPairs, conversationCandidates] = await Promise.all([
-    fetchProjects(deps.supabase, deps.userId),
+    fetchProjects(deps.supabase, deps.userId, deps.projectIds),
     fetchExistingLinkedPairs(deps.supabase, deps.userId),
     fetchConversationCandidates(deps.supabase, deps.userId),
   ]);
