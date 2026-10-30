@@ -109,6 +109,9 @@ optional.
 `http://localhost:3000`. The image is multi-arch (amd64 and arm64); if a pull fails, build it locally and pass `--image`. Image source builds, extraction setup, disk, logs, Linux notes and what works without an
 extraction model are in [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
 
+Large stores (tens of GB of sessions) need Docker or Colima memory of 12 GB or more, for example `colima start --memory 14`.
+`up` sizes Postgres memory to the Docker VM and warms the excerpts table in the background after it starts.
+
 To run a second stack beside it (for example to test a branch), add `--project <name>` to `local up|down|status|logs`
 (or set `MEMBRAL_LOCAL_PROJECT`) and pass a free `--port` value. Its files live in
 `~/.membral/local-<name>` and its Docker volumes end in `-<name>`; the default stack is untouched. Both stacks write

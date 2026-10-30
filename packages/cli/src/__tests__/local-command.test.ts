@@ -53,6 +53,8 @@ function makeFakeDocker(
     pullCode?: number;
     baseUpCode?: number;
     preludeMissing?: boolean;
+    memTotal?: string;
+    prewarmCode?: number;
   } = {},
 ) {
   const calls: Call[] = [];
@@ -68,6 +70,7 @@ function makeFakeDocker(
         return { code: opts.composeCode ?? 0, stdout: `${opts.composeVersion ?? "2.29.1"}\n`, stderr: "" };
       if (args[0] === "pull") return { code: opts.pullCode ?? 0, stdout: "", stderr: "pull access denied" };
       if (args[0] === "context") return ok(opts.contextInspect ?? "");
+      if (args[0] === "info") return ok(opts.memTotal ?? "");
       if (args[0] === "create") return ok("cid123\n");
       if (args[0] === "volume") return { code: opts.volumeExists ? 0 : 1, stdout: "", stderr: "no such volume" };
       if (args[0] === "cp") {
@@ -106,6 +109,7 @@ function makeFakeDocker(
         }
         return ok();
       }
+      if (sub[0] === "exec" && sub[1] === "-d") return { code: opts.prewarmCode ?? 0, stdout: "", stderr: "" };
       if (sub[0] === "exec") {
         const joined = sub.join(" ");
         if (joined.includes("select version")) return ok([...applied].join("\n"));
@@ -205,6 +209,36 @@ describe("membral local", () => {
   const out = () => [...logs, ...errors].join("\n");
   const verbs = () =>
     docker.calls.map((c) => (c.args[0] === "compose" ? `compose ${c.args.slice(7).join(" ")}` : c.args.join(" ")));
+
+  it("sizes Postgres to the Docker VM and fires a detached prewarm after the stack is healthy", async () => {
+    docker = makeFakeDocker({ memTotal: `${14 * 1024 ** 3}\n` });
+    deps.runner = docker.runner;
+    await localUp({}, deps);
+    expect(errors).toEqual([]);
+    expect(docker.calls.some((c) => c.args.join(" ") === "info --format {{.MemTotal}}")).toBe(true);
+    expect(readFileSync(deps.paths!.compose, "utf8")).toContain(
+      '"log_min_messages=fatal", "-c", "shared_buffers=3584MB", "-c", "effective_cache_size=9318MB", "-c", "random_page_cost=1.1"]',
+    );
+    const v = verbs();
+    const upRest = v.findIndex((s) =>
+      s.startsWith("compose up -d --wait --wait-timeout 300 --remove-orphans rest app"),
+    );
+    const prewarm = v.findIndex((s) => s.startsWith("compose exec -d -T db sh -c"));
+    expect(prewarm).toBeGreaterThan(upRest);
+    expect(v[prewarm]).toContain("pg_prewarm('public.session_raw_units','buffer')");
+  });
+
+  it("keeps the stock db command when docker info is unreadable, and a failed prewarm does not fail up", async () => {
+    docker = makeFakeDocker({ prewarmCode: 1 });
+    deps.runner = docker.runner;
+    await localUp({}, deps);
+    expect(process.exitCode).toBeUndefined();
+    expect(readFileSync(deps.paths!.compose, "utf8")).toContain(
+      'command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "log_min_messages=fatal"]',
+    );
+    expect(out()).toContain("Prewarm skipped");
+    expect(out()).toContain("Stack: healthy");
+  });
 
   it("first up: files, image, fresh migrations, migrate loop, provision with mintKey, profile write + activate + setup", async () => {
     await localUp({}, deps);
