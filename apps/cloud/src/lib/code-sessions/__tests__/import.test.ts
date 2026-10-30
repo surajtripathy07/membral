@@ -564,4 +564,70 @@ describe("importCodeSession — session profile (goal 2026-09-26 W4 / P2)", () =
     await importCodeSession(old.asClient(), USER_ID, makeSession());
     expect(old.getRows("code_sessions")[0].props).not.toHaveProperty("actions_version");
   });
+
+  // Issue #585: an empty timestamp string made Postgres reject the whole session.
+  describe("empty or unparseable timestamps (#585)", () => {
+    it("imports every turn of a session with one empty-timestamp turn, storing that turn's ts as null", async () => {
+      const db = new FakeSupabase();
+      const base = makeSession();
+      const session = makeSession({ turns: base.turns.map((t) => (t.idx === 1 ? { ...t, ts: "" } : t)) });
+      const result = await importCodeSession(db.asClient(), USER_ID, session);
+
+      expect(result.status).toBe("imported");
+      const turns = db.getRows("code_session_turns");
+      expect(turns).toHaveLength(3);
+      expect(turns.map((t) => t.ts)).toEqual(["2026-07-01T10:00:00.000Z", null, "2026-07-01T10:04:00.000Z"]);
+      expect(db.getRows("code_sessions")[0].turn_count).toBe(3);
+    });
+
+    it("treats whitespace-only and unparseable turn timestamps as missing", async () => {
+      const db = new FakeSupabase();
+      const base = makeSession();
+      const bad = ["   ", "not a date", "2026-99-99T00:00:00Z"];
+      const session = makeSession({ turns: base.turns.map((t, i) => ({ ...t, ts: bad[i] ?? t.ts })) });
+      const result = await importCodeSession(db.asClient(), USER_ID, session);
+
+      expect(result.status).toBe("imported");
+      expect(db.getRows("code_session_turns").map((t) => t.ts)).toEqual([null, null, null]);
+    });
+
+    it("derives an empty start and end from the earliest and latest usable turn times", async () => {
+      const db = new FakeSupabase();
+      const result = await importCodeSession(db.asClient(), USER_ID, makeSession({ startedAt: "", endedAt: " " }));
+
+      expect(result.status).toBe("imported");
+      const row = db.getRows("code_sessions")[0];
+      expect(row.started_at).toBe("2026-07-01T10:00:00.000Z");
+      expect(row.ended_at).toBe("2026-07-01T10:04:00.000Z");
+      expect(row.duration_seconds).toBe(240);
+      expect(db.getRows("code_session_turns")).toHaveLength(3);
+    });
+
+    it("skips unusable turns when deriving start and end, and keeps a valid session start or end", async () => {
+      const db = new FakeSupabase();
+      const base = makeSession();
+      // turn 0 (the earliest) and turn 2 (the latest) are unusable; only turn 1 (10:01) has a time.
+      const turns = base.turns.map((t) => (t.idx === 1 ? t : { ...t, ts: "" }));
+      await importCodeSession(db.asClient(), USER_ID, makeSession({ startedAt: "", turns }));
+      const row = db.getRows("code_sessions")[0];
+      expect(row.started_at).toBe("2026-07-01T10:01:00.000Z");
+      expect(row.ended_at).toBe("2026-07-01T10:05:00.000Z"); // the valid session end is kept, not replaced
+    });
+
+    it("still imports when every session and turn timestamp is empty", async () => {
+      const db = new FakeSupabase();
+      const base = makeSession();
+      const session = makeSession({ startedAt: "", endedAt: "", turns: base.turns.map((t) => ({ ...t, ts: "" })) });
+      const result = await importCodeSession(db.asClient(), USER_ID, session);
+
+      expect(result.status).toBe("imported");
+      expect(db.getRows("code_session_turns")).toHaveLength(3);
+      expect(db.getRows("code_session_turns").every((t) => t.ts === null)).toBe(true);
+      const row = db.getRows("code_sessions")[0];
+      expect(row.started_at).toBeNull();
+      expect(row.ended_at).toBeNull();
+      expect(row.duration_seconds).toBeNull();
+      expect(db.getRows("code_projects")[0].session_count).toBe(1);
+    });
+  });
 });

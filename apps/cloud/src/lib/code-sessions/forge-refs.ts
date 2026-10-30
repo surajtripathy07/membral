@@ -69,7 +69,7 @@ export interface ForgeRefsContext {
   /** Every `repo_identity` of the user's projects (host binding, §3). */
   projectIdentities: Iterable<string | null | undefined>;
   /** `code_sessions.started_at`: `observed_at` for a turn with no `ts`. */
-  startedAt: string;
+  startedAt: string | null;
 }
 
 const SOURCES = new Set(["cli", "mcp", "command", "paste"]);
@@ -179,6 +179,7 @@ export function computeForgeRefs(turns: readonly ForgeRefTurn[], ctx: ForgeRefsC
   for (const turn of turns) {
     if (!Number.isInteger(turn.idx)) continue;
     const ts = typeof turn.ts === "string" && !Number.isNaN(Date.parse(turn.ts)) ? turn.ts : ctx.startedAt;
+    if (ts === null) continue; // observed_at is NOT NULL: no usable time, no ref row (#585)
     const props = (turn.props ?? {}) as Record<string, unknown>;
     const toolName = String(props.mcpTool ?? turn.tool_name ?? "");
     const evidence = typeof props.inputDigest === "string" ? props.inputDigest : null;
@@ -413,7 +414,7 @@ function itemRow(
 export async function forgeRefsForImport(
   supabase: Db,
   userId: string,
-  input: { projectIdentity: string; startedAt: string; turns: readonly ForgeRefTurn[] },
+  input: { projectIdentity: string; startedAt: string | null; turns: readonly ForgeRefTurn[] },
 ): Promise<ForgeRefRow[] | null> {
   try {
     const identities = await userProjectIdentities(supabase, userId);

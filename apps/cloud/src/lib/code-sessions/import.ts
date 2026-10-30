@@ -20,6 +20,7 @@ import { sanitizePgDeep } from "./pg-text";
 import { buildProfile } from "./profile";
 import { patchCodeSessionProps } from "./props-patch";
 import { normalizeRepoIdentity, sanitizeRemoteUrl, UNASSIGNED_REPO_IDENTITY } from "./repo-identity";
+import { checkSessionTimestamps, type TimestampCheckedSession } from "./timestamps";
 import { firstLineTitle, titleSourceText } from "./view";
 
 export type ImportStatus = "imported" | "skipped" | "error";
@@ -99,7 +100,9 @@ export async function importCodeSession(
     // surrogates, which Postgres rejects ("unsupported Unicode escape
     // sequence"). contentHash stays the CLIENT's value, computed on the
     // original transcript, so dedup is unchanged.
-    const session: RawCodeSessionPayload = { ...sanitizePgDeep(rawSession), contentHash: rawSession.contentHash };
+    // Issue #585: an empty or unparseable timestamp becomes null (every timestamp column written below is nullable)
+    // instead of failing the whole session inside Postgres.
+    const session = checkSessionTimestamps({ ...sanitizePgDeep(rawSession), contentHash: rawSession.contentHash });
     const existing = await findExistingSession(supabase, userId, session.source, session.sourceSessionId);
 
     // Issue #171: a byte-identical transcript keeps its content_hash, so a
@@ -143,6 +146,8 @@ export async function importCodeSession(
     // W3 D9: the session's observed forge refs, written in the turns RPC's transaction (null on failure).
     const forgeRefs = await forgeRefsForImport(supabase, userId, {
       projectIdentity: repoIdentity,
+      // observed_at is NOT NULL: a turn without a usable time takes the session start; with no start either (no
+      // timestamped turn at all) its refs are skipped.
       startedAt: session.startedAt,
       turns: session.turns.map((t) => ({
         idx: t.idx,
@@ -237,7 +242,7 @@ function writeRawUnits(
   supabase: Db,
   userId: string,
   sessionId: string,
-  turns: RawCodeSessionPayload["turns"],
+  turns: TimestampCheckedSession["turns"],
   contentHash: string,
   importOpts: ImportOptions,
 ): Promise<void> | void {
@@ -286,7 +291,7 @@ async function upsertCodeProject(
   supabase: Db,
   userId: string,
   repoIdentity: string,
-  session: RawCodeSessionPayload,
+  session: TimestampCheckedSession,
 ): Promise<string> {
   const found = await supabase
     .from("code_projects")
@@ -335,7 +340,7 @@ function deriveDisplayName(repoIdentity: string, repo: RawCodeSessionPayload["re
  * read time), so the mirror and every list show what the session was about.
  * A git-remote session keeps a null title (synthesis/summary decide). Pure.
  */
-export function nonGitSessionTitle(session: Pick<RawCodeSessionPayload, "repo" | "turns">): string | null {
+export function nonGitSessionTitle(session: Pick<TimestampCheckedSession, "repo" | "turns">): string | null {
   if (session.repo.remoteUrl) return null;
   // UX W6 (review 3b): the owner's own words only — a prompt that was only a
   // paste is skipped, and a paste span inside one never becomes the title.
@@ -351,7 +356,7 @@ async function upsertCodeSessionRow(
   supabase: Db,
   userId: string,
   codeProjectId: string,
-  session: RawCodeSessionPayload,
+  session: TimestampCheckedSession,
   existing: ExistingSessionRow | null,
   open = false,
   wasOpen = false,
@@ -458,7 +463,7 @@ async function finalizeContentHash(
 }
 
 /** ADR 0026 D3/D4 — carries usage/models/subAgents through to code_sessions.props when the parser supplied them; omits keys it didn't (D13). */
-function buildSessionProps(session: RawCodeSessionPayload): Record<string, unknown> {
+function buildSessionProps(session: TimestampCheckedSession): Record<string, unknown> {
   const props: Record<string, unknown> = {};
   if (session.usage) props.usage = session.usage;
   if (session.models && session.models.length > 0) props.models = session.models;
@@ -484,7 +489,8 @@ function buildSessionProps(session: RawCodeSessionPayload): Record<string, unkno
   return props;
 }
 
-function computeDurationSeconds(startedAt: string, endedAt: string): number | null {
+function computeDurationSeconds(startedAt: string | null, endedAt: string | null): number | null {
+  if (startedAt === null || endedAt === null) return null;
   const start = Date.parse(startedAt);
   const end = Date.parse(endedAt);
   if (Number.isNaN(start) || Number.isNaN(end) || end < start) return null;
@@ -503,7 +509,7 @@ async function replaceTurns(
   supabase: Db,
   userId: string,
   sessionId: string,
-  turns: RawCodeSessionPayload["turns"],
+  turns: TimestampCheckedSession["turns"],
   forgeRefs: ForgeRefRow[] | null,
 ): Promise<void> {
   const rows = turns.map((t) => ({
@@ -531,7 +537,7 @@ async function replaceTurns(
 }
 
 /** ADR 0026 D1/D2/D10 — per-turn structured extras (tool_use rows only), all optional (D13). */
-function buildTurnProps(t: RawCodeSessionPayload["turns"][number]): Record<string, unknown> {
+function buildTurnProps(t: Omit<RawCodeSessionPayload["turns"][number], "ts">): Record<string, unknown> {
   const props: Record<string, unknown> = {};
   if (t.toolUseId) props.toolUseId = t.toolUseId;
   if (t.resultType) props.resultType = t.resultType; // D1
@@ -561,7 +567,7 @@ async function bumpCodeProject(
   supabase: Db,
   userId: string,
   codeProjectId: string,
-  sessionEndedAt: string,
+  sessionEndedAt: string | null,
 ): Promise<void> {
   const countRes = await supabase
     .from("code_sessions")
@@ -582,9 +588,11 @@ async function bumpCodeProject(
   const project = projectRes.data as ExistingProjectRow | null;
 
   const prevActive = project?.last_active_at ? Date.parse(project.last_active_at) : Number.NEGATIVE_INFINITY;
-  const nextActive = Date.parse(sessionEndedAt);
+  const nextActive = sessionEndedAt === null ? Number.NaN : Date.parse(sessionEndedAt);
   const lastActiveAt =
-    !Number.isNaN(nextActive) && nextActive > prevActive ? sessionEndedAt : (project?.last_active_at ?? sessionEndedAt);
+    sessionEndedAt !== null && !Number.isNaN(nextActive) && nextActive > prevActive
+      ? sessionEndedAt
+      : (project?.last_active_at ?? sessionEndedAt);
 
   const updateRes = await supabase
     .from("code_projects")
