@@ -60,7 +60,8 @@ export async function synthesizeCodeDimension(
 ): Promise<SynthesizeCodeDimensionResult> {
   const summarize = await summarizeCodeSessions(deps);
   const rollup = await rollupCodeProjects(deps);
-  const crossLinks = await matchCodeProjectCrossLinks(deps);
+  // Only projects whose rollup changed this run: an unchanged rollup would embed to the same vector (cross-links.ts).
+  const crossLinks = await matchCodeProjectCrossLinks({ ...deps, projectIds: rollup.rolledUpIds });
   const codeGraph = await buildCodeGraphForUser(deps.supabase, deps.userId);
   const costUsd = summarize.costUsd + rollup.costUsd;
 
@@ -152,21 +153,57 @@ async function createCodeSessionClients(userId: string): Promise<CreateCodeSessi
   return { ok: true, supabase, llm, flushSpend: ledger.flush };
 }
 
+// Single-flight per user, in this process. Every import batch with new sessions fires a synthesis run, and a bulk
+// sweep sends many batches back to back; overlapping runs read the same dirty projects and repeat the same LLM and
+// embedding work. A trigger that arrives while a run is in flight does not start a second one: it marks the user
+// "rerun wanted" and returns at once, and the in-flight run does ONE follow-up pass when it ends (so sessions
+// imported mid-run are still summarized, however many triggers piled up). LIMIT: the map lives in module memory.
+// The local server is one process, so this is exact there; on Vercel each invocation may be its own instance, so
+// it only de-duplicates within one warm instance (the rollup's dirty flag keeps cross-instance reruns cheap).
+const inFlight = new Map<string, { rerun: boolean }>();
+
+type SynthesizeForUserOutcome =
+  | SynthesizeCodeDimensionResult
+  | { refused: true; reason: "already_running" }
+  | { refused: true; reason: "monthly_ceiling_exceeded" }
+  | { refused: true; reason: "global_ceiling_exceeded"; detail: GlobalCeilingReason }
+  | { refused: true; reason: "feature_disabled"; detail: Exclude<FeatureCheckReason, "ok">; contact: string };
+
 /**
- * Convenience wrapper for the two route triggers — builds service-role + LLM
+ * Convenience wrapper for the route trigger — builds service-role + LLM
  * clients (capped + ledgered, issue #21) and runs the full pass for one user.
  * A monthly-ceiling refusal (or, issue #126, a disabled `llm` feature flag)
  * is a clean, logged no-op surfaced as `{ refused: true, reason }` rather
- * than a throw — callers must check for it.
+ * than a throw — callers must check for it. At most one run per user at a
+ * time (see `inFlight` above); a coalesced trigger returns
+ * `{ refused: true, reason: "already_running" }`, and the run that is in
+ * flight returns the result of its last pass.
  */
-export async function synthesizeCodeDimensionForUser(
-  userId: string,
-): Promise<
-  | SynthesizeCodeDimensionResult
-  | { refused: true; reason: "monthly_ceiling_exceeded" }
-  | { refused: true; reason: "global_ceiling_exceeded"; detail: GlobalCeilingReason }
-  | { refused: true; reason: "feature_disabled"; detail: Exclude<FeatureCheckReason, "ok">; contact: string }
-> {
+export async function synthesizeCodeDimensionForUser(userId: string): Promise<SynthesizeForUserOutcome> {
+  const running = inFlight.get(userId);
+  if (running) {
+    running.rerun = true;
+    log.info("code dimension synthesis already running for user — coalesced into one follow-up run", {
+      user_id: userId,
+    });
+    return { refused: true, reason: "already_running" };
+  }
+  const state = { rerun: false };
+  inFlight.set(userId, state);
+  try {
+    let outcome = await runSynthesisOnce(userId);
+    // A refusal (ceiling, feature flag) would only repeat, so only a completed pass earns the follow-up.
+    while (state.rerun && !("refused" in outcome)) {
+      state.rerun = false;
+      outcome = await runSynthesisOnce(userId);
+    }
+    return outcome;
+  } finally {
+    inFlight.delete(userId);
+  }
+}
+
+async function runSynthesisOnce(userId: string): Promise<SynthesizeForUserOutcome> {
   const clients = await createCodeSessionClients(userId);
   if (!clients.ok) {
     if (clients.reason === "feature_disabled") {

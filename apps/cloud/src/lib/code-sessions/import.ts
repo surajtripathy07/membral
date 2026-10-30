@@ -8,7 +8,7 @@
 //
 // No LLM calls happen here (P1a scope) — summary/rollup columns are left
 // NULL; per-session and per-CodeProject synthesis is P1c (ADR Q5).
-import { needsParserRefresh, sessionTurnCount } from "@membral/core";
+import { isMembralHeadlessRunDir, needsParserRefresh, sessionTurnCount } from "@membral/core";
 import type { Db } from "@/lib/db/types";
 import { log } from "@/lib/log";
 import { verifyAgentResolutions } from "@/lib/memory/agent-resolve";
@@ -30,6 +30,8 @@ export interface ImportResult {
   sessionId?: string;
   codeProjectId?: string;
   error?: string;
+  /** Why a "skipped" result was skipped, when it was not the unchanged-content short-circuit. */
+  reason?: "membral_headless_run";
 }
 
 interface ExistingSessionRow {
@@ -95,6 +97,12 @@ export async function importCodeSession(
   importOpts: ImportOptions = {},
 ): Promise<ImportResult> {
   try {
+    // Membral's own headless `claude -p` runs (extraction provider, eval harness) leave transcripts in a throwaway
+    // OS temp dir. They are not user sessions: no project, session row or turns are written, and the caller counts
+    // them as skipped with this reason. The CLI skips them before upload too; this covers older CLIs and the hook.
+    if (isMembralHeadlessRunDir(rawSession.repo?.path)) {
+      return { status: "skipped", reason: "membral_headless_run" };
+    }
     // Every string bound for code_sessions / code_session_turns (text,
     // tool_name, file_path, props, repo, ids) loses U+0000 and lone
     // surrogates, which Postgres rejects ("unsupported Unicode escape

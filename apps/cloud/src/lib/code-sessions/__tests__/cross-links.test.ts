@@ -3,6 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { EmbeddingCeilingExceededError } from "@/lib/embeddings";
 import { dedupeAndCap, matchCodeProjectCrossLinks } from "../cross-links";
 
+const mockQueryVectorsAllowed = vi.hoisted(() => vi.fn(() => true));
+vi.mock("@/lib/llm/embedding-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/llm/embedding-client")>()),
+  queryVectorsAllowed: mockQueryVectorsAllowed,
+}));
+
 const USER_ID = "user-1";
 
 function seedProject(db: FakeSupabase, id: string, overrides: Record<string, unknown> = {}) {
@@ -279,6 +285,58 @@ describe("matchCodeProjectCrossLinks", () => {
     // neither got a match once content-matching was disabled after proj-1's
     // ceiling hit.
     expect(result.evaluated).toBe(2);
+    expect(db.getRows("code_cross_links")).toHaveLength(0);
+  });
+
+  it("CHANGED ONLY: with 3 projects and 1 listed in projectIds, embed() runs once, for that project", async () => {
+    const db = new FakeSupabase();
+    seedProject(db, "proj-1", { props: { rollup: { summary: "Widget catalog." } } });
+    seedProject(db, "proj-2", { props: { rollup: { summary: "Infra rollout." } } });
+    seedProject(db, "proj-3", { props: { rollup: { summary: "Billing." } } });
+    seedConversation(db, "conv-1", "Widget topic", [1, 0]);
+
+    const embed = vi.fn(async () => [1, 0]);
+    const result = await matchCodeProjectCrossLinks({
+      supabase: db.asClient(),
+      userId: USER_ID,
+      embed,
+      projectIds: ["proj-2"],
+    });
+
+    expect(embed).toHaveBeenCalledTimes(1);
+    expect(result.evaluated).toBe(1);
+    expect(result.matches.map((m) => m.codeProjectId)).toEqual(["proj-2"]);
+  });
+
+  it("CHANGED ONLY: an empty projectIds list embeds nothing and reads nothing", async () => {
+    const db = new FakeSupabase();
+    seedProject(db, "proj-1", { props: { rollup: { summary: "Widget catalog." } } });
+    seedConversation(db, "conv-1", "Widget topic", [1, 0]);
+
+    const embed = vi.fn(async () => [1, 0]);
+    const result = await matchCodeProjectCrossLinks({
+      supabase: db.asClient(),
+      userId: USER_ID,
+      embed,
+      projectIds: [],
+    });
+
+    expect(embed).not.toHaveBeenCalled();
+    expect(result).toEqual({ evaluated: 0, created: 0, matches: [] });
+  });
+
+  it("FAMILY GATE: when query vectors are not allowed (non-default embedding family), embed() is never called", async () => {
+    mockQueryVectorsAllowed.mockReturnValueOnce(false);
+    const db = new FakeSupabase();
+    seedProject(db, "proj-1", { props: { rollup: { summary: "Widget catalog." } } });
+    seedProject(db, "proj-2", { props: { rollup: { summary: "Infra rollout." } } });
+    seedConversation(db, "conv-1", "Widget topic", [1, 0]);
+
+    const embed = vi.fn(async () => [1, 0]);
+    const result = await matchCodeProjectCrossLinks({ supabase: db.asClient(), userId: USER_ID, embed });
+
+    expect(embed).not.toHaveBeenCalled();
+    expect(result).toEqual({ evaluated: 0, created: 0, matches: [] });
     expect(db.getRows("code_cross_links")).toHaveLength(0);
   });
 

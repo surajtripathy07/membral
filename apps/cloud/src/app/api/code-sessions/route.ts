@@ -127,6 +127,8 @@ export const POST = withRoute(
     const supabase = getCodeSessionsServiceClient();
     let imported = 0;
     let skipped = 0;
+    // Subset of `skipped`: Membral's own headless runs, which are never imported (lib/code-sessions/import.ts).
+    let skippedHeadless = 0;
     const errors: { sourceSessionId: string; error: string }[] = [];
     // ADR 0039 (W6/D7): every session actually written this batch (imported OR
     // skipped-unchanged both already have a code_sessions row/turns to mirror
@@ -161,6 +163,7 @@ export const POST = withRoute(
         if (session.parentSessionId) importedChildParents.add(`${session.source}\u0000${session.parentSessionId}`);
       } else if (result.status === "skipped") {
         skipped++;
+        if (result.reason === "membral_headless_run") skippedHeadless++;
         if (result.sessionId) mirrorSessionIds.push(result.sessionId);
       } else {
         errors.push({ sourceSessionId: session.sourceSessionId, error: result.error ?? "unknown error" });
@@ -296,6 +299,7 @@ export const POST = withRoute(
     return NextResponse.json({
       imported,
       skipped,
+      skipped_headless: skippedHeadless,
       total: sessions.length,
       errors,
       // Ack for the Stop hook: a server that predates `open` strips the flag and would queue paid extraction.

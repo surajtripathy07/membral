@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const callOrder: string[] = [];
 
@@ -12,7 +12,7 @@ vi.mock("../summarize", () => ({
 vi.mock("../rollup", () => ({
   rollupCodeProjects: vi.fn(async () => {
     callOrder.push("rollup");
-    return { processed: 1, llmCalls: 1, costUsd: 0.02, capped: false };
+    return { processed: 1, llmCalls: 1, costUsd: 0.02, capped: false, rolledUpIds: ["p1"] };
   }),
 }));
 
@@ -80,7 +80,8 @@ describe("synthesizeCodeDimension", () => {
     expect(callOrder).toEqual(["summarize", "rollup", "cross-links", "code-graph"]);
     expect(summarizeCodeSessions).toHaveBeenCalledWith(deps);
     expect(rollupCodeProjects).toHaveBeenCalledWith(deps);
-    expect(matchCodeProjectCrossLinks).toHaveBeenCalledWith(deps);
+    // Content matching is limited to the projects whose rollup was rewritten this run.
+    expect(matchCodeProjectCrossLinks).toHaveBeenCalledWith({ ...deps, projectIds: ["p1"] });
     expect(buildCodeGraphForUser).toHaveBeenCalledWith(deps.supabase, deps.userId);
 
     expect(result.summarize.processed).toBe(2);
@@ -188,5 +189,83 @@ describe("synthesizeCodeDimensionForUser — issue #126 (ADR 0047) llm feature f
 
     expect(result).toEqual({ refused: true, reason: "global_ceiling_exceeded", detail: "global_ceiling_unchecked" });
     expect(summarizeCodeSessions).not.toHaveBeenCalled();
+  });
+});
+
+describe("synthesizeCodeDimensionForUser — single-flight per user", () => {
+  const defaultSummarize = vi.mocked(summarizeCodeSessions).getMockImplementation();
+  beforeEach(() => {
+    callOrder.length = 0;
+    vi.clearAllMocks();
+    if (defaultSummarize) vi.mocked(summarizeCodeSessions).mockImplementation(defaultSummarize);
+    mockCheckFeature.mockResolvedValue({
+      allowed: true,
+      reason: "ok" as const,
+      spentUsd: 0,
+      budgetUsd: null,
+      dailyUsd: null,
+      contact: "support@membral.me",
+    });
+    mockRpc.mockResolvedValue({ data: "0", error: null });
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("a trigger that arrives while a run is in flight does not start a second concurrent run; it coalesces into ONE follow-up pass", async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let active = 0;
+    let maxActive = 0;
+    vi.mocked(summarizeCodeSessions).mockImplementation((async () => {
+      active++;
+      maxActive = Math.max(maxActive, active);
+      await gate;
+      active--;
+      return { processed: 0, llmCalls: 0, heuristicCount: 0, costUsd: 0, capped: false };
+    }) as never);
+
+    const first = synthesizeCodeDimensionForUser("user-sf");
+    await vi.waitFor(() => expect(summarizeCodeSessions).toHaveBeenCalledTimes(1));
+
+    // Three more triggers while the first is blocked: all dropped into the same single follow-up.
+    const dropped = await Promise.all([
+      synthesizeCodeDimensionForUser("user-sf"),
+      synthesizeCodeDimensionForUser("user-sf"),
+      synthesizeCodeDimensionForUser("user-sf"),
+    ]);
+    expect(dropped).toEqual(Array(3).fill({ refused: true, reason: "already_running" }));
+    expect(summarizeCodeSessions).toHaveBeenCalledTimes(1);
+
+    release();
+    const result = await first;
+    expect("refused" in result).toBe(false);
+    expect(summarizeCodeSessions).toHaveBeenCalledTimes(2); // original run + exactly one follow-up
+    expect(maxActive).toBe(1); // never two runs at once
+
+    // The guard is released afterwards: a later trigger runs normally.
+    await synthesizeCodeDimensionForUser("user-sf");
+    expect(summarizeCodeSessions).toHaveBeenCalledTimes(3);
+  });
+
+  it("a run for a different user is not blocked by one in flight", async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.mocked(summarizeCodeSessions).mockImplementationOnce((async () => {
+      await gate;
+      return { processed: 0, llmCalls: 0, heuristicCount: 0, costUsd: 0, capped: false };
+    }) as never);
+    const slow = synthesizeCodeDimensionForUser("user-a");
+    await vi.waitFor(() => expect(summarizeCodeSessions).toHaveBeenCalledTimes(1));
+
+    const other = await synthesizeCodeDimensionForUser("user-b");
+    expect("refused" in other).toBe(false);
+    release();
+    await slow;
   });
 });

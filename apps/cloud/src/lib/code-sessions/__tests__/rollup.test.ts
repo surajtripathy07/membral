@@ -81,6 +81,30 @@ describe("rollupCodeProjects", () => {
     expect(clean?.summary).toBeNull(); // untouched
   });
 
+  it("rolledUpIds lists exactly the projects whose rollup was rewritten (not clean ones, not LLM-failed pending ones)", async () => {
+    const db = new FakeSupabase();
+    seedProject(db, "proj-dirty", { props: { portrait_dirty: true } });
+    seedProject(db, "proj-clean", {
+      props: { portrait_dirty: false, rollup_status: "ok", rollup: { summary: "Already rolled up." } },
+    });
+    seedSessions(db, "proj-dirty", [{ summary: "Did some work." }]);
+
+    const { llm } = makeLlm(GOOD_ROLLUP);
+    const ok = await rollupCodeProjects({ supabase: db.asClient(), llm, userId: USER_ID });
+    expect(ok.rolledUpIds).toEqual(["proj-dirty"]);
+
+    const failing = new FakeSupabase();
+    seedProject(failing, "proj-fail");
+    seedSessions(failing, "proj-fail", [{ summary: "Fixed the bug." }]);
+    const bad = await rollupCodeProjects({
+      supabase: failing.asClient(),
+      llm: makeLlm("not valid json {{{").llm,
+      userId: USER_ID,
+    });
+    expect(bad.processed).toBe(1);
+    expect(bad.rolledUpIds).toEqual([]); // still pending: its rollup did not change
+  });
+
   it("COST BOUND: makes exactly ONE LLM call per dirty project regardless of session count", async () => {
     const db = new FakeSupabase();
     seedProject(db, "proj-1");
