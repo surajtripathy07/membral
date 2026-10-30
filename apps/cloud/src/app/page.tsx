@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAppUrl } from "@/lib/env";
-import { installCommand } from "@/lib/install-command";
+import { localInstallCommand } from "@/lib/install-command";
 import { createClient } from "@/lib/supabase/server";
 import { HEADLINE } from "./_landing/content";
 import { Chats, Closing, Faq, Hero, HowItWorks, LandingFooter, LandingNav, Privacy, ProofTeaser } from "./_landing/sections";
@@ -31,7 +30,7 @@ export default async function Home() {
     redirect("/pulse");
   }
 
-  const install = installCommand(getAppUrl());
+  const install = localInstallCommand();
 
   return (
     <div className="min-h-screen bg-canvas text-ink">

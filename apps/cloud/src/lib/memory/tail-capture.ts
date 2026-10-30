@@ -62,6 +62,7 @@ import { BLOCKER_FRESH_DAYS } from "@/lib/domain/blockers";
 import { RESOLVED_IN_SESSION_RETIRE_REASON, RESOLVED_OBSERVED_RETIRE_REASON } from "@/lib/domain/retire-reasons";
 import { handoffModelRaw, handoffSearchEnabled, handoffSynthesisEnabled } from "@/lib/env";
 import type { LlmClient } from "@/lib/llm/client";
+import { embeddingsConfigured } from "@/lib/llm/embedding-client";
 import { log } from "@/lib/log";
 import {
   dropCrossSessionDuplicates,
@@ -2037,8 +2038,16 @@ async function persistPhase(state: RunState, deps: TailCaptureDeps): Promise<Per
     vectors,
     costUsd: embedCostUsd,
     failedCount: embedFailedCount,
+    failedIndexes: embedFailedIndexes,
   } = await embedTexts(deps.llm, texts, sessionId, deps.supabase);
-  const embedded: EmbeddedGroundedRecord[] = deduped.map((r, i) => ({ ...r, embedding: vectors[i] ?? null }));
+  // Migration 138: a record whose embed batch FAILED carries `embeddingFailed`, so its row gets `embedding_failed_at`
+  // and the retry repairs it. Embeddings that are simply unconfigured stay unmarked (nothing to retry until configured).
+  const embedFailedSet = new Set(embeddingsConfigured() ? (embedFailedIndexes ?? []) : []);
+  const embedded: EmbeddedGroundedRecord[] = deduped.map((r, i) => ({
+    ...r,
+    embedding: vectors[i] ?? null,
+    ...(embedFailedSet.has(i) && !vectors[i] ? { embeddingFailed: true } : {}),
+  }));
   embedded.sort((a, b) => a.windowIndex - b.windowIndex);
   const candidates: InsertableRecord[] = dedupeByCosine(embedded).map((r) =>
     resolvedBlockerHashes.has(r.contentHash) ? { ...r, retireReason: RESOLVED_IN_SESSION_RETIRE_REASON } : r,

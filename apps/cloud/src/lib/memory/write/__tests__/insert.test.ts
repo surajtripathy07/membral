@@ -185,3 +185,35 @@ describe("planInsert embedding_model (migration 118, D-072)", () => {
     expect(plan.keepLive[0]).not.toHaveProperty("embedding_model");
   });
 });
+
+describe("planInsert embedding_failed_at (migration 138, #598)", () => {
+  it("stamps a record whose embed failed and nulls its siblings, so the batch stays column-homogeneous", () => {
+    const plan = planInsert(
+      [
+        rec({ contentHash: "bad", embedding: null, embeddingFailed: true }),
+        rec({ contentHash: "ok", text: "other", embedding: [1, 0] }),
+        rec({ contentHash: "unconfigured", text: "third", embedding: null }),
+      ],
+      existing(),
+      ctx,
+    );
+    const byHash = new Map(plan.keepLive.map((r) => [r.content_hash, r]));
+    expect(byHash.get("bad")?.embedding_failed_at).toBe(ctx.retiredAt);
+    expect(byHash.get("ok")?.embedding_failed_at).toBeNull();
+    expect(byHash.get("unconfigured")?.embedding_failed_at).toBeNull();
+  });
+
+  it("omits the key when nothing failed (unconfigured or blocked embeddings; works on a pre-138 DB)", () => {
+    const plan = planInsert([rec({ embedding: null }), rec({ contentHash: "h2", embedding: [1, 0] })], existing(), ctx);
+    for (const row of plan.keepLive) expect(row).not.toHaveProperty("embedding_failed_at");
+  });
+
+  it("carries the marker on lifted and retired-insert rows too", () => {
+    const plan = planInsert(
+      [rec({ contentHash: "u", verified: false, embedding: null, embeddingFailed: true })],
+      existing(),
+      ctx,
+    );
+    expect(plan.insertRetired[0].embedding_failed_at).toBe(ctx.retiredAt);
+  });
+});

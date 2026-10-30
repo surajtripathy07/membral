@@ -33,6 +33,8 @@ export interface EmbedTextsResult {
   costUsd: number;
   /** Count of texts whose batch failed (folds into `props.memory_extraction.embed_failed`). */
   failedCount: number;
+  /** Indexes (into `texts`) whose batch threw; empty when none did. Excludes `familyBlocked` (nothing was attempted). Feeds `embedding_failed_at` (migration 138). */
+  failedIndexes?: number[];
   /** D-072: set when the store holds another embedding model's vectors — every vector is null (keyword-only), nothing was called or billed. */
   familyBlocked?: string;
 }
@@ -63,6 +65,7 @@ export async function embedTexts(
   const vectors: (number[] | null)[] = new Array(texts.length).fill(null);
   let costUsd = 0;
   let failedCount = 0;
+  const failedIndexes: number[] = [];
 
   for (let start = 0; start < texts.length; start += EMBED_BATCH_SIZE) {
     const chunk = texts.slice(start, start + EMBED_BATCH_SIZE);
@@ -76,6 +79,7 @@ export async function embedTexts(
       for (let i = 0; i < chunkVectors.length; i++) vectors[start + i] = chunkVectors[i];
     } catch (err) {
       failedCount += chunk.length;
+      for (let i = 0; i < chunk.length; i++) failedIndexes.push(start + i);
       log.warn("memory: embed batch failed — storing these records with embedding=null, extraction is not discarded", {
         conversation_id: conversationId,
         batch_start: start,
@@ -84,7 +88,7 @@ export async function embedTexts(
       });
     }
   }
-  return { vectors, costUsd, failedCount };
+  return { vectors, costUsd, failedCount, failedIndexes };
 }
 
 export { cosineSimilarityMutable as cosineSimilarity } from "@/lib/domain/similarity";

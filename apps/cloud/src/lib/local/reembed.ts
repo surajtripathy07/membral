@@ -74,7 +74,7 @@ const TABLE_BATCH_CAP: Partial<Record<ReembedTable, number>> = { conversations: 
 
 interface TableSpec {
   select: string;
-  /** Has `embedding_failed_at` (session_memories does not). */
+  /** Has `embedding_failed_at` (every table, since migration 138 added it to session_memories). */
   hasFailedAt: boolean;
   /** Extra filter on the selection (chunks: empty text is a coverage sentinel, never embedded). */
   nonEmptyText: boolean;
@@ -94,7 +94,7 @@ const str = (v: unknown): string | null => (typeof v === "string" && v.trim() !=
 const SPECS: Record<ReembedTable, TableSpec> = {
   session_memories: {
     select: "id, text, embedding_model",
-    hasFailedAt: false,
+    hasFailedAt: true,
     nonEmptyText: false,
     text: (r) => str(r.text),
     model: plainModel,
@@ -135,9 +135,11 @@ const SPECS: Record<ReembedTable, TableSpec> = {
 
 /**
  * PostgREST `or` filter for "rows that need a new vector" for rows whose configured model value is `target`.
- * Without `embedding_failed_at` (session_memories) a never-embedded row cannot be told from an unembeddable one, so
- * only foreign-family rows (vector present, model differs) are selected; never-embedded rows stay with the normal
- * write path.
+ * With `embedding_failed_at` a retired row (vector null, marker set) is told from a never-embedded one, so the
+ * never-embedded rows are selected and a retired one is not. Without the column (a table that lacks it) only
+ * foreign-family rows (vector present, model differs) are selected; never-embedded rows stay with the normal write path.
+ * session_memories has the column since migration 138; its extraction-time failures are marked and retried by
+ * lib/memory/embed-retry.ts, and this command also repairs the unmarked ones (rows that failed before 138).
  */
 export function reembedFilter(target: string | null, hasFailedAt: boolean): string {
   const foreign =
@@ -169,7 +171,7 @@ export interface ReembedInput {
 export interface TableCounts {
   /** Rows a run would (re-)embed now. */
   remaining: number;
-  /** Rows without a vector (not retired). Informational for tables without `embedding_failed_at`: not in `remaining`. */
+  /** Rows without a vector (not retired). Informational for a table without `embedding_failed_at`: not in `remaining`. */
   missing: number;
   /** Rows holding a vector of another family, default-family (NULL model) vectors counted apart from named ones. */
   foreign_default: number;

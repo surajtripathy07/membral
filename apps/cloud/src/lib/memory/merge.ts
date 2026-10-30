@@ -864,6 +864,8 @@ export function dedupeByNormalizedText<T extends GroundedRecord>(records: T[]): 
 export interface EmbeddedGroundedRecord extends GroundedRecord {
   /** `null` when this record's embedding batch failed (step2d finding 8) — never discarded, just excluded from cosine dedupe/supersede below. */
   embedding: number[] | null;
+  /** True when the embed call for this record FAILED (migration 138): the insert stamps `embedding_failed_at` so the retry (embed-retry.ts) picks the row up. Unset when embeddings are unconfigured or blocked. */
+  embeddingFailed?: boolean;
 }
 
 /**

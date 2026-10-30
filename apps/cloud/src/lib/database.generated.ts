@@ -1621,6 +1621,7 @@ export type Database = {
           created_at: string
           durable: boolean
           embedding: string | null
+          embedding_failed_at: string | null
           embedding_model: string | null
           extraction_pass: string | null
           head_sha: string | null
@@ -1673,6 +1674,7 @@ export type Database = {
           created_at?: string
           durable?: boolean
           embedding?: string | null
+          embedding_failed_at?: string | null
           embedding_model?: string | null
           extraction_pass?: string | null
           head_sha?: string | null
@@ -1725,6 +1727,7 @@ export type Database = {
           created_at?: string
           durable?: boolean
           embedding?: string | null
+          embedding_failed_at?: string | null
           embedding_model?: string | null
           extraction_pass?: string | null
           head_sha?: string | null
@@ -2431,6 +2434,21 @@ export type Database = {
           turn_role: string
           verified: boolean
         }[]
+      }
+      memory_embed_retry_apply: {
+        Args: { p_embedding_model: string; p_rows: Json; p_user_id: string }
+        Returns: number
+      }
+      memory_embed_retry_batch: {
+        Args: { p_limit: number; p_retry_seconds: number; p_user_id: string }
+        Returns: {
+          id: string
+          text: string
+        }[]
+      }
+      memory_embed_retry_users: {
+        Args: { p_limit: number; p_retry_seconds: number }
+        Returns: string[]
       }
       memory_extraction_claim: {
         Args: {

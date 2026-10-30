@@ -3,6 +3,7 @@
 // there is one claim path. Moved verbatim from the route; the route keeps auth, the daily stats and the patterns step.
 import { getServiceClient, SUPABASE_ENV_MISSING_MESSAGE } from "@/lib/db/clients";
 import { log } from "@/lib/log";
+import { retryMemoryEmbeddings } from "@/lib/memory/embed-retry";
 import { type MemoryQueueListingRow, partitionUsersForKick } from "@/lib/memory/extraction-backoff";
 import {
   MEMORY_QUEUE_TABLE,
@@ -88,6 +89,10 @@ export async function kickExtraction(mode: "kick" | "full"): Promise<KickResult>
     if (await triggerMemoryExtraction(userIds[i], baseUrl)) kicked++;
     else failed++;
   }
+
+  // Migration 138 (#598): repair rows whose embedding failed at extraction. Independent of the queue (a quiet store
+  // still heals), bounded, inside the same time budget, and never throws.
+  await retryMemoryEmbeddings(supabase, { deadlineMs: startedAt + CRON_TIME_BUDGET_MS });
 
   const kickSummary = {
     mode,

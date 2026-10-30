@@ -76,6 +76,8 @@ describe("embedTexts (step2d finding 8)", () => {
     const llm = makeLlm(create);
     const result = await embedTexts(llm, texts, "s1");
     expect(result.failedCount).toBe(EMBED_BATCH_SIZE);
+    // Migration 138: the failed batch's positions are reported so the insert can stamp embedding_failed_at.
+    expect(result.failedIndexes).toEqual(Array.from({ length: EMBED_BATCH_SIZE }, (_, i) => i));
     expect(result.vectors.slice(0, EMBED_BATCH_SIZE).every((v) => v === null)).toBe(true);
     expect(result.vectors.slice(EMBED_BATCH_SIZE).every((v) => v !== null)).toBe(true);
   });
