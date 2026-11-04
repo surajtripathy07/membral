@@ -1,0 +1,41 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.surajtripathy07/membral",
+  "title": "Membral",
+  "description": "Local memory store for coding agents: decisions and learnings keep their verbatim quote and link to the session turn.",
+  "repository": {
+    "url": "https://github.com/surajtripathy07/membral",
+    "source": "github"
+  },
+  "version": "0.2.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "membral",
+      "version": "0.2.1",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "MEMBRAL_API_URL",
+          "description": "Base URL of your Membral stack. Leave empty to run offline and list tools only.",
+          "isRequired": false
+        },
+        {
+          "name": "MEMBRAL_API_KEY",
+          "description": "API key for your Membral stack.",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
