@@ -1,10 +1,23 @@
 {
-  "name": "@membral/cli",
-  "version": "0.2.1",
+  "name": "membral",
+  "version": "0.3.0",
   "description": "Your coding agent can answer from what your past sessions found. The Membral command line.",
   "license": "MIT",
-  "private": true,
   "type": "module",
+  "keywords": [
+    "mcp",
+    "claude-code",
+    "coding-agents",
+    "memory",
+    "codex",
+    "opencode"
+  ],
+  "homepage": "https://membral.me",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/surajtripathy07/membral.git",
+    "directory": "packages/cli"
+  },
   "engines": {
     "node": ">=22.5.0"
   },
@@ -12,10 +25,15 @@
     "membral": "dist/index.js"
   },
   "main": "dist/index.js",
-  "dependencies": {
-    "@membral/core": "*"
+  "files": [
+    "dist/index.js",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "devDependencies": {
+    "@membral/core": "*",
     "esbuild": "0.27.7",
     "typescript": "^5.8.3",
     "vitest": "^3.1.1"
@@ -23,6 +41,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "lint": "biome check ./src"
+    "lint": "biome check ./src",
+    "prepublishOnly": "node scripts/bundle-npm.mjs"
   }
 }

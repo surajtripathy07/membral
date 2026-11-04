@@ -245,7 +245,7 @@ jobs:
       - run: npm ci
 
       - name: Build the CLI
-        run: npx turbo build --filter=@membral/cli
+        run: npx turbo build --filter=membral
 
       - name: Docker and Compose versions
         run: |

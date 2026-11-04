@@ -136,7 +136,7 @@ Next steps
    and a matching localhost host-permission).
 
 4. (optional) Build + link the CLI:
-     npx turbo build --filter=@membral/cli
+     npx turbo build --filter=membral
      cd packages/cli && npm link
      membral setup --api-url http://localhost:${PORT}
 
