@@ -172,7 +172,7 @@ To skip throwaway scratch directories, add path patterns to that file (`*` match
 ## More
 
 [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md) covers the stack in depth. [CONTRIBUTING.md](CONTRIBUTING.md) goes
-from clone to green gate to PR.
+from clone to green gate to PR. [docs/COMPARISON.md](docs/COMPARISON.md) compares Membral with other ways of giving an agent memory.
 
 ## License
 
