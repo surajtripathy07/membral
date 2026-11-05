@@ -77,8 +77,8 @@
       // restored the extension zip but not the tarball, so
       // `npm i -g https://membral.me/membral-cli.tgz` 404s after a cached
       // deploy. Cloud's own `dependsOn` stays "^build" (unchanged): once
-      // apps/cloud/package.json depends on "@membral/cli" (below), "^build"
-      // already includes @membral/cli#build, which is what makes CLI source
+      // apps/cloud/package.json depends on "membral" (below), "^build"
+      // already includes membral#build, which is what makes CLI source
       // changes bust this task's cache key — no separate `inputs` needed.
       // VERCEL switches pack.mjs to stamp the hosted origin into the CLI tarball
       // (stamp-default-url.mjs), so it must key this task's cache.
@@ -103,14 +103,14 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/fixtures/**", "src/**/fixtures/**"]
     },
-    "@membral/cli#test": {
+    "membral#test": {
       // Same fixture inputs as "test" above (a package override replaces,
       // not merges, the generic task's keys).
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/fixtures/**", "src/**/fixtures/**"],
       // packages/cli's help.test.ts spawns the BUILT dist/index.js (issue
       // #138 / ADR 0050 §5.1) so it sees the real stdout a user gets, not a
       // source-level approximation — but the bare "test" task above only
-      // builds dependencies (^build), not @membral/cli's own build, so
+      // builds dependencies (^build), not membral's own build, so
       // dist/ could be absent or stale otherwise. Same shape as the
       // "typecheck" override below.
       "dependsOn": ["^build", "build"]

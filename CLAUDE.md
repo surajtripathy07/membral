@@ -14,7 +14,7 @@ input. The CLI puts sessions in, the web dashboard is where you read them, and M
 ```
 packages/core/       # Shared types, normalizer, session-parser interface (@membral/core)
 packages/extension/  # Chrome MV3 extension, vanilla HTML+TS, no React (@membral/extension)
-packages/cli/        # setup/login/status/import/sessions commands (@membral/cli)
+packages/cli/        # setup/login/status/import/sessions commands (membral)
 apps/cloud/          # Next.js 15 App Router + Tailwind v4 cloud app (@membral/cloud)
 ```
 
@@ -28,7 +28,7 @@ apps/cloud/          # Next.js 15 App Router + Tailwind v4 cloud app (@membral/c
 - `npm install` — install all workspace dependencies
 - `npm run hooks:install` — once per clone: points `core.hooksPath` at the committed `.githooks/`
 - `npx turbo build|test|lint|typecheck` — build/test/lint/typecheck all packages (add
-  `--filter=@membral/cli` etc. for one package); CI runs all four on Node 20
+  `--filter=membral` etc. for one package); CI runs all four on Node 20
 - Cloud env: `cd apps/cloud && npx supabase start`, then copy the printed values into
   `apps/cloud/.env.local`; dev server: `npm run dev --workspace=@membral/cloud` on `:3001`
 - `npm run smoke` — the end-to-end check: imports fixture sessions through the built CLI and

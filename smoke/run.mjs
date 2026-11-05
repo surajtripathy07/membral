@@ -287,7 +287,7 @@ async function createThrowawayUserAndKey(config) {
 async function importFixtures(apiKey) {
   log("(d) building fixtures and importing via the built CLI");
   if (!existsSync(CLI_ENTRY)) {
-    fail(`Built CLI not found at ${CLI_ENTRY} — run \`npx turbo build --filter=@membral/cli\` first.`);
+    fail(`Built CLI not found at ${CLI_ENTRY} — run \`npx turbo build --filter=membral\` first.`);
   }
 
   // --- Claude Code fixture: detect() walks <root>/<project>/<session>.jsonl

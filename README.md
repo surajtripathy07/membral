@@ -98,7 +98,8 @@ You need Node 22.5+ with Git, Docker with Compose 2.23+ (40 GiB of VM disk), and
 runs extraction on a timer. Embeddings use a bundled model that downloads on first use (about 137 MB); Ollama is
 optional.
 
-1. Install the CLI from a clone. This builds it and installs it globally:
+1. Run the CLI with npx (no install): `npx membral local up` in step 3 works as is. Or install it from source, from a
+   clone. This builds it and installs it globally:
    `git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install`
 2. Pick an extraction model by putting one choice in `~/.membral/local/.env` (`mkdir -p ~/.membral/local` first):
    - Claude subscription: `CLAUDE_CODE_OAUTH_TOKEN=<from claude setup-token>`. When `claude` is on your PATH and
