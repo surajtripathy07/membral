@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `membral mcp` — a stdio MCP server in `@membral/cli`, with a slim non-root `Dockerfile.mcp` (#20).
+- `membral mcp`, a stdio MCP server in `@membral/cli`, with a slim non-root `Dockerfile.mcp` (#20).
 - `excludePathPatterns` in `sync.json` to skip scratch projects when syncing sessions (#17).
 - Semantic chat search on local embedding families (#30).
 - The container image is now published for `linux/arm64` alongside `amd64` (#14).
@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - MCP `session_summary` now serves a session's handoff note (#27).
 - `membral local up/status/logs` have clearer help and diagnostics and accept `--project` (#15).
-- Local images pull the caddy and node base images from ECR Public, and CI pulls base images from a GHCR mirror (#18).
+- Local images pull the caddy and node base images from ECR Public (#18).
 
 ### Fixed
 
