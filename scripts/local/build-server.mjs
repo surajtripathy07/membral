@@ -59,7 +59,7 @@ if (!flag("--skip-build")) {
     process.exit(1);
   }
   // next build type-checks the whole app, which imports the dist types of these workspaces.
-  for (const ws of ["@membral/core", "@membral/test-kit", "@membral/cli"]) {
+  for (const ws of ["@membral/core", "@membral/test-kit", "membral"]) {
     run("npm", ["run", "build", `--workspace=${ws}`], root);
   }
   run("npx", ["next", "build"], cloud, {

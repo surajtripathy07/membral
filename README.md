@@ -1,9 +1,12 @@
 # Membral
 
-Your coding agent can answer from what your past sessions found, including what nobody wrote down.
+A local memory store for coding agents. Every decision and learning it extracts keeps its verbatim quote and links
+back to the session turn it came from, and your agents search it over MCP.
 
-Membral saves your coding-agent sessions (Claude Code, Codex, opencode, Copilot, Antigravity) in one store on your
-machine, extracts the decisions, learnings and outcomes, and lets your agents search them.
+Membral runs in Docker on your machine. It saves your coding-agent sessions (Claude Code, Codex, opencode, Copilot,
+Antigravity) in one store, extracts the decisions, learnings and outcomes, and keeps each one tied to its source: the
+exact words said, and the turn to open (`get_code_session` with a `turn`) to read what was around them. An agent can
+check a recalled fact against the transcript instead of trusting a summary.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![membral MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/surajtripathy07/membral/badges/score.svg)](https://glama.ai/mcp/servers/surajtripathy07/membral)
@@ -95,7 +98,8 @@ You need Node 22.5+ with Git, Docker with Compose 2.23+ (40 GiB of VM disk), and
 runs extraction on a timer. Embeddings use a bundled model that downloads on first use (about 137 MB); Ollama is
 optional.
 
-1. Install the CLI from a clone. This builds it and installs it globally:
+1. Run the CLI with npx (no install): `npx membral local up` in step 3 works as is. Or install it from source, from a
+   clone. This builds it and installs it globally:
    `git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install`
 2. Pick an extraction model by putting one choice in `~/.membral/local/.env` (`mkdir -p ~/.membral/local` first):
    - Claude subscription: `CLAUDE_CODE_OAUTH_TOKEN=<from claude setup-token>`. When `claude` is on your PATH and

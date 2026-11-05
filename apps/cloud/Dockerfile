@@ -43,7 +43,7 @@ COPY . .
 # the dist types of these workspaces (turbo's ^build does the same).
 RUN npm run build --workspace=@membral/core \
     && npm run build --workspace=@membral/test-kit \
-    && npm run build --workspace=@membral/cli \
+    && npm run build --workspace=membral \
     && cd apps/cloud && npx next build \
     && rm -rf .next/cache
 
