@@ -1,9 +1,12 @@
 # Membral
 
-Your coding agent can answer from what your past sessions found, including what nobody wrote down.
+A local memory store for coding agents. Every decision and learning it extracts keeps its verbatim quote and links
+back to the session turn it came from, and your agents search it over MCP.
 
-Membral saves your coding-agent sessions (Claude Code, Codex, opencode, Copilot, Antigravity) in one store on your
-machine, extracts the decisions, learnings and outcomes, and lets your agents search them.
+Membral runs in Docker on your machine. It saves your coding-agent sessions (Claude Code, Codex, opencode, Copilot,
+Antigravity) in one store, extracts the decisions, learnings and outcomes, and keeps each one tied to its source: the
+exact words said, and the turn to open (`get_code_session` with a `turn`) to read what was around them. An agent can
+check a recalled fact against the transcript instead of trusting a summary.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![membral MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/surajtripathy07/membral/badges/score.svg)](https://glama.ai/mcp/servers/surajtripathy07/membral)
