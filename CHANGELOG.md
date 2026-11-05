@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `membral mcp`, a stdio MCP server in `@membral/cli`, with a slim non-root `Dockerfile.mcp` (#20).
+- `excludePathPatterns` in `sync.json` to skip scratch projects when syncing sessions (#17).
+- Semantic chat search on local embedding families (#30).
+- The container image is now published for `linux/arm64` alongside `amd64` (#14).
+
+### Changed
+
+- MCP `session_summary` now serves a session's handoff note (#27).
+- `membral local up/status/logs` have clearer help and diagnostics and accept `--project` (#15).
+- Local images pull the caddy and node base images from ECR Public (#18).
+
+### Fixed
+
+- Empty session timestamps on import are treated as missing instead of failing (#28).
+- Stopped an embedding storm caused by cross-linking sessions (#29).
+- `membral sessions` fixes to the `--source` usage message and relative `--since` values (#16).
+
 ### Removed
 
 - `@membral/mcp` (`mcp-local`) — the self-hosted stdio MCP server. Deprecated by ADR 0001's 2026-06-30 addendum (one store — Postgres only, no SQLite mirror; one MCP surface — the cloud app's `POST /api/mcp`) and removed in #40. `@membral/cli`'s `enable-memories` command, which only existed to configure this pipeline's Ollama dependency, was removed alongside it. `npx mcp-remote <url>` now bridges stdio-only clients to `/api/mcp` — see the README's "MCP Server" section.
