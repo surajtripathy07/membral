@@ -17,7 +17,7 @@ const publicPaths = ["/login", "/signup"];
 // /membral-cli.tgz: the README's `npm i -g https://membral.me/membral-cli.tgz`
 // runs before the user has any session, so the tarball must not redirect to /login.
 // /proof: the recorded runs the signed-out landing links to.
-const publicExactPaths = new Set(["/privacy", "/proof", "/terms", "/setup", "/auth/callback", "/membral-cli.tgz"]);
+const publicExactPaths = new Set(["/privacy", "/proof", "/terms", "/setup", "/claude-code", "/opencode", "/codex", "/auth/callback", "/membral-cli.tgz"]);
 const publicPrefixPaths = ["/downloads/"];
 
 export async function middleware(request: NextRequest) {
