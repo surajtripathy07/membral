@@ -1,5 +1,5 @@
 {
-  "name": "membral",
+  "name": "membral-monorepo",
   "private": true,
   "license": "MIT",
   "workspaces": [

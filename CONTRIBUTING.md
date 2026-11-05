@@ -42,7 +42,7 @@ does nothing unless you keep a local deny-list file.
 
 ```bash
 npx turbo build|test|lint|typecheck        # everything
-npx turbo test --filter=@membral/cli       # one package
+npx turbo test --filter=membral       # one package
 npm run smoke                              # end to end: fixture sessions through the CLI to the dashboard
 ```
 
@@ -61,7 +61,7 @@ Optional: `OPENAI_API_KEY` (extraction). Do not run `npx turbo build` for
 
 ### CLI and extension from your clone
 
-CLI: `npx turbo build --filter=@membral/cli`, then `node packages/cli/dist/index.js <command>`.
+CLI: `npx turbo build --filter=membral`, then `node packages/cli/dist/index.js <command>`.
 Extension: `npx turbo build --filter=@membral/extension`, then load `packages/extension/dist/` as an unpacked
 extension in `chrome://extensions/` with Developer mode on.
 

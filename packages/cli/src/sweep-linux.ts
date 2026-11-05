@@ -263,7 +263,7 @@ export async function installLinuxSweep(opts: LinuxSweepOptions): Promise<SweepI
   try {
     const invocation = await resolveSchedulerInvocation(opts.invocation, run);
     if (!invocation) {
-      const reason = "`membral` is not on PATH; run `npm i -g @membral/cli`, then `membral setup` again";
+      const reason = "`membral` is not on PATH; run `npm i -g membral`, then `membral setup` again";
       return { success: false, scheduler: "none", reason, message: `Backstop sweep: NOT scheduled — ${reason}.` };
     }
     const service = buildSweepService(invocation, logPath);
