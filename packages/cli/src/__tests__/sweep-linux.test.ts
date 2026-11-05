@@ -270,7 +270,7 @@ describe("sweep scheduler on Linux", () => {
     const m = fakeMachine({ systemd: true });
     const r = await installSweepAgent({ home, platform: "linux", cliInvocation: { argv: ["membral"] }, run: m.run });
     expect(r).toMatchObject({ success: false, scheduler: "none" });
-    expect(r.reason).toContain("npm i -g @membral/cli");
+    expect(r.reason).toContain("npm i -g membral");
     expect(existsSync(systemdUnitDir(home))).toBe(false);
   });
 
