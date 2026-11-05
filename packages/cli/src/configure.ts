@@ -109,7 +109,7 @@ export interface CliInvocation {
  * later evict — writing that path into settings.json would eventually point
  * at nothing. Detect that shape and fall back to the bare `membral` name,
  * resolved from PATH at hook-run time instead, with a warning so setup can
- * tell the user to `npm install -g @membral/cli` (or otherwise get `membral`
+ * tell the user to `npm install -g membral` (or otherwise get `membral`
  * on PATH) for hooks to keep working.
  */
 // B3 (P6 local rehearsal): a Homebrew-installed node's `process.execPath` is
@@ -176,7 +176,7 @@ export function resolveCliInvocation(opts: ResolveCliInvocationOptions = {}): Cl
       fallbackWarning:
         "  NOTE: running via npx from a temporary cache — the hook command was written as\n" +
         '  "membral" (resolved from PATH each time the hook runs) instead of a path inside\n' +
-        "  the npx cache, which npx may delete. Run `npm install -g @membral/cli` (or\n" +
+        "  the npx cache, which npx may delete. Run `npm install -g membral` (or\n" +
         "  otherwise put `membral` on PATH) so the hook keeps working.",
     };
   }

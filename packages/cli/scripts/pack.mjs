@@ -76,7 +76,7 @@ function newestMtimeMs(dir) {
   return newest;
 }
 
-// N4 (P10 re-review): once apps/cloud/package.json depends on "@membral/cli",
+// N4 (P10 re-review): once apps/cloud/package.json depends on "membral",
 // turbo's own "^build" already builds @membral/cli (and transitively
 // @membral/core, via THEIR OWN "^build") before the outer turbo task that
 // runs this script (apps/cloud's `prebuild`) starts — so dist/ is already
@@ -107,7 +107,7 @@ function main() {
   //    this script directly without a prior turbo build, or `--force-build`.
   const forceBuild = process.argv.includes("--force-build");
   if (forceBuild || !distIsFresh()) {
-    run("npx", ["turbo", "build", "--filter=@membral/core", "--filter=@membral/cli"], REPO_ROOT);
+    run("npx", ["turbo", "build", "--filter=@membral/core", "--filter=membral"], REPO_ROOT);
   } else {
     console.log("[pack-cli] @membral/cli and @membral/core dist/ already fresh — skipping nested turbo build");
   }
