@@ -24,6 +24,7 @@
   "bin": {
     "membral": "dist/index.js"
   },
+  "mcpName": "io.github.surajtripathy07/membral",
   "main": "dist/index.js",
   "files": [
     "dist/index.js",
