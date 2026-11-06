@@ -363,6 +363,7 @@
   & .inp .hint { color: var(--t-dim); }
   & .foot { padding-left: 2ch; color: var(--t-dim); white-space: nowrap; overflow: hidden; }
   & .foot .pur { color: var(--t-pur); }
+  & .foot .ffwd { display: inline-block; width: 1.2em; height: 0.7em; vertical-align: 0.05em; }
   & .wide { display: none; }
 
   /* leader + citation under the plate */
