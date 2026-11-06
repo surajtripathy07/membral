@@ -102,7 +102,7 @@ unified because raw turns carry no receipt or supersession (D-021, D-074). Meta-
    `PARSERS` (key order = default import order; `claude-code` stays first); update the pinned keys in
    `packages/core/src/__tests__/sessions/registry.test.ts` (`packages/cli/src/__tests__/sweep-command.test.ts`
    derives its expected import list from `PARSERS`, so it needs no update). Check:
-   `npx turbo test --filter=@membral/core --filter=@membral/cli`.
+   `npx turbo test --filter=@membral/core --filter=membral`.
 4. The CLI picks it up via `Object.keys(PARSERS)` in `packages/cli/src/import-sessions.ts` (extend
    `defaultRootFor` there for a new default root). Cloud needs nothing: `RawCodeSessionSchema`
    (`apps/cloud/src/lib/code-sessions/payload.ts`) accepts any non-empty `source`.

@@ -31,7 +31,7 @@ paste logs here
 ## Environment
 
 - **Component**: <!-- extension / cloud / cli / core -->
-- **Membral version**: <!-- e.g. @membral/cli 0.1.0 or commit SHA -->
+- **Membral version**: <!-- e.g. membral 0.3.1 or commit SHA -->
 - **OS**: <!-- e.g. macOS 14.5, Ubuntu 22.04, Windows 11 -->
 - **Node.js**: <!-- output of `node -v` -->
 - **Browser** (if extension): <!-- e.g. Chrome 130 -->
