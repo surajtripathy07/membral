@@ -104,15 +104,26 @@ export default async function SetupPage() {
               <CopyCommand command="/plugin marketplace add surajtripathy07/membral-plugin" />
             </li>
             <li className="space-y-2">
-              <p>Install the plugin. It asks for your API key and masks it:</p>
+              <p>Install the plugin:</p>
               <CopyCommand command="/plugin install membral@membral" />
+            </li>
+            <li className="space-y-2">
+              <p>Set the server URL and your API key:</p>
+              <CopyCommand command="/plugin configure membral@membral" />
+              <p className="text-sm text-muted">
+                Server URL: <code className="font-mono text-xs text-ink">{getAppUrl()}</code>. API key: the one you
+                generated in step 1.
+              </p>
             </li>
           </ol>
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-ink">Or from your shell</h3>
             <CopyCommand command="claude plugin marketplace add surajtripathy07/membral-plugin" />
-            <CopyCommand command="claude plugin install membral@membral --config api_key=<your key>" />
-            <p className="text-sm text-muted">This form leaves your key in your shell history.</p>
+            <CopyCommand command="claude plugin install membral@membral" />
+            <p className="text-sm text-muted">
+              Then run <code className="font-mono text-xs text-ink">/plugin configure membral@membral</code> inside
+              Claude Code to set the server URL and key.
+            </p>
           </div>
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-ink">What happens next</h3>

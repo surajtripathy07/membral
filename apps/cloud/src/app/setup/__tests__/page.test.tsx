@@ -129,8 +129,10 @@ describe("/setup page", () => {
     const text = collectText(await SetupPage()).join(" ");
     expect(text).toContain("/plugin marketplace add surajtripathy07/membral-plugin");
     expect(text).toContain("/plugin install membral@membral");
-    expect(text).toContain("claude plugin install membral@membral --config api_key=<your key>");
-    expect(text).toContain("shell history");
+    expect(text).toContain("claude plugin install membral@membral");
+    expect(text).not.toContain("--config");
+    expect(text).toContain("/plugin configure membral@membral");
+    expect(text).toContain("Set the server URL and your API key");
     expect(text).toContain("hook error");
     expect(text).toContain("catches up once a day");
     expect(text).toContain("Node 22.5");
