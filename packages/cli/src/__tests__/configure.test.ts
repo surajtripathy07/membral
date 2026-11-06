@@ -700,13 +700,16 @@ describe("resolveCliInvocation", () => {
     expect(result.fallbackWarning).toBeUndefined();
   });
 
-  it("falls back to bare `membral` on PATH (with a warning) when the entry path is inside an npx temp cache", () => {
+  it("falls back to bare `membral` on PATH (with a warning and the reason) when the npx copy cannot be made", () => {
     const result = resolveCliInvocation({
       execPath: "/usr/bin/node",
       entryPath: "/Users/x/.npm/_npx/abc123/node_modules/@membral/cli/dist/index.js",
+      existsSync: () => true,
+      installStable: () => ({ ok: false, error: "could not copy membral into /h/.membral/bin: EACCES" }),
     });
     expect(result.argv).toEqual(["membral"]);
     expect(result.fallbackWarning).toMatch(/npx/i);
+    expect(result.stableInstallError).toContain("EACCES");
   });
 
   it("falls back to `membral` when no entry path is resolvable at all", () => {

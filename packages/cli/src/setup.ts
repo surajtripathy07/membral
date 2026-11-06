@@ -225,7 +225,13 @@ export async function promptDeviceName(prompter: Prompter, defaultName: string):
   return answer.trim() || defaultName;
 }
 
-export async function setup(opts: SetupOptions = {}): Promise<void> {
+/** What `setup` tells a caller (`membral local up`) that wants to avoid reporting the same failure twice. */
+export interface SetupOutcome {
+  /** The backstop sweep was wanted but is not installed; setup already printed why and set exit code 1. */
+  sweepFailed: boolean;
+}
+
+export async function setup(opts: SetupOptions = {}): Promise<SetupOutcome | undefined> {
   console.log("");
   console.log("Membral setup");
   console.log("");
@@ -347,6 +353,7 @@ export async function setup(opts: SetupOptions = {}): Promise<void> {
   // here (the `finally` below). Step 6 (session-end hook) asks nothing.
   let prompter: Prompter | undefined;
   const summary: string[] = [];
+  let sweepFailed = false;
   let opencodePresent = false;
   function ensurePrompter(): Prompter {
     if (!prompter) prompter = createPrompter();
@@ -651,6 +658,11 @@ export async function setup(opts: SetupOptions = {}): Promise<void> {
             : opts.dryRun
               ? `would install (${sweep.scheduler}, dry-run)`
               : `installed (${sweep.scheduler}), every 20 min`;
+      // Every other step above has run by now; a missing sweep must still fail the command, loudly.
+      if (!opts.dryRun && (sweep.scheduler === "none" || !sweep.success)) {
+        sweepFailed = true;
+        process.exitCode = 1;
+      }
       const sweepWarnings = sweep.warnings?.length ? ` — ${sweep.warnings.join("; ")}` : "";
       summary.push(`Backstop sweep: ${sweepStatus}${sweepWarnings}`);
     }
@@ -800,4 +812,5 @@ export async function setup(opts: SetupOptions = {}): Promise<void> {
   console.log(`  - Or install the extension for ongoing sync: ${apiUrl}/import`);
   console.log(line);
   console.log("");
+  return { sweepFailed };
 }

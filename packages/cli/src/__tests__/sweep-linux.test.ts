@@ -102,6 +102,14 @@ describe("sweep scheduler on Linux", () => {
   });
   afterEach(() => rmSync(home, { recursive: true, force: true }));
 
+  it("readCrontab: no table is empty on Vixie and BusyBox; any other failure is unusable", async () => {
+    const { readCrontab } = await import("../sweep-linux.js");
+    const failing = (output: string) => async () => ({ ok: false, output, stdout: "" });
+    expect(await readCrontab(failing("no crontab for user"))).toBe("");
+    expect(await readCrontab(failing("crontab: can't open 'root': No such file or directory"))).toBe("");
+    expect(await readCrontab(failing("crontab: you are not allowed to use this program"))).toBeUndefined();
+  });
+
   it("unit files: absolute node + entry, oneshot, appends to the sweep log; timer every 20 min", () => {
     const service = buildSweepService(INVOCATION, "/h/.membral/logs/sweep.log");
     expect(service).toContain('ExecStart="/usr/bin/node" "/usr/lib/node_modules/membral/dist/index.js" "sweep"');

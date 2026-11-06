@@ -49,6 +49,19 @@ export const LLM_PASSTHROUGH = [
   "MEMBRAL_HANDOFF_SEARCH",
 ] as const;
 
+/** Handoff flags `membral local up` turns on unless the caller's shell or the stack's .env already sets them. */
+export const LOCAL_DEFAULT_ON = ["MEMBRAL_HANDOFF_SYNTHESIS", "MEMBRAL_HANDOFF_SEARCH"] as const;
+
+/**
+ * Precedence per flag: a non-empty value in the caller's shell, else a non-empty value already in .env
+ * (an explicit "0" is kept), else "1". Hosted/server defaults live in apps/cloud and stay off.
+ */
+export function localDefaultOnSettings(shell: Record<string, string | undefined>, stored: EnvMap): EnvMap {
+  const out: EnvMap = {};
+  for (const k of LOCAL_DEFAULT_ON) out[k] = shell[k] || stored[k] || "1";
+  return out;
+}
+
 /** A custom compose project name (--project / MEMBRAL_LOCAL_PROJECT): lowercase, compose- and volume-safe. */
 export const PROJECT_NAME_RE = /^[a-z0-9][a-z0-9-]{0,30}$/;
 

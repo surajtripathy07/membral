@@ -7,11 +7,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readSweepState, writeSweepState } from "../sweep.js";
 import {
   buildSweepPlist,
+  inspectSweepJob,
   installSweepAgent,
   sweepCommand,
   sweepPlistPath,
   uninstallSweepAgent,
 } from "../sweep-command.js";
+import { buildCronEntry, buildSweepService, systemdUnitDir, withCronEntry } from "../sweep-linux.js";
 
 // Expected `importFn` calls derive from the parser registry, in its order,
 // rather than a hardcoded harness list (#288).
@@ -386,5 +388,123 @@ describe("sweepCommand", () => {
     const branchStateFn = vi.fn();
     await sweepCommand({ statePath, now, importFn: vi.fn(), heartbeatFn: vi.fn(), kickFn: vi.fn(), branchStateFn });
     expect(branchStateFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("inspectSweepJob: can the installed job still run?", () => {
+  let home: string;
+  beforeEach(() => {
+    home = mkdtempSync(join(tmpdir(), "membral-inspect-home-"));
+  });
+  afterEach(() => rmSync(home, { recursive: true, force: true }));
+
+  const writePlist = (argv: string[]) => {
+    const path = sweepPlistPath(home);
+    mkdirSync(join(home, "Library", "LaunchAgents"), { recursive: true });
+    writeFileSync(path, buildSweepPlist({ argv }, join(home, ".membral", "logs", "sweep.log")));
+    return path;
+  };
+  const printOk = () => vi.fn(async (_a: string[]) => ({ ok: true, output: "" }));
+
+  it("a healthy job that points elsewhere (dev checkout) is healthy, and nothing but `launchctl print` runs", async () => {
+    const node = join(home, "node");
+    const entry = join(home, "dev", "membral", "packages", "cli", "dist", "index.js");
+    mkdirSync(join(entry, ".."), { recursive: true });
+    writeFileSync(node, "");
+    writeFileSync(entry, "");
+    const path = writePlist([node, entry]);
+    const before = readFileSync(path, "utf8");
+    const launchctl = printOk();
+    expect(await inspectSweepJob({ home, platform: "darwin", uid: 501, launchctl })).toBeNull();
+    expect(launchctl.mock.calls.map((c) => c[0][0])).toEqual(["print"]);
+    expect(readFileSync(path, "utf8")).toBe(before);
+  });
+
+  it("flags a missing plist, a dead entry path, a dead node, and an unloaded job", async () => {
+    const launchctl = printOk();
+    expect(await inspectSweepJob({ home, platform: "darwin", launchctl })).toContain("is missing");
+    writePlist(["/gone/node", "/gone/index.js"]);
+    expect(await inspectSweepJob({ home, platform: "darwin", launchctl })).toContain("/gone/node does not exist");
+    const node = join(home, "node");
+    writeFileSync(node, "");
+    writePlist([node, "/gone/index.js"]);
+    expect(await inspectSweepJob({ home, platform: "darwin", launchctl })).toContain("/gone/index.js does not exist");
+    expect(launchctl).not.toHaveBeenCalled();
+    const entry = join(home, "index.js");
+    writeFileSync(entry, "");
+    writePlist([node, entry]);
+    const unloaded = vi.fn(async (_a: string[]) => ({ ok: false, output: "Could not find service\nmore" }));
+    expect(await inspectSweepJob({ home, platform: "darwin", launchctl: unloaded })).toBe(
+      "launchctl: Could not find service",
+    );
+  });
+
+  it("0.3.0's bare `membral sweep` is broken unless the JOB's own PATH has it", async () => {
+    writePlist(["membral"]); // launchd PATH is /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin
+    const launchctl = printOk();
+    const none = await inspectSweepJob({ home, platform: "darwin", launchctl, exists: () => false });
+    expect(none).toContain("`membral` is not on the job's PATH");
+    const there = await inspectSweepJob({
+      home,
+      platform: "darwin",
+      launchctl,
+      exists: (p) => p === "/usr/local/bin/membral",
+    });
+    expect(there).toBeNull();
+  });
+
+  describe("linux", () => {
+    const argv = ["/usr/bin/node", "/opt/m/index.js"];
+    const fake = (opts: { crontab?: string; timer?: boolean }) => {
+      const calls: string[] = [];
+      const run = async (cmd: string, args: string[]) => {
+        calls.push([cmd, ...args].join(" "));
+        if (cmd === "crontab") {
+          return opts.crontab === undefined
+            ? { ok: false, output: "no crontab for u", stdout: "" }
+            : { ok: true, output: opts.crontab, stdout: opts.crontab };
+        }
+        return { ok: opts.timer === true, output: "", stdout: "" };
+      };
+      return { run, calls };
+    };
+    const writeUnit = (a: string[]) => {
+      const dir = systemdUnitDir(home);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "membral-sweep.service"), buildSweepService({ argv: a }, "/l/sweep.log"));
+    };
+
+    it("systemd: healthy when the paths exist and the timer is enabled and active", async () => {
+      writeUnit(argv);
+      const m = fake({ timer: true });
+      expect(await inspectSweepJob({ home, platform: "linux", run: m.run, exists: () => true })).toBeNull();
+      expect(m.calls).toEqual([
+        "systemctl --user is-enabled membral-sweep.timer",
+        "systemctl --user is-active membral-sweep.timer",
+      ]);
+      expect(
+        await inspectSweepJob({ home, platform: "linux", run: fake({ timer: false }).run, exists: () => true }),
+      ).toContain("not enabled");
+      expect(await inspectSweepJob({ home, platform: "linux", run: m.run, exists: () => false })).toContain(
+        "does not exist",
+      );
+    });
+
+    it("cron: reads our marked entry; dead path and missing entry are problems; other lines are ignored", async () => {
+      const table = withCronEntry("0 3 * * * /usr/bin/backup\n", buildCronEntry({ argv }, "/l/sweep.log"));
+      const m = fake({ crontab: table });
+      expect(await inspectSweepJob({ home, platform: "linux", run: m.run, exists: () => true })).toBeNull();
+      expect(
+        await inspectSweepJob({ home, platform: "linux", run: m.run, exists: (p) => p !== "/opt/m/index.js" }),
+      ).toBe("/opt/m/index.js does not exist");
+      const none = fake({ crontab: "0 3 * * * /usr/bin/backup\n" });
+      expect(await inspectSweepJob({ home, platform: "linux", run: none.run, exists: () => true })).toContain(
+        "no systemd timer or crontab entry",
+      );
+      const bare = fake({ crontab: withCronEntry("", buildCronEntry({ argv: ["membral"] }, "/l/sweep.log")) });
+      expect(await inspectSweepJob({ home, platform: "linux", run: bare.run, exists: () => false })).toContain(
+        "is not on the job's PATH",
+      );
+    });
   });
 });

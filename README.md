@@ -115,6 +115,8 @@ builds the CLI and installs it globally, so `membral` replaces `npx membral` in 
 `http://localhost:3000`. The image is multi-arch (amd64 and arm64); if a pull fails, build it locally and pass `--image`. Image source builds, extraction setup, disk, logs, Linux notes and what works without an
 extraction model are in [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
 
+Handoff notes are on by default locally: `up` writes `MEMBRAL_HANDOFF_SYNTHESIS=1` (a session note is written after extraction) and `MEMBRAL_HANDOFF_SEARCH=1` (`memory_search` can find notes) into `.env`; set either to `0` in your shell before `membral local up`, or in `~/.membral/local/.env`, to turn it off.
+
 Large stores (tens of GB of sessions) need Docker or Colima memory of 12 GB or more, for example `colima start --memory 14`.
 `up` sizes Postgres memory to the Docker VM and warms the excerpts table in the background after it starts.
 

@@ -21,7 +21,7 @@ import type { DockerRunner, DockerRunOptions } from "../docker-runner.js";
 import {
   acquireUpLock,
   defaultIsPortFree,
-  EXTRACTION_OFF_LINE,
+  extractionOffLine,
   type LocalDeps,
   localDown,
   localLogs,
@@ -180,7 +180,7 @@ describe("membral local", () => {
     });
     docker = makeFakeDocker();
     fstate = { userExists: false, minted: 0, provisionBodies: [], extraction: "off" };
-    runSetup = vi.fn(async () => {});
+    runSetup = vi.fn(async (_o?: unknown): Promise<unknown> => undefined);
     activate = vi.fn(async () => {});
     validKeys = new Set();
     deps = {
@@ -315,7 +315,7 @@ describe("membral local", () => {
     expect(out()).toContain(env.MEMBRAL_LOCAL_PASSWORD);
     expect(out()).not.toContain("lls_minted_1");
     expect(out()).not.toContain(env.SERVICE_ROLE_KEY);
-    expect(logs.filter((l) => l === EXTRACTION_OFF_LINE)).toHaveLength(1);
+    expect(logs.filter((l) => l === extractionOffLine(deps.paths!.env))).toHaveLength(1);
 
     // modes
     expect(statSync(deps.paths!.env).mode & 0o777).toBe(0o600);
@@ -362,6 +362,56 @@ describe("membral local", () => {
     writeFileSync(deps.paths!.env, `${readFileSync(deps.paths!.env, "utf8")}OPENAI_API_KEY=sk-test\n`);
     await localUp({}, deps);
     expect(readFileSync(deps.paths!.compose, "utf8")).not.toContain("MEMBRAL_LLM_PROVIDER: claude-code");
+  });
+
+  describe("handoff flags default on locally", () => {
+    const KEYS = ["MEMBRAL_HANDOFF_SYNTHESIS", "MEMBRAL_HANDOFF_SEARCH"] as const;
+    const envOf = () => parseEnv(readFileSync(deps.paths!.env, "utf8"));
+    const composeOf = () => readFileSync(deps.paths!.compose, "utf8");
+
+    it("fresh stack: both flags are 1 in .env and passed to the app, and .env stays mode 600", async () => {
+      await localUp({}, deps);
+      for (const k of KEYS) {
+        expect(envOf()[k]).toBe("1");
+        expect(composeOf()).toContain(`${k}: "$` + `{${k}}"`);
+      }
+      expect(statSync(deps.paths!.env).mode & 0o777).toBe(0o600);
+    });
+
+    it("a value in the caller's shell wins, and replaces an older .env value", async () => {
+      deps.env = { MEMBRAL_HANDOFF_SYNTHESIS: "0", MEMBRAL_HANDOFF_SEARCH: "false" };
+      await localUp({}, deps);
+      expect(envOf().MEMBRAL_HANDOFF_SYNTHESIS).toBe("0");
+      expect(envOf().MEMBRAL_HANDOFF_SEARCH).toBe("false");
+      deps.env = { MEMBRAL_HANDOFF_SYNTHESIS: "1" };
+      await localUp({}, deps);
+      expect(envOf().MEMBRAL_HANDOFF_SYNTHESIS).toBe("1");
+      expect(envOf().MEMBRAL_HANDOFF_SEARCH).toBe("false");
+    });
+
+    it("an existing .env value is kept (0 stays 0); a later up does not flip it", async () => {
+      await localUp({}, deps);
+      const text = readFileSync(deps.paths!.env, "utf8")
+        .replace(/^MEMBRAL_HANDOFF_SYNTHESIS=.*$/m, "MEMBRAL_HANDOFF_SYNTHESIS=0")
+        .replace(/^MEMBRAL_HANDOFF_SEARCH=.*$/m, "MEMBRAL_HANDOFF_SEARCH=0");
+      writeFileSync(deps.paths!.env, text);
+      await localUp({}, deps);
+      expect(envOf().MEMBRAL_HANDOFF_SYNTHESIS).toBe("0");
+      expect(envOf().MEMBRAL_HANDOFF_SEARCH).toBe("0");
+    });
+
+    it("an existing .env without the keys gets 1 on the next up (other lines untouched)", async () => {
+      await localUp({}, deps);
+      const stripped = readFileSync(deps.paths!.env, "utf8")
+        .split("\n")
+        .filter((l) => !l.startsWith("MEMBRAL_HANDOFF_"))
+        .join("\n");
+      writeFileSync(deps.paths!.env, `${stripped}\nOPENAI_API_KEY=sk-test\n`);
+      expect(envOf().MEMBRAL_HANDOFF_SYNTHESIS).toBeUndefined();
+      await localUp({}, deps);
+      for (const k of KEYS) expect(envOf()[k]).toBe("1");
+      expect(envOf().OPENAI_API_KEY).toBe("sk-test");
+    });
   });
 
   it("second up is a no-op: no new key, no migrations re-applied, files unchanged, no password", async () => {
@@ -655,12 +705,99 @@ describe("membral local", () => {
     expect(errors).toEqual([]);
   });
 
-  it("names MEMBRAL_LLM_PROVIDER and the README section in the extraction-off hint, in up and status", async () => {
-    expect(EXTRACTION_OFF_LINE).toContain("MEMBRAL_LLM_PROVIDER=claude-code");
-    expect(EXTRACTION_OFF_LINE).toContain("Run it locally");
+  it("extraction-off hint names every variable, the stack's real .env path and the re-run, in up and status", async () => {
+    const hint = extractionOffLine(deps.paths!.env);
+    for (const name of [
+      "MEMBRAL_LLM_PROVIDER=claude-code",
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "claude setup-token",
+      "OPENAI_API_KEY",
+      "MEMBRAL_MODEL_BASE_URL",
+      "MEMBRAL_MODEL=",
+      "shell exports are not read",
+      deps.paths!.env,
+      "membral local up",
+    ]) {
+      expect(hint).toContain(name);
+    }
     await localUp({}, deps);
     await localStatus({}, deps);
-    expect(logs.filter((l) => l === EXTRACTION_OFF_LINE)).toHaveLength(2);
+    expect(logs.filter((l) => l === hint)).toHaveLength(2);
+  });
+
+  it("adds the where-to-put-it fix to the app's missing-token reason", async () => {
+    await localUp({}, deps);
+    fstate.reason = "MEMBRAL_LLM_PROVIDER=claude-code needs CLAUDE_CODE_OAUTH_TOKEN (run `claude setup-token`).";
+    logs.length = 0;
+    await localStatus({}, deps);
+    expect(out()).toContain(`needs CLAUDE_CODE_OAUTH_TOKEN (run \`claude setup-token\`). Add to ${deps.paths!.env}`);
+  });
+
+  it("does not report the sweep twice when setup already reported it", async () => {
+    runSetup.mockResolvedValue({ sweepFailed: true });
+    deps.sweepCheck = async () => "launchctl: Could not find service";
+    await localUp({}, deps);
+    expect(errors.filter((e) => e.includes("Sweep agent not installed"))).toEqual([]);
+  });
+
+  describe("sweep refresh on a re-run (no new key, setup not run)", () => {
+    const INV = { argv: ["/n/node", "/h/.membral/bin/current/dist/index.js"] };
+    let resolveInvocation: ReturnType<typeof vi.fn>;
+    let installSweep: ReturnType<typeof vi.fn>;
+    beforeEach(async () => {
+      await localUp({}, deps); // first run: mints the key and runs setup
+      validKeys.add("lls_minted_1");
+      resolveInvocation = vi.fn(() => INV);
+      installSweep = vi.fn(async () => ({ success: true, scheduler: "launchd", message: "Installed backstop sweep" }));
+      Object.assign(deps, { home: "/h", resolveInvocation, installSweep });
+      runSetup.mockClear();
+      activate.mockClear();
+      logs.length = 0;
+      errors.length = 0;
+      process.exitCode = undefined;
+    });
+
+    it("refreshes the copy, checks the job, and writes nothing when it is healthy (no setup, so no import)", async () => {
+      await localUp({}, deps);
+      expect(resolveInvocation).toHaveBeenCalledWith({ home: "/h" });
+      expect(installSweep).not.toHaveBeenCalled();
+      expect(runSetup).not.toHaveBeenCalled();
+      expect(activate).not.toHaveBeenCalled();
+      expect(process.exitCode).toBeUndefined();
+      expect(errors).toEqual([]);
+    });
+
+    it("reinstalls a broken job with the refreshed invocation and stays exit 0", async () => {
+      deps.sweepCheck = async () => "/gone/index.js does not exist";
+      await localUp({}, deps);
+      expect(installSweep).toHaveBeenCalledWith({ home: "/h", cliInvocation: INV });
+      expect(runSetup).not.toHaveBeenCalled();
+      expect(out()).toContain("Backstop sweep repaired (/gone/index.js does not exist)");
+      expect(process.exitCode).toBeUndefined();
+    });
+
+    it("a failed reinstall prints one line, exits 1 and leaves the stack running", async () => {
+      deps.sweepCheck = async () => "plist is missing";
+      installSweep.mockResolvedValue({
+        success: false,
+        scheduler: "none",
+        message:
+          "Backstop sweep: NOT scheduled — could not copy membral into /h/.membral/bin: EACCES; run `npm install -g membral`, then `membral setup` again.",
+      });
+      docker.calls.length = 0;
+      await localUp({}, deps);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("NOT scheduled — could not copy membral");
+      expect(process.exitCode).toBe(1);
+      expect(docker.calls.some((c) => c.args.includes("down"))).toBe(false);
+    });
+
+    it("--no-sweep neither refreshes nor checks", async () => {
+      deps.sweepCheck = async () => "plist is missing";
+      await localUp({ noSweep: true }, deps);
+      expect(resolveInvocation).not.toHaveBeenCalled();
+      expect(installSweep).not.toHaveBeenCalled();
+    });
   });
 
   it("names the endpoint it tried when the daemon is unreachable (active context, or DOCKER_HOST)", async () => {
@@ -901,7 +1038,7 @@ describe("membral local", () => {
     expect(out()).toContain(
       "Extraction is off: Claude Code could not be downloaded from npm on this start; retry with `docker restart membral-app-1`.",
     );
-    expect(out()).not.toContain(EXTRACTION_OFF_LINE);
+    expect(out()).not.toContain(extractionOffLine(deps.paths!.env));
   });
 
   it("status: exit 0 when healthy, shows the password only with --show-password, exit 1 when not", async () => {
@@ -912,7 +1049,7 @@ describe("membral local", () => {
     expect(process.exitCode).toBeUndefined();
     expect(out()).not.toContain(env.MEMBRAL_LOCAL_PASSWORD);
     expect(out()).toContain("Profile: local (active)");
-    expect(out()).toContain(EXTRACTION_OFF_LINE);
+    expect(out()).toContain(extractionOffLine(deps.paths!.env));
     expect(docker.calls.at(-1)!.args.slice(7)).toEqual(["ps", "--all", "--format", "json"]);
 
     await localStatus({ showPassword: true }, deps);

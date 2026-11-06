@@ -15,7 +15,7 @@ import {
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { type EnvMap, LLM_PASSTHROUGH } from "./local-stack.js";
+import { type EnvMap, LLM_PASSTHROUGH, localDefaultOnSettings } from "./local-stack.js";
 
 export const LOG_ROTATE_BYTES = 10 * 1024 * 1024;
 export const LOG_KEEP = 3;
@@ -195,6 +195,8 @@ export function buildServerEnv(a: ServerEnvArgs): NodeJS.ProcessEnv {
     if (v !== undefined && v !== "") env[k] = v;
   };
   for (const k of LLM_PASSTHROUGH) set(k, a.stored[k]);
+  // Handoff notes are on by default locally: shell, then .env, then "1" (same rule as `membral local up`).
+  for (const [k, v] of Object.entries(localDefaultOnSettings(a.base, a.stored))) set(k, v);
   if (!a.stored.MEMBRAL_LLM_PROVIDER && a.claudeOnPath) env.MEMBRAL_LLM_PROVIDER = "claude-code";
   set("NEXT_PUBLIC_SUPABASE_ANON_KEY", a.stored.ANON_KEY);
   set("SUPABASE_SERVICE_ROLE_KEY", a.stored.SERVICE_ROLE_KEY);
