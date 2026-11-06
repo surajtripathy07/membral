@@ -310,13 +310,38 @@ describe("importSession", () => {
   it("an upload still in flight at uploadAbortAt is cut and deferred to the sweep", async () => {
     const transcript = join(root, "session.jsonl");
     await writeFile(transcript, sessionLine("/home/dev/acme-webapp", "2026-01-01T00:00:00.000Z"));
-    const fetchMock = slowOk(5_000);
+    // Deterministic: the clock is frozen, so the parent's startBy (= uploadAbortAt,
+    // import-session.ts) cannot lapse during the real parse/git work before fetch.
+    // The fake fetch signals it was entered; only then does the clock advance past
+    // uploadAbortAt, so the upload is provably in flight when the cut lands.
+    let entered!: () => void;
+    const fetchEntered = new Promise<void>((r) => {
+      entered = r;
+    });
+    const inner = slowOk(5_000);
+    const fetchMock = vi.fn((u: string, init: RequestInit) => {
+      entered();
+      return inner(u, init);
+    });
     vi.stubGlobal("fetch", fetchMock);
 
-    const now = Date.now();
-    await importSession({ transcript, apiKey: "lls_key", childDeadlineAt: now + 50, uploadAbortAt: now + 200 });
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    try {
+      const now = Date.now();
+      const done = importSession({
+        transcript,
+        apiKey: "lls_key",
+        childDeadlineAt: now + 50,
+        uploadAbortAt: now + 200,
+      });
+      await fetchEntered;
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(200);
+      await done;
+    } finally {
+      vi.useRealTimers();
+    }
 
-    expect(Date.now() - now).toBeLessThan(2_000);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(warnings()).toContain("upload deferred");
   });

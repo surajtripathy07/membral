@@ -1,6 +1,6 @@
 {
   "name": "membral",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Your coding agent can answer from what your past sessions found. Uploads each Claude Code session to Membral when it ends, adds a short memory preamble when a session starts, and connects the Membral MCP server.",
   "author": {
     "name": "Membral"
