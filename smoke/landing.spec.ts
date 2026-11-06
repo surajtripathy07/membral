@@ -24,12 +24,12 @@ test("signed-out landing renders the headline and the install command", async ({
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(HEADLINE);
 
-  // Primary CTA: the install command and its copy button (the hero and the closing Start section each have one).
+  // Primary CTA: the install command and its copy button (one copy button on the page, in the hero install block).
   const copyButtons = page.getByRole("button", { name: "Copy the install command" });
   await expect(copyButtons.first()).toBeVisible();
-  await expect(page.locator("code", { hasText: "npm run cli:install" }).first()).toBeVisible();
+  await expect(page.locator("code", { hasText: "npx membral local up" }).first()).toBeVisible();
 
-  // Proof: the compact block and the hero line both link to the full recorded runs on /proof.
+  // Proof: Fig. 1 and Fig. 2 captions each link to the full recorded runs on /proof.
   await expect(page.locator("#proof-h")).toBeVisible();
   await expect(page.locator('main a[href="/proof"]')).toHaveCount(2);
 
@@ -75,4 +75,26 @@ test("landing has no horizontal scroll at 390px", async ({ page }) => {
     inner: window.innerWidth,
   }));
   expect(scroll).toBeLessThanOrEqual(inner);
+});
+
+// The comparison page and the three harness pages load signed out, show their h1 and fit a phone.
+const PUBLIC_PAGES = [
+  { path: "/compare", h1: "How Membral compares" },
+  { path: "/claude-code", h1: "Membral for Claude Code" },
+  { path: "/opencode", h1: "Membral for opencode" },
+  { path: "/codex", h1: "Membral for Codex" },
+];
+
+test("compare and harness pages load signed out with no horizontal scroll at 390px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const { path, h1 } of PUBLIC_PAGES) {
+    await page.goto(path);
+    await expect(page, `${path} stays signed out`).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.getByRole("heading", { level: 1 }), `${path} h1`).toHaveText(h1);
+    const { scroll, inner } = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      inner: window.innerWidth,
+    }));
+    expect(scroll, `${path} scrollWidth`).toBeLessThanOrEqual(inner);
+  }
 });

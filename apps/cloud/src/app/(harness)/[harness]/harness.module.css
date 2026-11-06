@@ -1,0 +1,13 @@
+/* The connect snippet. globals.css (off limits for this page) styles `pre` only inside `.steps`, so the same look
+   lives here: a boxed, wrapping block that never widens the page. Tokens come from the `.landing` wrapper. */
+.code {
+  margin: 6px 0 16px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--l-rule);
+  font: 500 13px/1.5 var(--l-mono);
+  color: var(--l-ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}

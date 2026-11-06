@@ -12,13 +12,13 @@
     "api_url": {
       "type": "string",
       "title": "Membral server URL",
-      "description": "http://localhost:3000 for `membral local up` (no trailing slash).",
+      "description": "http://localhost:3000 for `npx membral local up` (no trailing slash).",
       "required": true
     },
     "api_key": {
       "type": "string",
       "title": "Membral API key",
-      "description": "From `membral local up` output, or your server's Settings → Keys.",
+      "description": "From `npx membral local up` output, or your server's Settings → Keys.",
       "sensitive": true,
       "required": true
     }

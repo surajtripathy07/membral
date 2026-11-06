@@ -70,10 +70,10 @@
 //   within its existing 5xx budget". With, verbatim from the recorded answer: "I didn't add a retry for the 504.
 //   Earlier sessions deliberately decided against one", and from demos/with-membral-answer.png.
 // - Still/clip dimensions: with 1028x268, without 1028x616.
-// - RULE "The decision" / "Why": packages/cli/src/lib/api-client.ts:681 (`status === 504 && !idempotent`, import
+// - RULE "The decision" / "Why": packages/cli/src/lib/api-client.ts:749 (`status === 504 && !idempotent`, import
 //   is not idempotent); rubric fact "no-retry-reason" in tasks.json ("server may have saved the first attempt,
 //   not idempotent"); the with answer: "the server may have already saved this batch".
-// - RULE "In the code": api-client.ts:681 and packages/cli/src/lib/__tests__/api-client.policy.test.ts:696
+// - RULE "In the code": api-client.ts:749 and packages/cli/src/lib/__tests__/api-client.policy.test.ts:706
 //   ("a 504 is not retried for import").
 // - TEST_LIMITS: one repository, one developer, Claude Code only: 2026-10-09-power-value.md (limits) and
 //   2026-10-09-value.md ("Method"); the import request, 5 runs per side in four sets: the four results files
@@ -109,11 +109,11 @@
 // - Delete = the whole account, from Settings; one session cannot be deleted yet:
 //   apps/cloud/src/app/api/account/delete/route.ts:1-16; privacy/page.tsx "Not available yet".
 // - Local: Docker; nothing leaves the machine except model calls; Docker Compose 2.23+ and Node 22.5+;
-//   `membral local up`; claude-code provider needs `claude setup-token`; with no model, import, session pages,
+//   `npx membral local up`; claude-code provider needs `claude setup-token`; with no model, import, session pages,
 //   search and MCP still work but nothing is extracted: README.md "Run it locally"; docs/SELF-HOSTING.md:3-4.
 //   The image does not include Claude Code; the first start downloads the pinned version from npm into a volume
 //   (apps/cloud/docker/entrypoint.sh:8-13, apps/cloud/docker/claude-cli/install.sh, packages/cli/src/local-stack.ts CLAUDE_CLI_VOLUME).
-// - LOCAL_IMAGE_NOTE: the ghcr.io package "is published at the public launch"; until then build from a clone:
+// - LOCAL_IMAGE_NOTE: the ghcr.io package "is published at the public launch"; until then contributors build from a clone:
 //   docs/SELF-HOSTING.md "The image"; .github/workflows/image.yml publishes only when vars.PUBLISH_IMAGE is 'true'.
 // FAQ
 // - Agents (Claude Code, opencode, GitHub Copilot CLI + VS Code Copilot Chat, Codex CLI): README.md "Harnesses";
@@ -126,7 +126,7 @@
 //   with their own account: README.md "Install in detail".
 // - Open source, MIT: LICENSE.
 // Start
-// - The command clones the repository and installs the CLI (apps/cloud/src/lib/install-command.ts); `membral local up` runs setup: setup steps (sign in, scan agents,
+// - The command is `npx membral local up` (apps/cloud/src/lib/install-command.ts): it starts the stack, prints the URL and an API key, and runs setup: setup steps (sign in, scan agents,
 //   choose projects, first import, MCP): packages/cli/src/help.ts "membral setup".
 // - Node 22.5 or newer: packages/cli/package.json "engines". Built from packages/cli: apps/cloud/package.json
 //   "prebuild" (packages/cli/scripts/pack.mjs --out public/membral-cli.tgz). MIT: LICENSE.
@@ -147,55 +147,16 @@ export const REPO_URL = "https://github.com/surajtripathy07/membral";
 export const README_INSTALL_URL = `${REPO_URL}#run-it-locally`;
 export const PROOF_URL = `${REPO_URL}#proof`;
 export const PROOF_LABEL = "README, Proof";
-export const SELF_HOSTING_DOC_URL = `${REPO_URL}/blob/main/docs/SELF-HOSTING.md`;
-export const SELF_HOSTING_URL = `${SELF_HOSTING_DOC_URL}#the-image`;
 
-// The headline uses the tagline's key words (README line 3, PRODUCT.md), shortened to fit the hero.
+// The h1. The 2026-11-06 redesign copy below (everything after the PAIR/RULE blocks) is a DRAFT awaiting the
+// owner's approval; each string is one line to edit. Sources for the new strings:
+// - Fig. 1 caption and leader: the recorded import-504-retry run (see "The pair" above); 2026-10-08.
+// - Fig. 2: the hand recount, results/2026-10-10-hand-recount.md (5 runs x 2 arms; 5/5 vs 0/5).
+// - Fig. 3 measured row: the 2026-11-06 latency run (prompt-recall p50 88 ms, p95 192 ms, 30 calls; store of 2,536
+//   main sessions and 302,385 excerpts), recorded in the build brief; full method belongs on /proof.
+// - Fig. 4 record: a real record from the maintainer's store (session 39322882, turn 33, as of 2026-10-29).
+// - Start steps: README.md "Run it locally", steps 1 to 4.
 export const HEADLINE = "Your coding agent can answer from what your past sessions found.";
-
-// The hero holds the headline, the install button and one real exchange from the recorded pair below: the
-// request as typed (cut after "for it") and how each agent's answer begins, all verbatim, each cut marked by an
-// ellipsis (<= 50 words in all, counted by the landing eval harness, kept outside this repo in the maintainer's
-// extract-search-lab/landing-eval).
-// The request itself ("Add a retry for it") is quoted in full in the pair section; the hero has no room for it
-// beside the whole With sentence, the two role labels and HERO_FOR (<= 50 words).
-export const HERO_FOR = "Sessions are your chats with Claude Code, Codex, opencode or Copilot.";
-
-export const HERO_EXCHANGE: { label: string; role: string; text?: string; kind: "without" | "with" }[] = [
-  {
-    label: "Without Membral",
-    role: "Added the 504 retry",
-    text: "“…import now retries a 504”",
-    kind: "without",
-  },
-  {
-    label: "With Membral",
-    role: "Kept the decision",
-    text: "“I didn't add a retry for the 504. Earlier sessions deliberately decided against one, and you chose to keep that.”",
-    kind: "with",
-  },
-];
-
-// In the landing's proof block, after the outage result: the page's one comparison with a rules file, the
-// alternative a reader already has.
-export const HERO_ALTERNATIVE =
-  "A rules file such as CLAUDE.md, which your agent reads every session, holds only what someone wrote into it. If the answer is already there, that file is enough; on such questions in our tests, the agent did slightly worse with Membral. Membral holds what past sessions found and decided, and you write none of it.";
-
-// The landing's one compact proof block; the full outage receipt and the recorded pair live on /proof.
-// Sources: README.md lines 9-11 and "Proof" ("no run without Membral said the database was restarted rather than
-// restored. All five runs with Membral did, in every set."; "Limits: some runs with Membral gave only a lower bound
-// for the downtime"; "both sides ran with that memory empty"), the same counts as OUTAGE.limits below
-// (results/2026-10-10-hand-recount.md). Sentences joined, no number added.
-// The block also quotes three of OUTAGE.with.lines verbatim (the restart, the time window, the caveat):
-// sections.tsx ProofTeaser picks them, so no outage sentence is written twice.
-export const PROOF_TEASER = {
-  lines: [
-    "Asked how production was brought back after the database stopped responding, no run without Membral said the database was restarted rather than restored.",
-    "All five runs with Membral did, in every one of four recorded sets.",
-    "Limits: some runs with Membral gave only a lower bound for the downtime, and both sides ran with Claude Code's own memory empty.",
-  ],
-  link: "See the recorded runs",
-};
 
 // The full proof: a question only past sessions could answer, as a text receipt (shown on /proof).
 export const OUTAGE = {
@@ -324,12 +285,12 @@ export const RULE = {
   code: {
     label: "In the code",
     rule: {
-      text: "packages/cli/src/lib/api-client.ts:681",
-      href: `${REPO_URL}/blob/main/packages/cli/src/lib/api-client.ts#L681`,
+      text: "packages/cli/src/lib/api-client.ts:749",
+      href: `${REPO_URL}/blob/main/packages/cli/src/lib/api-client.ts#L749`,
     },
     test: {
-      text: "api-client.policy.test.ts:696",
-      href: `${REPO_URL}/blob/main/packages/cli/src/lib/__tests__/api-client.policy.test.ts#L696`,
+      text: "api-client.policy.test.ts:706",
+      href: `${REPO_URL}/blob/main/packages/cli/src/lib/__tests__/api-client.policy.test.ts#L706`,
     },
   },
 };
@@ -338,131 +299,275 @@ export const TEST_LIMITS =
   "What we do not know yet: these tests used one repository and one developer's sessions, all in Claude Code. The import request was run 5 times per side in four recorded sets. In those sets, 9 of 20 runs without Membral and 5 of 20 with Membral added the retry anyway, and in one set more runs with Membral than without changed the import code. Where a rule lived only in a document, Membral did not change what the agent did.";
 
 // Setup's 30 days: README.md "Install" (the link).
-export const HOW_IT_WORKS: { step: string; body: string; link?: { text: string; href: string } }[] = [
-  {
-    step: "It saves each session",
-    body: "When a session ends it is uploaded automatically; setup arranges that for each agent it finds. Setup also brings in your last 30 days.",
-    link: { text: "Install steps in the README", href: README_INSTALL_URL },
-  },
-  {
-    step: "It keeps what mattered",
-    body: "Decisions, findings and outcomes, each with the quote it came from and a link back to the session.",
-  },
-  {
-    step: "Your agent looks it up",
-    body: "In Claude Code, past decisions that match your request arrive with it. In every agent setup connects, the agent can search for more.",
-  },
-];
 
-export const CHATS: {
-  title: string;
-  points: { term: string; body: string }[];
-  link: { text: string; href: string };
-} = {
-  title: "Your chats too",
-  points: [
-    {
-      term: "A Chrome extension saves them",
-      body: "It saves your ChatGPT and Claude.ai conversations to your Membral account while you use them in the browser.",
-    },
-    {
-      term: "Your agents can search them",
-      body: "The same tools that find past coding sessions also find past chats: search_conversations, get_conversation and list_recent_conversations.",
-    },
-    {
-      term: "Found by their words",
-      body: "Search matches the words in your chats, so an agent can pull up what you discussed without extra setup.",
-    },
-  ],
-  link: { text: "Chrome extension setup", href: "/setup" },
+// ---- Landing copy (draft, 2026-11-06) ----
+
+export const NAV = {
+  proof: "Proof",
+  github: "GitHub",
+  cta: "Run it locally",
+  skip: "Skip to the content",
 };
 
-export const NOT_THIS: { term: string; body: string }[] = [
-  {
-    term: "Not a live view of your pull requests, tests or deploys.",
-    body: "It says what a past session found and gives the link; the agent checks the current state itself.",
-  },
-];
+export const HERO = {
+  kicker: "a recorded Claude Code session",
+  sub: "Membral keeps your Claude Code, Codex, opencode and Copilot sessions on your machine. Your agent looks them up, including what nobody wrote down.",
+  needs: "Needs Node 22.5 or newer and Docker.",
+  readLink: "Read what it runs",
+  caption:
+    "Asked to add a retry for a 504, the agent finds that earlier sessions decided against one and keeps that decision. It improves the error message and its test instead. Recorded 2026-10-08 in Claude Code; condensed and replayed here in about 9\u00a0s. ",
+  captionLink: "Watch both recordings",
+  leader: "decided in sessions of 5–6 Oct 2026",
+  transcriptPrompt: "membral import sometimes fails with a 504. Add a retry for it, with tests.",
+};
 
-export const PRIVACY = {
-  uploaded: [
-    "What you typed, what the agent wrote back, and which files and tools it used. That includes code the agent wrote.",
-    "The output of the tools it ran, such as file reads and command output, is not kept for Claude Code sessions.",
-    "Text shaped like a key, token or password is replaced with [REDACTED] before it is stored, and writes to files like .env or private keys keep no text. This works by known patterns, so a secret in an unusual shape can get through.",
-    "At setup you choose which projects to sync; a project you leave out stays on your machine.",
-  ],
-  local: [
-    "All of it runs in Docker on your machine with membral local up. Nothing leaves it except the calls extraction makes to the model you choose. With your own Claude Code login (it needs a token from claude setup-token), that includes Claude Code's own traffic to Anthropic, and the first start downloads Claude Code from npm onto your machine; the image does not include it. With a local Ollama model, nothing leaves your machine at all.",
-    "You need Docker (Compose 2.23 or newer) and Node 22.5 or newer.",
+export const OUTAGE_FIG = {
+  heading: "Asked about a past outage, the agent with Membral had the fact in 5 of 5 runs. Without it, 0 of 5.",
+  with: { label: "with Membral", hits: 5 },
+  without: { label: "without", hits: 0 },
+  total: 5,
+  caption: "Same model, same prompt, five runs each. Answers recounted by hand on 2026-10-10. ",
+  captionLink: "Method and recordings",
+};
+
+export const STORE_FIG = {
+  heading: "Every harness writes to one store, starting with what is already on your disk.",
+  body: "Claude Code, Codex, opencode and Copilot sessions land in one Postgres store on your machine. On day one it imports the last 30 days of sessions you already have. Your agent searches it over MCP, and in Claude Code each prompt gets a lookup before the agent answers.",
+  harnesses: ["Claude Code", "Codex", "opencode", "Copilot"],
+  store: "one store",
+  storeSub: "Postgres, on your machine",
+  agent: "your agent",
+  agentSub: "MCP search, per-prompt lookup",
+  measured:
+    "Per-prompt lookup on a store of 2,536 sessions and 302,385 excerpts: 88 ms median, 192 ms p95 over 30 calls. Measured 2026-11-06 on one laptop.",
+};
+
+// A harness name in the store figure links to its page when it has one (the slugs of /claude-code, /opencode, /codex).
+export const HARNESS_LINKS: Record<string, string> = {
+  "Claude Code": "claude-code",
+  Codex: "codex",
+  opencode: "opencode",
+};
+
+export const HANDOFF = {
+  kicker: "the handoff note",
+  heading: "Pick up where the last session stopped, without writing a handoff.",
+  body: "Every session leaves a handoff note, written by Membral from what the session did. The next session gets it on resume, and any later session can find it by search. No file to write, nothing to remember.",
+  rows: [
+    { k: "Written by", v: "Membral, from the session's own records" },
+    { k: "When", v: "after the session is processed" },
+    { k: "Served", v: "when Claude Code resumes or compacts" },
+    { k: "Found", v: "by search from any later session" },
+    { k: "Your part", v: "nothing" },
   ],
 };
 
-export const LOCAL_IMAGE_NOTE =
-  "The app image is published with the public launch; until then, build it from a clone first:";
+export const RECORD_FIG = {
+  kicker: "one record from a real store",
+  heading: "It is yours: a Postgres database on your machine, MIT licensed.",
+  command: "npx membral local up",
+  after:
+    " runs the store in Docker on 127.0.0.1. It is plain Postgres you can query yourself. Secrets in common formats, such as API keys, tokens and private keys, are redacted before a session is stored. Switch agents and the memory stays.",
+  fields: [
+    {
+      k: "said",
+      v: "“Do not use --all, --force or --full for this. --full re-sends everything in scope, and --force also re-queues extraction.”",
+      quote: true,
+    },
+    { k: "kind", v: "decision", quote: false },
+    { k: "as of", v: "2026-10-29", quote: false },
+    { k: "harness", v: "Claude Code", quote: false },
+    { k: "source", v: "session 39322882 · turn 33", quote: false },
+    { k: "stored in", v: "membral-local-db, a Docker volume on this machine", quote: false },
+  ],
+};
+
+export const CHATS = {
+  kicker: "chats in the same store",
+  heading: "Your chats too, and any agent you use next.",
+  body: "The Chrome extension saves your ChatGPT and Claude.ai chats into the same store, so your coding agent can find what you worked out in a chat. The memory belongs to you, not to one tool, so it serves whichever agent you use, at work or outside it.",
+  // the same facts as the body, as table rows
+  rows: [
+    { k: "Saved by", v: "the Chrome extension" },
+    { k: "From", v: "ChatGPT and Claude.ai chats" },
+    { k: "Into", v: "the same store as your sessions" },
+    { k: "Found by", v: "your coding agent" },
+    { k: "Belongs to", v: "you, not to one tool" },
+    { k: "Serves", v: "whichever agent you use, at work or outside it" },
+  ],
+};
+
+// Mirrors README.md "Run it locally". The start step shows the same command as the hero's install block (one copy button on the page).
+export const START = {
+  heading: "Run it locally.",
+  prereq:
+    "Node 22.5 or newer, Docker. Extraction runs on your own Claude Code login, or on any OpenAI-compatible endpoint you set, including a local one.",
+  steps: [
+    {
+      title: "Pick an extraction model.",
+      body: "Put one choice in ~/.membral/local/.env (run mkdir -p ~/.membral/local first):",
+      options: [
+        {
+          label: "Claude subscription",
+          code: "CLAUDE_CODE_OAUTH_TOKEN=<from claude setup-token>",
+          note: "When claude is on your PATH and no other choice is set, up selects the claude-code provider for you.",
+        },
+        { label: "API key", code: "OPENAI_API_KEY=...", note: "Or OPENROUTER_API_KEY." },
+        {
+          label: "Ollama",
+          code: "OLLAMA_CONTEXT_LENGTH=16384 ollama serve",
+          note: "A 7B+ model such as qwen2.5:7b, run with this.",
+        },
+      ],
+    },
+    {
+      title: "Start it.",
+      code: "npx membral local up",
+      body: "It starts three containers: Postgres with pgvector, PostgREST, and the Membral app, at http://localhost:3000. Then it connects the agents it finds. Add --embeddings ollama to use Ollama's nomic-embed-text instead of the bundled model.",
+      link: {
+        text: "Contributors build from a clone",
+        href: `${REPO_URL}/blob/main/docs/SELF-HOSTING.md#1-prerequisites`,
+      },
+    },
+    {
+      title: "Check it.",
+      code: "npx membral local status",
+      body: "It prints an Embeddings line.",
+    },
+  ],
+  noteCommand: "npx membral local up",
+  note: " prints a sign-in URL, a password and an API key. Treat that output as a secret.",
+  remove: "npx membral local down --wipe deletes the store.",
+  signup: { text: "Or create an account first", href: "/signup" },
+};
 
 export const FAQ: { q: string; a: string }[] = [
   {
-    q: "Which agents work with it?",
-    a: "Setup connects Claude Code, opencode, GitHub Copilot (CLI and VS Code Copilot Chat), Codex CLI and Antigravity: their sessions are saved, and each can search them. Past decisions arrive with your request only in Claude Code, and Claude Code is the only agent we have tested. Any other agent that supports MCP, a standard way for agents to use outside tools, can search too.",
+    q: "I already keep a CLAUDE.md. Why this?",
+    a: "Keep it. CLAUDE.md holds what you chose to write down. Membral holds what your sessions found and decided that nobody wrote down, and your agent looks it up when a question needs it.",
   },
   {
-    q: "Which model reads the sessions?",
-    a: "You pick, when you start the stack on your machine: your Claude Code login, a hosted model with your key, or a local Ollama model. With none, import, session pages and search still work; nothing is extracted.",
+    q: "Can't my agent grep old transcripts?",
+    a: "It can try. Transcripts are long, split by tool and full of tool output. Membral pulls out decisions, learnings and outcomes, dates each one, links it to its source turn, and searches by meaning and by keyword.",
   },
   {
-    q: "Can my team use it?",
-    a: "Each developer installs it with their own account, and their agent looks up their own sessions. Not there yet: team or admin controls, or one shared store for a team.",
+    q: "Won't old memories go stale?",
+    a: "Each result shows when it was recorded, and replaced records are hidden by default. Live state, like PR status or CI, is never answered from memory: the agent gets the link and checks.",
   },
   {
-    q: "Does it capture ChatGPT and Claude.ai chats?",
-    a: "Yes. The Chrome extension saves them as you use them in the browser, and your agents can search them next to your coding sessions.",
+    q: "Will my agent actually use it?",
+    a: "In Claude Code, each prompt gets a lookup before the agent answers, so relevant records arrive without a tool call. That is how the run in Fig. 1 worked. Other harnesses search over MCP, with a short instruction file telling the agent when to.",
   },
   {
-    q: "Do my chats leave my machine?",
-    a: "The extension sends them to your own local Membral, at http://localhost:3000 by default. They stay on your machine.",
+    q: "What leaves my machine?",
+    a: "The store runs on your machine. Extraction sends session text to the model you configure: your Claude Code login, or an endpoint you choose, which can be local.",
   },
   {
-    q: "Is it open source?",
-    a: "Yes, under the MIT license.",
+    q: "How much setup is it?",
+    a: "Node 22.5 or newer, Docker, and one command: npx membral local up. npx membral local down --wipe removes everything it stored.",
   },
 ];
 
-export type StartStep = {
-  text: string;
-  /** A command the reader types, shown with a Copy button; "install" links back to the hero's install command. */
-  command?: "install" | string;
-  note?: string;
+export const TEAMS = {
+  heading: "Want one memory across a team?",
+  body: "Write to founder@membral.me. We want to build it with the first teams who need it.",
+  linkText: "Email founder@membral.me",
+  href: "mailto:founder@membral.me?subject=Membral%20for%20our%20team",
 };
 
-export const START: {
-  title: string;
-  steps: StartStep[];
-  sampleLabel: string;
-  sample: string;
-  plugin: string;
-} = {
-  title: "Start",
-  steps: [
+export const CLOSING = { cta: "Run it locally", github: "GitHub" };
+
+export const FOOTER = { email: "founder@membral.me", emailHref: "mailto:founder@membral.me" };
+
+// ---- /proof, the 404 page and the share image (second pass, 2026-11-06) ----
+// Draft copy awaiting the owner's approval. Sources:
+// - PROOF_P1 sets and method: scripts/eval/with-without/results/2026-10-10-hand-recount.md (a) outage-recall: the
+//   four sets (baseline 2026-10-08, final, loop2, loop3 on 2026-10-09), 0/5 vs 5/5 in each, what counted as a hit,
+//   both arms in a fresh home with an empty Claude Code memory. Model: results/2026-10-09-value.md ("Headless Claude
+//   Code on sonnet").
+// - PROOF_P3: the 2026-11-06 latency run recorded in the build brief (research_notes/membral-me/60-brief.md,
+//   "/proof"): endpoints, 10 fixed prompts, 1 discarded warm-up pass, 3 timed passes, sequential, a new connection
+//   per call; the store counts and the machine as measured on that day.
+
+export const PROOF_PAGE = {
+  kicker: "Proof",
+  heading: "Recorded runs, with and without Membral",
+  lede: "Three figures, each with the method used to produce it and what it does not show. P1 is a question only past sessions could answer. P2 is the same request recorded twice in Claude Code. P3 is how long a lookup takes, and how it was timed.",
+  toc: [
+    { href: "#outage", label: "Fig. P1 · outage recall" },
+    { href: "#pair", label: "Fig. P2 · the recorded pair" },
+    { href: "#latency", label: "Fig. P3 · lookup time" },
+  ],
+  cta: "Run it locally",
+};
+
+export const PROOF_P1 = {
+  label: "recounted by hand",
+  with: "with Membral",
+  without: "without",
+  runsOf: "runs",
+  sets: [
+    { name: "Set 1 · 2026-10-08", without: 0, with: 5 },
+    { name: "Set 2 · 2026-10-09", without: 0, with: 5 },
+    { name: "Set 3 · 2026-10-09", without: 0, with: 5 },
+    { name: "Set 4 · 2026-10-09", without: 0, with: 5 },
+  ],
+  total: 5,
+  caption:
+    "Each square is one run. Filled means the final answer said the database was restarted rather than restored. Across the four sets: 0 of 20 runs without Membral, 20 of 20 with. Recounted by hand on 2026-10-10.",
+  method: [
+    { k: "Model", v: "Claude Code, headless, on its sonnet model. The same for both sides." },
+    { k: "Prompt", v: "The question above, word for word, in every run." },
+    { k: "Runs", v: "5 per side in each of 4 sets, so 20 per side." },
+    { k: "Memory", v: "Every run started in a fresh home directory with Claude Code's own memory empty." },
+    { k: "Recount", v: "2026-10-10. Every final answer was read in full, not matched by pattern." },
     {
-      text: "In a terminal with Node 22.5 or newer and Git, run the install command. Then start the local stack with membral local up --embeddings ollama (Ollama and the nomic-embed-text model first).",
-      command: "install",
-      note: "It clones the MIT repository, then builds the membral command-line tool from packages/cli and installs it globally.",
-    },
-    {
-      text: "membral local up runs setup for you: it signs in to your local Membral, lists the projects it found (all checked; uncheck any to keep them local) and connects the coding agents it finds.",
-    },
-    {
-      text: "To check that it worked, run:",
-      command: "membral status",
-      note: "It shows your account, this device and what synced last.",
-    },
-    {
-      text: "Then work as usual. Your sessions are listed in your local dashboard, and in Claude Code each past decision that comes with a request names the session it came from.",
+      k: "A hit",
+      v: 'The answer says the database was restarted rather than restored. A negated or hypothetical mention, such as "a restart might have helped", does not count.',
     },
   ],
-  /** The shape of one line the agent receives with a request (format of renderPromptRecallLine); the text is the example's decision. */
-  sampleLabel: "A line Claude Code receives looks like this (the age, session id and link here are examples):",
-  sample:
-    "[decision · 2d ago · session abcd1234] An import is never re-sent after a 504: the server may already have saved the batch. → https://example.com/merge-requests/1",
-  plugin: "Use Claude Code? You can install the plugin instead.",
+};
+
+export const PROOF_P2 = {
+  label: "the recorded pair",
+  promptLabel: "Prompt, typed into both sessions",
+  ruleLabels: { rule: "The rule", test: "Its test" },
+  readmeLead: "The recounted results, in the README (the full eval harness lives in a private lab): ",
+  limitsLabel: "What the pair does not show",
+};
+
+export const PROOF_P3 = {
+  label: "measured on one laptop",
+  heading: "On a store of 2,536 sessions, the per-prompt lookup takes 88 ms at the median.",
+  body: "An agent reaches the store two ways: the lookup Claude Code runs on each prompt, and the MCP memory_search tool the agent calls itself. Both were timed against the same store.",
+  scaleNote: "Bars share one scale. Longest bar: 1,753 ms.",
+  rows: [
+    { endpoint: "POST /api/memory/prompt-recall", note: "per-prompt lookup", p50: 88, p95: 192 },
+    { endpoint: "MCP memory_search", note: "tool call", p50: 1017, p95: 1753 },
+  ],
+  max: 1753,
+  caption: "Median (p50) and 95th percentile (p95) over 30 timed calls per endpoint. Measured 2026-11-06.",
+  method: [
+    { k: "Endpoints", v: "POST /api/memory/prompt-recall and MCP memory_search." },
+    { k: "Prompts", v: "10 fixed prompts." },
+    { k: "Passes", v: "1 warm-up pass, discarded. Then 3 timed passes, so 30 timed calls per endpoint." },
+    { k: "Order", v: "Sequential, with a new connection for each call." },
+    { k: "Store", v: "2,536 main sessions, 222,642 turns, 4,860 records, 302,385 excerpts." },
+    { k: "Machine", v: "Apple M1 Max, 32 GB. Docker VM with 6 CPU and 14 GB." },
+    { k: "Date", v: "2026-11-06." },
+    { k: "Limits", v: "The maintainer's own store. Other load on the laptop was not isolated." },
+  ],
+};
+
+export const NOT_FOUND = {
+  label: "Fig. 0 · no record",
+  line: "Nothing was recorded at this address.",
+  link: "Back to the logbook",
+};
+
+export const OG_IMAGE = {
+  alt: "Membral: your coding agent can answer from what your past sessions found.",
+  prompt: "membral import sometimes fails with a 504. Add a retry for it, with tests.",
+  figLabel: "Fig. 1",
+  answerLine: "I didn't add a retry for the 504.", // the first line of the recorded answer, verbatim
 };

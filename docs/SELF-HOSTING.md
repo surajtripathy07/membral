@@ -16,13 +16,13 @@ larger disk (`colima stop && colima start --disk 40`; for an existing VM the dis
 If `up` says "Database or auth did not become healthy", run `membral local logs db` first: a full disk
 shows up there, while the message points at the auth log.
 
-## 1. Install the CLI
+## 1. Prerequisites
 
-```
-git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install
-```
+Node 22.5 or newer and Docker. There is nothing to install first: `npx membral local up` (step 3) fetches the CLI
+from npm. The commands below are written as `npx membral ...`.
 
-This builds the CLI and installs it globally. Node 22.5 or newer is required.
+From a clone (contributors): `git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install`
+builds the CLI and installs it globally, and then `membral` replaces `npx membral`.
 
 ## 2. Pick how extraction runs (before the first `up`)
 
@@ -86,7 +86,7 @@ One extraction call gets 180 seconds on the local stack (60 hosted). If a slow m
 ## 3. Start it
 
 ```
-membral local up --embeddings ollama
+npx membral local up --embeddings ollama
 ```
 
 Leave out `--embeddings ollama` to start without embeddings (keyword search only).
@@ -104,14 +104,14 @@ it as a Bearer token. Treat that terminal output as a secret (do not paste it in
 
 ## The image
 
-`up` pulls the app image from `ghcr.io/surajtripathy07/membral-cloud:main`. To run from source instead, build
+`up` pulls the app image from `ghcr.io/surajtripathy07/membral-cloud:main`. To run from source instead (contributors), build
 the image from a clone of this repo and point `up` at it. If the pull fails and the image exists locally, `up`
 uses the local copy and prints "pull failed, using the local copy".
 
 ```
 git clone https://github.com/surajtripathy07/membral.git && cd membral
 docker build -f apps/cloud/Dockerfile -t membral-cloud:dev .
-membral local up --image membral-cloud:dev
+npx membral local up --image membral-cloud:dev
 ```
 
 The published image is multi-arch (linux/amd64 and linux/arm64). If a pull still fails with "no matching manifest", build it
@@ -163,10 +163,10 @@ provider does no embeddings.
 (`apps/cloud/src/lib/memory/similarity.ts`). It runs on Ollama on your machine, so record text never leaves it.
 
 1. Install [Ollama](https://ollama.com) and run `ollama pull nomic-embed-text`.
-2. Run `membral local up --embeddings ollama`. It checks that Ollama answers on `http://127.0.0.1:11434`
+2. Run `npx membral local up --embeddings ollama`. It checks that Ollama answers on `http://127.0.0.1:11434`
    (`OLLAMA_HOST` is honoured) and that `nomic-embed-text` is pulled. It then writes the two lines below into
    `~/.membral/local/.env`. A later plain `up` keeps them.
-3. Run `membral local status`. It prints one `Embeddings: ...` line, or a keyword-only hint.
+3. Run `npx membral local status`. It prints one `Embeddings: ...` line, or a keyword-only hint.
 
 ```
 MEMBRAL_EMBEDDINGS_BASE_URL=http://host.docker.internal:11434/v1
@@ -210,7 +210,7 @@ The extension syncs ChatGPT and Claude.ai chats to your stack.
    port, build with `VITE_CLOUD_URL=http://localhost:<port>`, or save a Server URL in the extension's options page,
    where Chrome asks for permission.
 2. Open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick `packages/extension/dist`.
-3. In the options page, paste the API key that `membral local up` printed (it starts `lls_`) and Save. The popup
+3. In the options page, paste the API key that `npx membral local up` printed (it starts `lls_`) and Save. The popup
    shows the server and "Connected with an API key".
 
 
@@ -222,10 +222,10 @@ Instead of the CLI hooks, inside Claude Code run `/plugin marketplace add surajt
 ## Every day
 
 ```
-membral local status        # service health and sign-in details
-membral local logs app -f   # db, auth, rest, gateway or app; -f follows
-membral local down          # stop, keep your data
-membral local down --wipe   # stop and delete the database (asks first; --yes skips)
+npx membral local status        # service health and sign-in details
+npx membral local logs app -f   # db, auth, rest, gateway or app; -f follows
+npx membral local down          # stop, keep your data
+npx membral local down --wipe   # stop and delete the database (asks first; --yes skips)
 ```
 
 `down --wipe` deletes the database volume and the downloaded Claude Code volume (the next start downloads it

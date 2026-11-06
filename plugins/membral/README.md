@@ -2,7 +2,7 @@
 
 Your coding agent can answer from what your past sessions found.
 
-This plugin connects Claude Code and Antigravity to a Membral server you run yourself (`membral local up`; see the
+This plugin connects Claude Code and Antigravity to a Membral server you run yourself (`npx membral local up`; see the
 [repository README](https://github.com/surajtripathy07/membral)). Nothing is hosted for you.
 
 This plugin connects Claude Code and Antigravity to Membral. It carries its own copy of the Membral CLI, so there is nothing else to
@@ -15,7 +15,7 @@ install. It adds:
 - **SessionEnd:** hands the transcript of the session that just ended to a background child process, which uploads
   it after Claude Code exits, and returns in well under a second. The entry sets `"timeout": 10` because Claude Code
   otherwise cancels SessionEnd hooks after 1.5 s.
-- **MCP server `membral`** at `<your server URL>/api/mcp` (for `membral local up`: `http://localhost:3000/api/mcp`), so
+- **MCP server `membral`** at `<your server URL>/api/mcp` (for `npx membral local up`: `http://localhost:3000/api/mcp`), so
   Claude can search and recall your past sessions.
 
 The hooks run `node`. Without Node on the `PATH` Claude Code sees, every session shows a hook error: install Node.js
@@ -42,7 +42,7 @@ Membral remembers what your sessions did, decided and found, even a few hours ag
 
 ## Install
 
-Start your server first (`membral local up` prints the URL and your API key; `membral local status` shows the URL again).
+Start your server first (`npx membral local up` prints the URL and your API key; `npx membral local status` shows the URL again).
 Then, inside Claude Code:
 
 ```
@@ -50,7 +50,7 @@ Then, inside Claude Code:
 /plugin install membral@membral
 ```
 
-The install dialog asks for the server URL (`http://localhost:3000` for `membral local up`, no trailing slash) and your
+The install dialog asks for the server URL (`http://localhost:3000` for `npx membral local up`, no trailing slash) and your
 API key, and masks the key as you paste.
 
 From a shell instead (this puts the key in your shell history):
@@ -86,12 +86,10 @@ claude mcp remove membral --scope user
 
 ## Without the plugin
 
-Install the CLI and let it configure Claude Code (and Antigravity, Codex, opencode and Copilot) for you:
+Let the CLI start the stack and configure Claude Code (and Antigravity, Codex, opencode and Copilot) for you. It needs Node 22.5 or newer and Docker:
 
 ```sh
-git clone https://github.com/surajtripathy07/membral && cd membral
-npm ci && npm run cli:install
-membral local up
+npx membral local up
 ```
 
 ## Uninstall

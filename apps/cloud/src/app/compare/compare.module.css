@@ -1,0 +1,156 @@
+/* /compare: Fig. 1 table and the two lists. The tokens (--l-*) and fonts come from the `.landing` scope in globals.css,
+   which wraps the page; this module adds only the table's responsive layout. Below 800px the table becomes one card
+   per row; from 800px it is an ordinary fixed-layout table. Surfaces are hairlines, no shadow. */
+
+.tbl {
+  display: block;
+  width: 100%;
+  margin: 10px 0 0;
+  border: 1px solid var(--l-ink);
+  background: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.tbl tbody,
+.tbl tr,
+.tbl th,
+.tbl td {
+  display: block;
+  text-align: left;
+}
+
+/* column headings: kept for assistive tech, hidden visually while the rows are cards */
+.head {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.tbl tr {
+  padding: 14px 14px 8px;
+  border-bottom: 1px solid var(--l-rule);
+}
+
+.tbl tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.q {
+  margin: 0 0 6px;
+  font: 500 18px/1.25 var(--l-serif);
+  font-variation-settings: "opsz" 24;
+  color: var(--l-ink);
+}
+
+.tbl td {
+  padding: 8px 0;
+  border-top: 1px solid var(--l-rule);
+  color: var(--l-ink);
+}
+
+.tbl td::before {
+  content: attr(data-label);
+  display: block;
+  margin: 0 0 2px;
+  font: 500 12.5px/1.3 var(--l-mono);
+  color: var(--l-ink2);
+}
+
+/* the Membral column, marked by the accent in the margin of its line */
+.tbl td.us {
+  padding-left: 10px;
+  border-left: 2px solid var(--l-accent);
+}
+
+.list {
+  margin: 0;
+  padding: 0 0 0 18px;
+  max-width: 40em;
+}
+
+.list li {
+  margin: 0 0 10px;
+  color: var(--l-ink2);
+  text-wrap: pretty;
+}
+
+.list strong {
+  font-weight: 600;
+  color: var(--l-ink);
+}
+
+@media (min-width: 800px) {
+  .tbl {
+    display: table;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  .tbl thead {
+    display: table-header-group;
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .tbl tbody {
+    display: table-row-group;
+  }
+
+  .tbl tr {
+    display: table-row;
+    padding: 0;
+  }
+
+  .tbl th,
+  .tbl td {
+    display: table-cell;
+    padding: 10px 12px;
+    vertical-align: top;
+    border-top: 0;
+    border-bottom: 1px solid var(--l-rule);
+  }
+
+  .tbl tbody tr:last-child th,
+  .tbl tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .tbl thead th {
+    border-bottom: 1px solid var(--l-ink);
+    font: 500 12.5px/1.35 var(--l-mono);
+    color: var(--l-ink);
+  }
+
+  .tbl thead th:first-child {
+    width: 15%;
+  }
+
+  .tbl td::before {
+    display: none;
+  }
+
+  .q {
+    margin: 0;
+    font: 600 14px/1.35 var(--l-sans);
+  }
+
+  .tbl td.us,
+  .tbl thead th.us {
+    padding-left: 12px;
+    border-left: 1px solid var(--l-ink);
+    background: rgba(35, 56, 200, 0.05);
+  }
+
+  .tbl thead th.us {
+    color: var(--l-accent);
+  }
+}

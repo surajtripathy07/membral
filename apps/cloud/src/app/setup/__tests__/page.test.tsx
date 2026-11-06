@@ -110,15 +110,17 @@ describe("/setup page", () => {
     manifestExists = false;
     const text = collectText(await SetupPage()).join(" ");
     expect(text).toContain("membral-cli.tgz && membral setup");
+    expect(text).not.toContain("npx membral local up");
     expect(text).not.toContain("npm run cli:install");
   });
 
-  it("local mode: keeps the clone install", async () => {
+  it("local mode: shows the npx start, not the clone install", async () => {
     manifestExists = false;
     vi.stubEnv("MEMBRAL_LOCAL", "1");
     const text = collectText(await SetupPage()).join(" ");
     vi.unstubAllEnvs();
-    expect(text).toContain("npm run cli:install");
+    expect(text).toContain("npx membral local up");
+    expect(text).not.toContain("npm run cli:install");
     expect(text).not.toContain("membral-cli.tgz");
   });
 

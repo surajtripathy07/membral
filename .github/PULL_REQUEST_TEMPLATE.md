@@ -17,7 +17,7 @@
 ## Affected components
 
 - [ ] `@membral/core`
-- [ ] `@membral/cli`
+- [ ] `membral` (CLI)
 - [ ] `@membral/extension`
 - [ ] `@membral/cloud` (includes `/api/mcp`)
 - [ ] Docs / repo tooling

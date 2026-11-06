@@ -1,33 +1,47 @@
 import type { Metadata } from "next";
-import { ComparePair, LandingFooter, LandingNav, Outage } from "../_landing/sections";
+import { NAV, PROOF_PAGE } from "../_landing/content";
+import { landingFontClass } from "../_landing/fonts";
+import { Footer } from "../_landing/landing-parts";
+import { ScrollFx } from "../_landing/scroll-fx";
+import { LatencyProof, OutageProof, PageNav, PairProof, ProofHero } from "./proof-parts";
 
-// The full proof, moved off the landing page (which keeps one compact proof block linking here): the outage
-// question as quoted from one test run per side with its limits, and the recorded pair (clips, frames, captions,
-// the rule, where it did not help, links to the results files). Copy and sources live in _landing/content.ts;
-// the layout is the landing's own (_landing/sections.tsx). Public: listed in middleware.ts publicExactPaths.
+// The full proof, in the landing's own system: three numbered figures (P1 to P3), each with its method and its
+// limits. P1 is the hand-recounted outage question, P2 the recorded pair (clips and stills), P3 the lookup-time
+// measurement. Copy and sources live in _landing/content.ts; markup in ./proof-parts.tsx; styles in the `.landing`
+// scope of globals.css (the `proofpg` modifier prints "Fig. P"). Public: listed in middleware.ts publicExactPaths.
 export const metadata: Metadata = {
-  title: "Recorded runs — Membral",
+  title: "Recorded runs, with and without Membral",
   description:
-    "Recorded Claude Code runs with and without Membral: an outage nobody wrote down, and a written rule one agent overrode. Each with its limits and results files.",
+    "Recorded Claude Code runs with and without Membral: an outage nobody wrote down, a written rule one agent overrode, and how long a lookup takes. Each with its method and its limits.",
 };
+
+// Adds `js` to <html> before first paint so the CSS may hide the scroll-reveal states; without JS nothing hides.
+const JS_FLAG = "document.documentElement.classList.add('js')";
 
 export default function ProofPage() {
   return (
-    <div className="min-h-screen bg-canvas text-ink">
-      <LandingNav />
-      <main>
-        <section aria-labelledby="proof-h1" className="pt-10 pb-8 sm:pt-14">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6">
-            <p className="section-label">Proof</p>
-            <h1 id="proof-h1" className="mt-2 text-h1 tracking-tight text-ink">
-              Recorded runs, with and without Membral
-            </h1>
+    <div className={`landing proofpg ${landingFontClass}`}>
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed one-line script, no input */}
+      <script dangerouslySetInnerHTML={{ __html: JS_FLAG }} />
+      <a className="skip" href="#main">
+        {NAV.skip}
+      </a>
+      <PageNav current="proof" />
+      <main id="main">
+        <ProofHero />
+        <OutageProof />
+        <PairProof />
+        <LatencyProof />
+        <section className="sec closing-p" aria-label={PROOF_PAGE.cta}>
+          <div className="wrap">
+            <a className="btn" href="/#start">
+              {PROOF_PAGE.cta}
+            </a>
           </div>
         </section>
-        <Outage />
-        <ComparePair />
       </main>
-      <LandingFooter />
+      <Footer />
+      <ScrollFx />
     </div>
   );
 }

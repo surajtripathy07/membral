@@ -70,6 +70,22 @@ describe("middleware", () => {
     });
   });
 
+  describe("public marketing pages", () => {
+    for (const path of ["/compare", "/claude-code", "/opencode", "/codex"]) {
+      it(`${path} never redirects an unauthenticated visitor to /login`, async () => {
+        mockUser = null;
+        const res = await middleware(makeRequest(path));
+        expect(locationOf(res)).toBeNull();
+      });
+    }
+
+    it("an unlisted path still redirects an unauthenticated visitor", async () => {
+      mockUser = null;
+      const res = await middleware(makeRequest("/nope"));
+      expect(locationOf(res)).toBe("http://localhost:3000/login?next=%2Fnope");
+    });
+  });
+
   describe("auth landing (#336)", () => {
     it("an authenticated visitor to /signup goes to /pulse", async () => {
       mockUser = { id: "user-1" };

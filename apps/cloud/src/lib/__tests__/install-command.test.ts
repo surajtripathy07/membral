@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { installCommand, localInstallCommand, START_COMMAND } from "../install-command";
 
-const CLONE_COMMAND =
-  "git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install";
+const LOCAL_COMMAND = "npx membral local up";
 
 describe("installCommand", () => {
   it("hosted: installs the served tarball, then signs in", () => {
@@ -17,10 +16,10 @@ describe("installCommand", () => {
     expect(cmd).not.toContain("--api-url");
   });
 
-  it("local mode: installs from a clone, with no tarball or npm package name", () => {
+  it("local mode: runs the one-command npx start, with no tarball or global install", () => {
     const cmd = installCommand("http://localhost:3000", { MEMBRAL_LOCAL: "1" });
-    expect(cmd).toBe(CLONE_COMMAND);
-    expect(cmd).not.toMatch(/membral-cli\.tgz|npm i -g/);
+    expect(cmd).toBe(LOCAL_COMMAND);
+    expect(cmd).not.toMatch(/membral-cli\.tgz|npm i -g|git clone|cli:install/);
   });
 
   it("a stray MEMBRAL_LOCAL on Vercel still shows the hosted install", () => {
@@ -29,11 +28,11 @@ describe("installCommand", () => {
     );
   });
 
-  it("localInstallCommand is the clone install in every mode", () => {
-    expect(localInstallCommand()).toBe(CLONE_COMMAND);
+  it("localInstallCommand is the npx start in every mode", () => {
+    expect(localInstallCommand()).toBe(LOCAL_COMMAND);
   });
 
   it("starts the local stack with Ollama embeddings", () => {
-    expect(START_COMMAND).toBe("membral local up --embeddings ollama");
+    expect(START_COMMAND).toBe("npx membral local up --embeddings ollama");
   });
 });
