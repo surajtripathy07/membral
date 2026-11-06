@@ -130,7 +130,7 @@ export function SetupChecklist({ hasChats }: { hasChats: boolean }) {
       label: "Install the plugin or the CLI",
       detail: (
         <>
-          <span className="block">Claude Code: run /plugin marketplace add surajtripathy07/membral-plugin, then /plugin install membral@membral. It asks for an API key from Settings.</span>
+          <span className="block">Claude Code: run /plugin marketplace add surajtripathy07/membral-plugin, then /plugin install membral@membral, then /plugin configure membral@membral to set this server&apos;s URL and an API key from Settings.</span>
           <span className="mt-1 block">Other harnesses: install the CLI.</span>
           <code className="mt-1 block rounded-xs bg-sunken px-1.5 py-0.5 font-mono text-label text-ink">
             {installCommand(getAppUrl())}

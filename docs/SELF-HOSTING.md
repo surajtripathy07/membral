@@ -217,7 +217,8 @@ The extension syncs ChatGPT and Claude.ai chats to your stack.
 ## Claude Code plugin
 
 Instead of the CLI hooks, inside Claude Code run `/plugin marketplace add surajtripathy07/membral-plugin` and
-`/plugin install membral@membral`. It asks for the server URL (default `http://localhost:3000`) and the API key.
+`/plugin install membral@membral`, then `/plugin configure membral@membral` to set the server URL (`http://localhost:3000`
+for the local stack) and an API key from Settings. The server URL is required.
 
 ## Every day
 
