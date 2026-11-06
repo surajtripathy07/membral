@@ -27,7 +27,7 @@ test("signed-out landing renders the headline and the install command", async ({
   // Primary CTA: the install command and its copy button (one copy button on the page, in the hero install block).
   const copyButtons = page.getByRole("button", { name: "Copy the install command" });
   await expect(copyButtons.first()).toBeVisible();
-  await expect(page.locator("code", { hasText: "npm run cli:install" }).first()).toBeVisible();
+  await expect(page.locator("code", { hasText: "npx membral local up" }).first()).toBeVisible();
 
   // Proof: Fig. 1 and Fig. 2 captions each link to the full recorded runs on /proof.
   await expect(page.locator("#proof-h")).toBeVisible();

@@ -61,9 +61,14 @@ Optional: `OPENAI_API_KEY` (extraction). Do not run `npx turbo build` for
 
 ### CLI and extension from your clone
 
-CLI: `npx turbo build --filter=membral`, then `node packages/cli/dist/index.js <command>`.
-Extension: `npx turbo build --filter=@membral/extension`, then load `packages/extension/dist/` as an unpacked
-extension in `chrome://extensions/` with Developer mode on.
+Users run the CLI with `npx membral local up`. Contributors install their own build from a clone with
+`npm run cli:install`. To run your own build without installing it: `npx turbo build --filter=membral`, then
+`node packages/cli/dist/index.js <command>`.
+
+### Extension
+
+`npx turbo build --filter=@membral/extension`, then load `packages/extension/dist/` as an unpacked extension in
+`chrome://extensions/` with Developer mode on.
 
 ## Repository layout
 

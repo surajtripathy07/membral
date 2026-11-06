@@ -413,7 +413,7 @@ This deploy does not replace a local setup you may run — the two can coexist:
   confirmation being ON — step 1.6 above) are what actually bound that traffic. See
   `.env.example`'s `MEMBRAL_SIGNUPS_DISABLED` block for the same summary.
 - **`/setup` self-serve onboarding page** — public, no auth required, links the Chrome extension
-  zip, the CLI's `git clone` + `npm link` steps (not on npm yet — issue #118), and Settings -> API
+  zip, the CLI install step, and Settings -> API
   key for MCP. Linked from the landing page, the sidebar footer, and every empty state that used to
   dead-end on `npx @membral/cli setup`.
   - **Extension zip** (`public/downloads/membral-extension.zip`, `npm run build`'s `prebuild` step

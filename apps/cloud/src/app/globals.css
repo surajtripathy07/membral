@@ -443,7 +443,7 @@
   & .closing .tag { margin: 0 0 22px; max-width: 18em; font: 500 clamp(1.8rem, 1.1rem + 2.6vw, 3.2rem) / 1.1 var(--l-serif); font-variation-settings: "opsz" 72; letter-spacing: -0.015em; text-wrap: balance; }
   & .closing .acts { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
   & .foot2 { border-top: 1px solid var(--l-rule); padding: 16px 0 28px; font: 500 12.5px/1.5 var(--l-mono); color: var(--l-ink2); display: flex; flex-wrap: wrap; gap: 4px 18px; }
-  & .foot2 a { color: var(--l-ink2); display: inline-flex; align-items: center; min-height: 32px; }
+  & .foot2 > * { color: var(--l-ink2); display: inline-flex; align-items: center; min-height: 32px; }
 
   @media (min-width: 560px) {
     & .top nav .hide-s { display: inline-flex; }

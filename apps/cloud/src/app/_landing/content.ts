@@ -109,11 +109,11 @@
 // - Delete = the whole account, from Settings; one session cannot be deleted yet:
 //   apps/cloud/src/app/api/account/delete/route.ts:1-16; privacy/page.tsx "Not available yet".
 // - Local: Docker; nothing leaves the machine except model calls; Docker Compose 2.23+ and Node 22.5+;
-//   `membral local up`; claude-code provider needs `claude setup-token`; with no model, import, session pages,
+//   `npx membral local up`; claude-code provider needs `claude setup-token`; with no model, import, session pages,
 //   search and MCP still work but nothing is extracted: README.md "Run it locally"; docs/SELF-HOSTING.md:3-4.
 //   The image does not include Claude Code; the first start downloads the pinned version from npm into a volume
 //   (apps/cloud/docker/entrypoint.sh:8-13, apps/cloud/docker/claude-cli/install.sh, packages/cli/src/local-stack.ts CLAUDE_CLI_VOLUME).
-// - LOCAL_IMAGE_NOTE: the ghcr.io package "is published at the public launch"; until then build from a clone:
+// - LOCAL_IMAGE_NOTE: the ghcr.io package "is published at the public launch"; until then contributors build from a clone:
 //   docs/SELF-HOSTING.md "The image"; .github/workflows/image.yml publishes only when vars.PUBLISH_IMAGE is 'true'.
 // FAQ
 // - Agents (Claude Code, opencode, GitHub Copilot CLI + VS Code Copilot Chat, Codex CLI): README.md "Harnesses";
@@ -126,7 +126,7 @@
 //   with their own account: README.md "Install in detail".
 // - Open source, MIT: LICENSE.
 // Start
-// - The command clones the repository and installs the CLI (apps/cloud/src/lib/install-command.ts); `membral local up` runs setup: setup steps (sign in, scan agents,
+// - The command is `npx membral local up` (apps/cloud/src/lib/install-command.ts): it starts the stack, prints the URL and an API key, and runs setup: setup steps (sign in, scan agents,
 //   choose projects, first import, MCP): packages/cli/src/help.ts "membral setup".
 // - Node 22.5 or newer: packages/cli/package.json "engines". Built from packages/cli: apps/cloud/package.json
 //   "prebuild" (packages/cli/scripts/pack.mjs --out public/membral-cli.tgz). MIT: LICENSE.
@@ -365,7 +365,7 @@ export const HANDOFF = {
 export const RECORD_FIG = {
   kicker: "one record from a real store",
   heading: "It is yours: a Postgres database on your machine, MIT licensed.",
-  command: "membral local up",
+  command: "npx membral local up",
   after:
     " runs the store in Docker on 127.0.0.1. It is plain Postgres you can query yourself. Secrets in common formats, such as API keys, tokens and private keys, are redacted before a session is stored. Switch agents and the memory stays.",
   fields: [
@@ -397,17 +397,12 @@ export const CHATS = {
   ],
 };
 
-// Mirrors README.md "Run it locally". Step 1 points back to the hero's install command (one copy button on the page).
+// Mirrors README.md "Run it locally". The start step shows the same command as the hero's install block (one copy button on the page).
 export const START = {
   heading: "Run it locally.",
   prereq:
     "Node 22.5 or newer, Docker. Extraction runs on your own Claude Code login, or on any OpenAI-compatible endpoint you set, including a local one.",
   steps: [
-    {
-      title: "Install the CLI from a clone.",
-      body: "This builds it and installs it globally. Use the command at the top of this page.",
-      link: { text: "Show the command", href: "#install" },
-    },
     {
       title: "Pick an extraction model.",
       body: "Put one choice in ~/.membral/local/.env (run mkdir -p ~/.membral/local first):",
@@ -427,18 +422,22 @@ export const START = {
     },
     {
       title: "Start it.",
-      code: "membral local up",
-      body: "Add --embeddings ollama to use Ollama's nomic-embed-text instead of the bundled model. It starts three containers: Postgres with pgvector, PostgREST, and the Membral app, at http://localhost:3000.",
+      code: "npx membral local up",
+      body: "It starts three containers: Postgres with pgvector, PostgREST, and the Membral app, at http://localhost:3000. Then it connects the agents it finds. Add --embeddings ollama to use Ollama's nomic-embed-text instead of the bundled model.",
+      link: {
+        text: "Contributors build from a clone",
+        href: `${REPO_URL}/blob/main/docs/SELF-HOSTING.md#1-prerequisites`,
+      },
     },
     {
       title: "Check it.",
-      code: "membral local status",
+      code: "npx membral local status",
       body: "It prints an Embeddings line.",
     },
   ],
-  noteCommand: "membral local up",
+  noteCommand: "npx membral local up",
   note: " prints a sign-in URL, a password and an API key. Treat that output as a secret.",
-  remove: "membral local down --wipe deletes the store.",
+  remove: "npx membral local down --wipe deletes the store.",
   signup: { text: "Or create an account first", href: "/signup" },
 };
 
@@ -465,7 +464,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "How much setup is it?",
-    a: "Node 22.5 or newer, Docker, and the two commands above. membral local down --wipe removes everything it stored.",
+    a: "Node 22.5 or newer, Docker, and one command: npx membral local up. npx membral local down --wipe removes everything it stored.",
   },
 ];
 

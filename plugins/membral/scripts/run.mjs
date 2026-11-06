@@ -333,7 +333,7 @@ function main() {
     // mcp_config.json reads the bearer from MEMBRAL_AUTH_HEADER, which Antigravity's MCP file cannot
     // define for a plugin (no header or env substitution is documented). stderr only: stdout is the hook's reply.
     console.error(
-      'membral plugin: MEMBRAL_AUTH_HEADER is not set, so the membral MCP server cannot authenticate. export MEMBRAL_AUTH_HEADER="Bearer <key>" or run `membral setup --agy`.',
+      'membral plugin: MEMBRAL_AUTH_HEADER is not set, so the membral MCP server cannot authenticate. export MEMBRAL_AUTH_HEADER="Bearer <key>" or run `npx membral setup --agy`.',
     );
   }
 
@@ -352,7 +352,7 @@ function main() {
   }
 
   if (!apiKey) {
-    console.error("membral plugin: no API key set; run /plugin, open membral, and add your server URL and API key (from `membral local up`)");
+    console.error("membral plugin: no API key set; run /plugin, open membral, and add your server URL and API key (from `npx membral local up`)");
     process.exit(0);
   }
   const env = cliEnv(apiKey);

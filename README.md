@@ -93,21 +93,23 @@ no team or admin controls yet.
 
 ## Run it locally
 
-You need Node 22.5+ with Git, Docker with Compose 2.23+ (40 GiB of VM disk), and one extraction model (step 2).
+You need Node 22.5 or newer, Docker with Compose 2.23+ (40 GiB of VM disk), and one extraction model (step 1).
 `up` starts three containers: Postgres with pgvector, PostgREST, and the Membral app, which serves sign-in itself and
 runs extraction on a timer. Embeddings use a bundled model that downloads on first use (about 137 MB); Ollama is
 optional.
 
-1. Run the CLI with npx (no install): `npx membral local up` in step 3 works as is. Or install it from source, from a
-   clone. This builds it and installs it globally:
-   `git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install`
-2. Pick an extraction model by putting one choice in `~/.membral/local/.env` (`mkdir -p ~/.membral/local` first):
+1. Pick an extraction model by putting one choice in `~/.membral/local/.env` (`mkdir -p ~/.membral/local` first):
    - Claude subscription: `CLAUDE_CODE_OAUTH_TOKEN=<from claude setup-token>`. When `claude` is on your PATH and
      no other choice is set, `up` selects the `claude-code` provider for you.
    - API key: `OPENAI_API_KEY=...` (or `OPENROUTER_API_KEY`)
    - Ollama: a 7B+ model such as `qwen2.5:7b`, run with `OLLAMA_CONTEXT_LENGTH=16384 ollama serve`
-3. Start it: `membral local up` (add `--embeddings ollama` to use Ollama's `nomic-embed-text` instead of the bundled model).
-4. Check it: `membral local status` (it prints an `Embeddings: ...` line).
+2. Install and start it in one command: `npx membral local up`. It starts the stack, prints the URL and an API key,
+   and connects the agents it finds. Add `--embeddings ollama` to use Ollama's
+   `nomic-embed-text` instead of the bundled model.
+3. Check it: `npx membral local status` (it prints an `Embeddings: ...` line).
+
+From a clone (contributors): `git clone https://github.com/surajtripathy07/membral && cd membral && npm ci && npm run cli:install`
+builds the CLI and installs it globally, so `membral` replaces `npx membral` in the commands here.
 
 `up` prints a sign-in URL and password and an API key; treat that output as a secret. The app is at
 `http://localhost:3000`. The image is multi-arch (amd64 and arm64); if a pull fails, build it locally and pass `--image`. Image source builds, extraction setup, disk, logs, Linux notes and what works without an
@@ -137,7 +139,7 @@ It syncs ChatGPT and Claude.ai chats to your local stack.
 1. `npm run build --workspace=@membral/extension` (targets `http://localhost:3000`; for another port build with
    `VITE_CLOUD_URL=http://localhost:<port>`, or save a Server URL in the options page, where Chrome asks permission).
 2. In `chrome://extensions`, turn on Developer mode, choose Load unpacked, pick `packages/extension/dist`.
-3. In the options page, paste the API key `membral local up` printed (it starts `lls_`) and Save. The popup shows
+3. In the options page, paste the API key `npx membral local up` printed (it starts `lls_`) and Save. The popup shows
    the server and "Connected with an API key".
 
 ## Supported agents
@@ -165,7 +167,7 @@ To skip throwaway scratch directories, add path patterns to that file (`*` match
 
 ## Commands
 
-- `membral local up | status | logs <service> | down` runs the stack (`down --wipe` deletes the data); `membral local reembed` moves stored vectors to a new embedding model.
+- `npx membral local up | status | logs <service> | down` runs the stack (`down --wipe` deletes the data); `npx membral local reembed` moves stored vectors to a new embedding model.
 - `membral setup`, `login` (default `http://localhost:3000`), `use`, `sessions`, `import <export.json>` and `status`.
 - `membral --help` lists every command. `npm run smoke` checks the dashboard renders the fixtures.
 
