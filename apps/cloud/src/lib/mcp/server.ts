@@ -99,7 +99,7 @@ export function createCloudMcpServer(
   const server = new McpServer(
     {
       name: "membral-cloud",
-      version: "0.2.0",
+      version: "0.3.1",
     },
     { instructions: serverInstructions(codeScopeId === null, codeScopeId !== null || tokenScopeId === null) },
   );
