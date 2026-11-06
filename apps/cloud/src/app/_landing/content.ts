@@ -342,6 +342,13 @@ export const STORE_FIG = {
     "Per-prompt lookup on a store of 2,536 sessions and 302,385 excerpts: 88 ms median, 192 ms p95 over 30 calls. Measured 2026-11-06 on one laptop.",
 };
 
+// A harness name in the store figure links to its page when it has one (the slugs of /claude-code, /opencode, /codex).
+export const HARNESS_LINKS: Record<string, string> = {
+  "Claude Code": "claude-code",
+  Codex: "codex",
+  opencode: "opencode",
+};
+
 export const HANDOFF = {
   kicker: "the handoff note",
   heading: "Pick up where the last session stopped, without writing a handoff.",

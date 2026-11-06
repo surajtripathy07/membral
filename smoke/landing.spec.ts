@@ -76,3 +76,25 @@ test("landing has no horizontal scroll at 390px", async ({ page }) => {
   }));
   expect(scroll).toBeLessThanOrEqual(inner);
 });
+
+// The comparison page and the three harness pages load signed out, show their h1 and fit a phone.
+const PUBLIC_PAGES = [
+  { path: "/compare", h1: "How Membral compares" },
+  { path: "/claude-code", h1: "Membral for Claude Code" },
+  { path: "/opencode", h1: "Membral for opencode" },
+  { path: "/codex", h1: "Membral for Codex" },
+];
+
+test("compare and harness pages load signed out with no horizontal scroll at 390px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const { path, h1 } of PUBLIC_PAGES) {
+    await page.goto(path);
+    await expect(page, `${path} stays signed out`).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.getByRole("heading", { level: 1 }), `${path} h1`).toHaveText(h1);
+    const { scroll, inner } = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      inner: window.innerWidth,
+    }));
+    expect(scroll, `${path} scrollWidth`).toBeLessThanOrEqual(inner);
+  }
+});

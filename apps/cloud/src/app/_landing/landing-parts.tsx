@@ -6,6 +6,7 @@ import {
   FAQ,
   FOOTER,
   HANDOFF,
+  HARNESS_LINKS,
   HERO,
   NAV,
   OUTAGE_FIG,
@@ -100,6 +101,20 @@ export function OutageFig() {
   );
 }
 
+// A harness label in the figure: a link to its page when it has one, plain text otherwise. The inline style beats the
+// scoped `.schem text` fill; the rect keeps the whole box clickable.
+function HarnessLabel({ name, x, y }: { name: string; x: number; y: number }) {
+  const slug = HARNESS_LINKS[name];
+  if (!slug) return <text x={x} y={y}>{name}</text>;
+  return (
+    <a href={`/${slug}`}>
+      <text x={x} y={y} style={{ fill: "var(--l-accent)", textDecoration: "underline" }}>
+        {name}
+      </text>
+    </a>
+  );
+}
+
 export function StoreFig() {
   const h = STORE_FIG.harnesses;
   return (
@@ -112,13 +127,11 @@ export function StoreFig() {
           <h2 id="store-h">{STORE_FIG.heading}</h2>
           <p>{STORE_FIG.body}</p>
           <div className="schem" data-reveal>
-            <svg className="sch-h" viewBox="0 0 862 220" aria-hidden="true" focusable="false">
+            <svg className="sch-h" viewBox="0 0 862 220" role="group" aria-label="Harnesses to store to agent" focusable="false">
               {h.map((name, i) => (
                 <g key={name}>
                   <rect className="stk" x="1" y={10 + i * 52} width="150" height="38" />
-                  <text x="14" y={34 + i * 52}>
-                    {name}
-                  </text>
+                  <HarnessLabel name={name} x={14} y={34 + i * 52} />
                   <path className="flow" d={`M151 ${29 + i * 52} H225 V110 H300`} />
                 </g>
               ))}
@@ -138,13 +151,11 @@ export function StoreFig() {
                 {STORE_FIG.agentSub}
               </text>
             </svg>
-            <svg className="sch-v" viewBox="0 0 320 330" aria-hidden="true" focusable="false">
+            <svg className="sch-v" viewBox="0 0 320 330" role="group" aria-label="Harnesses to store to agent" focusable="false">
               {h.map((name, i) => (
                 <g key={name}>
                   <rect className="stk" x={(i % 2) * 172 + 1} y={Math.floor(i / 2) * 46 + 1} width="146" height="38" />
-                  <text x={(i % 2) * 172 + 12} y={Math.floor(i / 2) * 46 + 25}>
-                    {name}
-                  </text>
+                  <HarnessLabel name={name} x={(i % 2) * 172 + 12} y={Math.floor(i / 2) * 46 + 25} />
                 </g>
               ))}
               {/* the lines run through the gutter between the two columns, never behind a label */}
@@ -368,6 +379,10 @@ export function Footer() {
         <span>MIT</span>
         <a href={REPO_URL}>GitHub</a>
         <a href="/proof">Proof</a>
+        <a href="/compare">Compare</a>
+        <a href="/claude-code">Claude Code</a>
+        <a href="/opencode">opencode</a>
+        <a href="/codex">Codex</a>
         <a href={FOOTER.emailHref}>{FOOTER.email}</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
