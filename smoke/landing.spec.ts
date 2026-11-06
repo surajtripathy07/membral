@@ -24,12 +24,12 @@ test("signed-out landing renders the headline and the install command", async ({
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(HEADLINE);
 
-  // Primary CTA: the install command and its copy button (the hero and the closing Start section each have one).
+  // Primary CTA: the install command and its copy button (one copy button on the page, in the hero install block).
   const copyButtons = page.getByRole("button", { name: "Copy the install command" });
   await expect(copyButtons.first()).toBeVisible();
   await expect(page.locator("code", { hasText: "npm run cli:install" }).first()).toBeVisible();
 
-  // Proof: the compact block and the hero line both link to the full recorded runs on /proof.
+  // Proof: Fig. 1 and Fig. 2 captions each link to the full recorded runs on /proof.
   await expect(page.locator("#proof-h")).toBeVisible();
   await expect(page.locator('main a[href="/proof"]')).toHaveCount(2);
 

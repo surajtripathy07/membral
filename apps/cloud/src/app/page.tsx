@@ -1,21 +1,38 @@
 import { redirect } from "next/navigation";
 import { localInstallCommand } from "@/lib/install-command";
 import { createClient } from "@/lib/supabase/server";
-import { HEADLINE } from "./_landing/content";
-import { Chats, Closing, Faq, Hero, HowItWorks, LandingFooter, LandingNav, Privacy, ProofTeaser } from "./_landing/sections";
+import { HEADLINE, NAV } from "./_landing/content";
+import { landingFontClass } from "./_landing/fonts";
+import { InstallBlock } from "./_landing/install-block";
+import {
+  Chats,
+  Closing,
+  Faq,
+  Footer,
+  Handoff,
+  HeroCopy,
+  Nav,
+  OutageFig,
+  RecordFig,
+  Start,
+  StoreFig,
+  Teams,
+} from "./_landing/landing-parts";
+import { Replay } from "./_landing/replay";
+import { ScrollFx } from "./_landing/scroll-fx";
 
-// Signed-out landing. A developer who has never heard of Membral should get the
-// point in one screen: what it is and who it is for (hero: the headline, one install button, how each recorded
-// agent answered, and one line linking to the recorded runs), then one compact proof block (the outage result
-// with its limit and count file, a link to /proof, and the one rules-file comparison); the full outage receipt and
-// the recorded pair live on /proof (app/proof/page.tsx). Then how it works and what it is not, what is uploaded
-// and where it lives, questions, and the start steps (which link back to the hero's install button instead of
-// repeating it). Each thing is said once.
-// No money, speed-up or percentage figures. Copy lives
-// in _landing/content.ts with its sources; the layout lives in
-// _landing/sections.tsx. The tagline below must stay verbatim (scripts/check-thesis.sh);
-// it is the footer's small print, so no section repeats the headline.
+// Signed-out landing, "the logbook that outlives the tool": a field-manual page of numbered figures.
+// Fig. 1 replays a recorded Claude Code session (replay.tsx), Fig. 2 is the hand-recounted outage result, Fig. 3
+// the one-store schematic with its measured row, Fig. 4 one real record, Fig. 5 the handoff note, Fig. 6 chats. Then the
+// start steps (mirroring README "Run it locally"), questions, teams, and the closing tagline.
+// No money, speed-up or percentage figures in the copy. Every string lives in _landing/content.ts (a draft
+// awaiting the owner's approval); the markup is in _landing/landing-parts.tsx. The landing is light-only and
+// scoped under .landing in globals.css; it adds no token to :root. The tagline below must stay verbatim
+// (scripts/check-thesis.sh); it is the closing band, so no section repeats the headline.
 const TAGLINE = "Your coding agent can answer from what your past sessions found, including what nobody wrote down.";
+
+// Adds `js` to <html> before first paint so the CSS may hide the scroll-reveal states; without JS nothing hides.
+const JS_FLAG = "document.documentElement.classList.add('js')";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -33,18 +50,35 @@ export default async function Home() {
   const install = localInstallCommand();
 
   return (
-    <div className="min-h-screen bg-canvas text-ink">
-      <LandingNav />
-      <main>
-        <Hero headline={HEADLINE} install={install} />
-        <ProofTeaser />
-        <HowItWorks />
+    <div className={`landing ${landingFontClass}`}>
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed one-line script, no input */}
+      <script dangerouslySetInnerHTML={{ __html: JS_FLAG }} />
+      <a className="skip" href="#main">
+        {NAV.skip}
+      </a>
+      <Nav />
+      <main id="main">
+        <div className="wrap">
+          <div className="hero">
+            <HeroCopy headline={HEADLINE} />
+            {/* before the plate in source order so the install command is in the first screen on a phone; the
+                two-column grid at 1024px places each by area, so the desktop layout does not follow this order */}
+            <InstallBlock command={install} />
+            <Replay />
+          </div>
+        </div>
+        <OutageFig />
+        <StoreFig />
+        <RecordFig />
+        <Handoff />
         <Chats />
-        <Privacy />
+        <Start />
         <Faq />
-        <Closing />
+        <Teams />
+        <Closing tagline={TAGLINE} />
       </main>
-      <LandingFooter tagline={TAGLINE} />
+      <Footer />
+      <ScrollFx />
     </div>
   );
 }
