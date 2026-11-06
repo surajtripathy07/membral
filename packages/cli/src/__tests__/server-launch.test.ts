@@ -212,6 +212,21 @@ describe("buildServerEnv", () => {
     });
     expect(set.MEMBRAL_LLM_PROVIDER).toBe("openai");
   });
+
+  it("handoff flags default to 1; the shell wins, then the stored .env (0 kept)", () => {
+    const args = { port: 1, pgdata: "p", claudeOnPath: false };
+    const dflt = buildServerEnv({ base: {}, stored, ...args });
+    expect(dflt.MEMBRAL_HANDOFF_SYNTHESIS).toBe("1");
+    expect(dflt.MEMBRAL_HANDOFF_SEARCH).toBe("1");
+    const kept = buildServerEnv({ base: {}, stored: { ...stored, MEMBRAL_HANDOFF_SYNTHESIS: "0" }, ...args });
+    expect(kept.MEMBRAL_HANDOFF_SYNTHESIS).toBe("0");
+    const shell = buildServerEnv({
+      base: { MEMBRAL_HANDOFF_SEARCH: "false" },
+      stored: { ...stored, MEMBRAL_HANDOFF_SEARCH: "1" },
+      ...args,
+    });
+    expect(shell.MEMBRAL_HANDOFF_SEARCH).toBe("false");
+  });
 });
 
 describe("rotateServerLog", () => {

@@ -15,6 +15,7 @@ import { RECALL_RESULTS_CLAUSE } from "@membral/core";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import { getServiceClient } from "@/lib/db/clients";
+import { handoffSearchEnabled } from "@/lib/env";
 import type { FreshnessPayload } from "@/lib/freshness";
 import { formatFreshnessPrefix } from "@/lib/freshness";
 import { isLocalRuntime } from "@/lib/llm/embedding-family";
@@ -48,8 +49,11 @@ export const RECORD_LINKS_CLAUSE =
 /** I33 (docs/design/i33-port.md D7): the tool's default budget, measured on the lab surface (maintainer gate G4). */
 export const SEARCH_DEFAULT_MAX_TOKENS = 3000;
 
-const kindDescription =
-  "One or more of: outcome, decision, learning, blocker, preference, handoff (a session's end-of-session summary note; read it with session_summary, it is not searched by default)";
+/** Read when the tools list is built (not at import), so the `handoff` clause follows MEMBRAL_HANDOFF_SEARCH. */
+export function kindDescription(searchEnabled: boolean = handoffSearchEnabled()): string {
+  const clause = searchEnabled ? "it is searched by default, one reserved slot" : "it is not searched by default";
+  return `One or more of: outcome, decision, learning, blocker, preference, handoff (a session's end-of-session summary note; read it with session_summary, ${clause})`;
+}
 /** memory_recall reads the extracted kinds only: a `handoff` kind is dropped there, so it is not advertised. */
 const recallKindDescription = "One or more of: outcome, decision, learning, blocker, preference";
 
@@ -81,7 +85,7 @@ export function registerMemoryTools(
         kind: z
           .union([z.string(), z.array(z.string())])
           .optional()
-          .describe(kindDescription),
+          .describe(kindDescription()),
         scope: z
           .enum(["project", "global"])
           .optional()

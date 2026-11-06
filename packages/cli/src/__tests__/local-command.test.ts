@@ -364,6 +364,56 @@ describe("membral local", () => {
     expect(readFileSync(deps.paths!.compose, "utf8")).not.toContain("MEMBRAL_LLM_PROVIDER: claude-code");
   });
 
+  describe("handoff flags default on locally", () => {
+    const KEYS = ["MEMBRAL_HANDOFF_SYNTHESIS", "MEMBRAL_HANDOFF_SEARCH"] as const;
+    const envOf = () => parseEnv(readFileSync(deps.paths!.env, "utf8"));
+    const composeOf = () => readFileSync(deps.paths!.compose, "utf8");
+
+    it("fresh stack: both flags are 1 in .env and passed to the app, and .env stays mode 600", async () => {
+      await localUp({}, deps);
+      for (const k of KEYS) {
+        expect(envOf()[k]).toBe("1");
+        expect(composeOf()).toContain(`${k}: "$` + `{${k}}"`);
+      }
+      expect(statSync(deps.paths!.env).mode & 0o777).toBe(0o600);
+    });
+
+    it("a value in the caller's shell wins, and replaces an older .env value", async () => {
+      deps.env = { MEMBRAL_HANDOFF_SYNTHESIS: "0", MEMBRAL_HANDOFF_SEARCH: "false" };
+      await localUp({}, deps);
+      expect(envOf().MEMBRAL_HANDOFF_SYNTHESIS).toBe("0");
+      expect(envOf().MEMBRAL_HANDOFF_SEARCH).toBe("false");
+      deps.env = { MEMBRAL_HANDOFF_SYNTHESIS: "1" };
+      await localUp({}, deps);
+      expect(envOf().MEMBRAL_HANDOFF_SYNTHESIS).toBe("1");
+      expect(envOf().MEMBRAL_HANDOFF_SEARCH).toBe("false");
+    });
+
+    it("an existing .env value is kept (0 stays 0); a later up does not flip it", async () => {
+      await localUp({}, deps);
+      const text = readFileSync(deps.paths!.env, "utf8")
+        .replace(/^MEMBRAL_HANDOFF_SYNTHESIS=.*$/m, "MEMBRAL_HANDOFF_SYNTHESIS=0")
+        .replace(/^MEMBRAL_HANDOFF_SEARCH=.*$/m, "MEMBRAL_HANDOFF_SEARCH=0");
+      writeFileSync(deps.paths!.env, text);
+      await localUp({}, deps);
+      expect(envOf().MEMBRAL_HANDOFF_SYNTHESIS).toBe("0");
+      expect(envOf().MEMBRAL_HANDOFF_SEARCH).toBe("0");
+    });
+
+    it("an existing .env without the keys gets 1 on the next up (other lines untouched)", async () => {
+      await localUp({}, deps);
+      const stripped = readFileSync(deps.paths!.env, "utf8")
+        .split("\n")
+        .filter((l) => !l.startsWith("MEMBRAL_HANDOFF_"))
+        .join("\n");
+      writeFileSync(deps.paths!.env, `${stripped}\nOPENAI_API_KEY=sk-test\n`);
+      expect(envOf().MEMBRAL_HANDOFF_SYNTHESIS).toBeUndefined();
+      await localUp({}, deps);
+      for (const k of KEYS) expect(envOf()[k]).toBe("1");
+      expect(envOf().OPENAI_API_KEY).toBe("sk-test");
+    });
+  });
+
   it("second up is a no-op: no new key, no migrations re-applied, files unchanged, no password", async () => {
     await localUp({}, deps);
     const p = deps.paths!;

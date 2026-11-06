@@ -29,7 +29,7 @@ process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
 
 import { MEMORY_TOOL_NAMES } from "@/lib/memory/preamble";
-import { registerMemoryTools } from "../memory-tools";
+import { kindDescription, registerMemoryTools } from "../memory-tools";
 
 const USER = "user-1";
 const PROJECT_SCOPE = "proj-1";
@@ -393,5 +393,21 @@ describe("memory_search: I33 served lines (docs/design/i33-port.md D7)", () => {
     expect(schema.description).toContain("default 3000");
     expect(tool.config.description).toContain("default 3000");
     expect(tool.config.description).toContain("raw excerpt");
+  });
+});
+
+describe("memory_search kind description follows MEMBRAL_HANDOFF_SEARCH", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("flag off: the 'not searched by default' text; flag on: searched by default with one reserved slot", () => {
+    vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "");
+    expect(kindDescription()).toBe(
+      "One or more of: outcome, decision, learning, blocker, preference, handoff (a session's end-of-session summary note; read it with session_summary, it is not searched by default)",
+    );
+    vi.stubEnv("MEMBRAL_HANDOFF_SEARCH", "1");
+    expect(kindDescription()).toContain("it is searched by default, one reserved slot");
+    expect(kindDescription()).not.toContain("not searched by default");
   });
 });
