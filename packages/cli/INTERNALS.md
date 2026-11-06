@@ -14,7 +14,8 @@ W3 docs collapse): `MEMBRAL.md` has no reader now that `CLAUDE.md` imports
 moved, and the launchd sweep no longer calls it.)
 
 They're hidden for the same reason across the board: no stranger following
-the public setup flow (clone → `npm link` → `membral setup`) ever needs to
+the public install flow (`npx membral local up`, or `npm install -g membral` then
+`membral setup`) ever needs to
 type one of these names. Hiding them is free — `packages/cli/src/__tests__/
 help.test.ts`'s case-label test asserts each name below still has a live
 `case` in `index.ts` and dispatches, so hiding never means "removed."

@@ -7,7 +7,6 @@
 // idempotent: a second `up` changes nothing and mints nothing.
 //
 // Docker is reached only through the injected DockerRunner (tests use a fake).
-import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import {
   accessSync,
@@ -25,8 +24,9 @@ import {
   writeFileSync,
 } from "node:fs";
 import { connect, createServer } from "node:net";
-import { hostname as osHostname } from "node:os";
+import { homedir, hostname as osHostname } from "node:os";
 import { basename, delimiter, join } from "node:path";
+import { type CliInvocation, resolveCliInvocation } from "./configure.js";
 import {
   type ApiKeyValidation,
   defaultCredentialsPath,
@@ -75,7 +75,7 @@ import {
 } from "./local-stack.js";
 import { createPrompter } from "./prompt.js";
 import { setup } from "./setup.js";
-import { SWEEP_LABEL } from "./sweep-command.js";
+import { inspectSweepJob, installSweepAgent, type SweepInstallResult } from "./sweep-command.js";
 import { useCommand } from "./use-command.js";
 
 export const LOCAL_PROFILE = "local";
@@ -83,9 +83,23 @@ export const PREVIOUS_PROFILE = "local-previous";
 /** Marks a profile written by `membral local up`; any other "local" profile is moved aside, never overwritten. */
 export const LOCAL_STACK_SOURCE = "local-stack";
 export const SERVICES = ["db", "rest", "app"] as const;
-export const EXTRACTION_OFF_LINE =
-  "Extraction is off: no LLM provider is set. Put an API key in ~/.membral/local/.env, or set MEMBRAL_LLM_PROVIDER=claude-code " +
-  '(see "Run it locally" in the README), then run `membral local up` again.';
+/**
+ * What to do about "Extraction is off". `local up` passes only the keys written in the stack's .env on to the app
+ * (LLM_PASSTHROUGH, local-stack.ts, filtered on the parsed .env in localUpLocked), so a variable exported in the
+ * shell does nothing: it goes in that file, and `local up` runs again. Names: MEMBRAL_LLM_PROVIDER and
+ * CLAUDE_CODE_OAUTH_TOKEN (apps/cloud/src/lib/llm/claude-code-provider.ts), OPENAI_API_KEY or MEMBRAL_MODEL_BASE_URL +
+ * MEMBRAL_MODEL (apps/cloud/src/lib/llm/config.ts).
+ */
+export function extractionFix(envPath: string): string {
+  return (
+    `Add to ${envPath} (shell exports are not read): MEMBRAL_LLM_PROVIDER=claude-code and CLAUDE_CODE_OAUTH_TOKEN=<token from \`claude setup-token\`>, ` +
+    "or for an OpenAI-compatible model OPENAI_API_KEY=<key> (or MEMBRAL_MODEL_BASE_URL=<url> and MEMBRAL_MODEL=<name>). " +
+    "Then run `membral local up` again."
+  );
+}
+export function extractionOffLine(envPath: string): string {
+  return `Extraction is off: no LLM provider is set. ${extractionFix(envPath)}`;
+}
 const WAIT_TIMEOUT_S = "300";
 
 export interface LocalDeps {
@@ -101,9 +115,15 @@ export interface LocalDeps {
   /** `membral use local` — re-points MCP + hooks when the profile already existed. */
   activate?: (name: string) => Promise<void>;
   /** The `membral setup` path, run after a new key lands in the profile. */
-  runSetup?: (opts: { apiUrl: string; yes: boolean; profile: string; noSweep?: boolean }) => Promise<void>;
-  /** Is the backstop sweep scheduled? Checked after setup; null when this platform has no check. */
+  runSetup?: (opts: { apiUrl: string; yes: boolean; profile: string; noSweep?: boolean }) => Promise<unknown>;
+  /** Why the backstop sweep job cannot run (missing, dead path, unresolvable command); null when healthy or unchecked. */
   sweepCheck?: () => Promise<string | null>;
+  /** Home that holds `.membral` and the scheduler files; defaults to os.homedir(). */
+  home?: string;
+  /** Resolves the command a (re)installed job runs; under npx this also refreshes the stable copy. */
+  resolveInvocation?: (opts: { home: string }) => CliInvocation;
+  /** Installs the sweep job; only called when the check found it broken. */
+  installSweep?: (opts: { home: string; cliInvocation: CliInvocation }) => Promise<SweepInstallResult>;
   /** Is `claude` on PATH? Decides the default extractor. */
   claudeOnPath?: () => boolean;
   /** Is this pid alive? (stale-lock detection) */
@@ -430,29 +450,16 @@ async function getHealth(ctx: Ctx, url: string): Promise<{ ok: boolean; llm?: He
 }
 
 /** macOS only (launchd refuses a non-GUI session); returns why the agent is not loaded, else null. */
-function defaultSweepCheck(): Promise<string | null> {
-  if (process.platform !== "darwin") return Promise.resolve(null);
-  return new Promise((resolve) => {
-    execFile("launchctl", ["print", `gui/${process.getuid?.() ?? 0}/${SWEEP_LABEL}`], (err, _out, stderr) => {
-      resolve(
-        err
-          ? `launchctl: ${
-              String(stderr || err.message)
-                .trim()
-                .split("\n")[0]
-            }`
-          : null,
-      );
-    });
-  });
-}
-
-function extractionLine(llm: HealthLlm | undefined): string | null {
+function extractionLine(llm: HealthLlm | undefined, envPath: string): string | null {
   if (!llm) return null;
   if (llm.extraction === "off") {
     // The app's reason, when it gives one (sanitised: one line, bounded), replaces the generic advice.
     const reason = typeof llm.reason === "string" ? llm.reason.replace(/\s+/g, " ").trim().slice(0, 300) : "";
-    return reason ? `Extraction is off: ${reason}` : EXTRACTION_OFF_LINE;
+    if (!reason) return extractionOffLine(envPath);
+    // The app's own reason for the missing token names the variable but not where it goes.
+    return reason.includes("CLAUDE_CODE_OAUTH_TOKEN")
+      ? `Extraction is off: ${reason} ${extractionFix(envPath)}`
+      : `Extraction is off: ${reason}`;
   }
   const what = [llm.provider, llm.model].filter(Boolean).join(" ");
   return `Extraction: on${what ? ` (${what})` : ""}`;
@@ -681,6 +688,7 @@ export async function provisionAndSetup(a: ProvisionSetupArgs, deps: LocalDeps =
   }
 
   // 7. profile → active → hooks/MCP
+  let sweepReported = false;
   if (prov.apiKey) {
     const s = loadProfiles(a.credsPath) ?? { activeProfile: LOCAL_PROFILE, profiles: {} };
     const old = s.profiles[LOCAL_PROFILE];
@@ -704,12 +712,13 @@ export async function provisionAndSetup(a: ProvisionSetupArgs, deps: LocalDeps =
     console.log("");
     const runSetup =
       deps.runSetup ?? ((o: { apiUrl: string; yes: boolean; profile: string; noSweep?: boolean }) => setup(o));
-    await runSetup({
+    const outcome = await runSetup({
       apiUrl: url,
       yes: a.yes ?? false,
       profile: LOCAL_PROFILE,
       ...(a.noSweep ? { noSweep: true } : {}),
     });
+    sweepReported = (outcome as { sweepFailed?: boolean } | undefined)?.sweepFailed === true;
   } else if (loadProfiles(a.credsPath)?.activeProfile !== LOCAL_PROFILE) {
     const activate = deps.activate ?? ((name: string) => useCommand(name, { credentialsPath: a.credsPath }));
     await activate(LOCAL_PROFILE);
@@ -717,8 +726,27 @@ export async function provisionAndSetup(a: ProvisionSetupArgs, deps: LocalDeps =
     console.log(`  Profile: "local" is active`);
   }
 
-  if (prov.apiKey && !a.noSweep) {
-    const problem = await (deps.sweepCheck ?? defaultSweepCheck)();
+  // Every `local up` (not --no-sweep) leaves a sweep that can run. Without a new key setup did not run, so nothing
+  // else has refreshed the npx copy or looked at the job: do both here, touching nothing else (no hooks, no import).
+  const home = deps.home ?? homedir();
+  const check = deps.sweepCheck ?? (() => inspectSweepJob({ home }));
+  if (!prov.apiKey && !a.noSweep) {
+    const cliInvocation = (deps.resolveInvocation ?? resolveCliInvocation)({ home });
+    const problem = await check();
+    // A healthy job is left alone, even when it points at a dev checkout or a global install.
+    if (problem) {
+      const r = await (deps.installSweep ?? installSweepAgent)({ home, cliInvocation });
+      if (!r.success || r.scheduler === "none") {
+        console.error(r.message);
+        process.exitCode = 1;
+      } else {
+        console.log(`  Backstop sweep repaired (${problem}): ${r.message}`);
+      }
+    }
+  }
+  // setup already printed why the sweep is missing and set the exit code: do not report it twice.
+  if (prov.apiKey && !a.noSweep && !sweepReported) {
+    const problem = await check();
     if (problem) {
       console.error(
         `Sweep agent not installed (${problem}): uploads will not be swept. Run \`membral setup\` again from a login shell, or pass --no-sweep to skip it.`,
@@ -843,7 +871,9 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   const url = appUrl(port);
   console.log(`Membral local: ${url} (files in ${ctx.paths.dir})`);
   if (defaultClaudeCode)
-    console.log("  Extractor: claude-code (found `claude` on PATH; needs CLAUDE_CODE_OAUTH_TOKEN in .env)");
+    console.log(
+      `  Extractor: claude-code (found \`claude\` on PATH; needs CLAUDE_CODE_OAUTH_TOKEN in ${ctx.paths.env})`,
+    );
 
   const failKept = (message: string): void =>
     fail(
@@ -949,7 +979,7 @@ async function localUpLocked(ctx: Ctx, opts: UpOptions, deps: LocalDeps): Promis
   if (!provisioned) return;
 
   console.log(`  ${embeddingsLine(localEnv)}`);
-  const line = extractionLine(health.llm);
+  const line = extractionLine(health.llm, ctx.paths.env);
   if (line?.startsWith("Extraction is off")) console.log(line);
 }
 
@@ -1002,7 +1032,7 @@ export async function localStatus(
     );
   }
   console.log(`  ${embeddingsLine(env)}`);
-  const line = extractionLine(health.llm);
+  const line = extractionLine(health.llm, ctx.paths.env);
   if (line) console.log(line.startsWith("Extraction is off") ? line : `  ${line}`);
   if (!healthy) process.exitCode = 1;
 }

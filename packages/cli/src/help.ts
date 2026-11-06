@@ -48,7 +48,7 @@ export type HiddenCommand = (typeof HIDDEN_COMMANDS)[number];
 // also the literal first line `membral --help` prints. Exactly the nine
 // public commands below, one line each, from PRODUCT.md's Commands table.
 export const TOP_LEVEL_HELP = `Your coding agent can answer from what your past sessions found, including what nobody wrote down.
-Start: membral setup
+Start: membral local up
 Membral remembers what your sessions did, decided and found; it is not a live view of your forge.
 Your agent checks a PR or issue's current state live.
 

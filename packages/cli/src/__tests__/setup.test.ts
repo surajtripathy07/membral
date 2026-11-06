@@ -649,6 +649,30 @@ describe("setup", () => {
       expect(lines.some((l) => l.includes("from cron"))).toBe(false);
     });
 
+    it("exits non-zero and tells the caller when the sweep is not installed, after every other step ran", async () => {
+      installSweepAgentMock.mockResolvedValue({
+        success: false,
+        scheduler: "none",
+        reason: "could not copy membral into /h/.membral/bin: EACCES",
+        message: "Backstop sweep: NOT scheduled — could not copy membral into /h/.membral/bin: EACCES",
+      });
+      const logSpy = vi.spyOn(console, "log");
+      const outcome = await setup({ yes: true });
+      expect(outcome).toEqual({ sweepFailed: true });
+      expect(process.exitCode).toBe(1);
+      const lines = logSpy.mock.calls.map((c) => String(c[0]));
+      expect(lines.some((l) => l.includes("NOT scheduled — could not copy membral"))).toBe(true);
+      expect(lines).toContain("Summary"); // setup carried on to its summary
+    });
+
+    it("keeps exit 0 and reports sweepFailed=false when the sweep installs, or with --dry-run / --no-sweep", async () => {
+      expect(await setup({ yes: true })).toEqual({ sweepFailed: false });
+      expect(process.exitCode).toBe(0);
+      installSweepAgentMock.mockResolvedValue({ success: false, scheduler: "none", message: "NOT scheduled" });
+      expect(await setup({ yes: true, noSweep: true })).toEqual({ sweepFailed: false });
+      expect(process.exitCode).toBe(0);
+    });
+
     it("cron write failure shows FAILED (cron) with the reason in the summary", async () => {
       installSweepAgentMock.mockResolvedValue({
         success: false,
