@@ -555,7 +555,13 @@ export function Replay() {
           </div>
           <div className="rule" />
           <div className="foot">
-            <span className="pur">⏵⏵ accept edits on</span>
+            <span className="pur">
+              {/* ⏵⏵ is drawn: the latin font subset lacks U+23F5 and Android has no fallback glyph for it. */}
+              <svg className="ffwd" viewBox="0 0 12 7" aria-hidden="true">
+                <path d="M0 0l5 3.5L0 7zM6 0l5 3.5L6 7z" fill="currentColor" />
+              </svg>{" "}
+              accept edits on
+            </span>
             <span className="wide"> (shift+tab to cycle)</span>
             <span data-x="esc" hidden>
               {" "}
