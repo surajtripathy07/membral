@@ -21,6 +21,7 @@
 // step ever affects the sweep's own exit code. the launchd sweep script's
 // `sweep` subcommand is a one-line call to this command.
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
@@ -36,9 +37,14 @@ import { kickMemoryExtraction } from "./memory-kick.js";
 import { defaultSweepStatePath, readSweepState, writeSweepState } from "./sweep.js";
 import {
   type CommandRunner,
+  CRON_MARKER,
   defaultCommandRunner,
   installLinuxSweep,
+  readCrontab,
   type SweepInstallResult,
+  SYSTEMD_TIMER,
+  SYSTEMD_UNIT,
+  systemdUnitDir,
   uninstallLinuxSweep,
 } from "./sweep-linux.js";
 
@@ -275,9 +281,10 @@ export function sweepPlistPath(home: string = homedir()): string {
 export async function installSweepAgent(opts: InstallSweepAgentOptions = {}): Promise<SweepInstallResult> {
   const platform = opts.platform ?? process.platform;
   if (platform === "linux") {
+    const home = opts.home ?? homedir();
     return installLinuxSweep({
-      home: opts.home ?? homedir(),
-      invocation: opts.cliInvocation ?? resolveCliInvocation(),
+      home,
+      invocation: opts.cliInvocation ?? resolveCliInvocation({ home, dryRun: opts.dryRun }),
       run: opts.run ?? defaultCommandRunner,
       dryRun: opts.dryRun,
     });
@@ -289,7 +296,14 @@ export async function installSweepAgent(opts: InstallSweepAgentOptions = {}): Pr
       message: `Backstop sweep: NOT scheduled — no scheduler support on ${platform}. Run \`membral sweep\` every 20 minutes yourself.`,
     };
   }
-  return { ...(await installLaunchdAgent(opts)), scheduler: "launchd" };
+  const home = opts.home ?? homedir();
+  const invocation = opts.cliInvocation ?? resolveCliInvocation({ home, dryRun: opts.dryRun });
+  if (invocation.stableInstallError) {
+    // launchd's PATH is fixed and has no npm global bin: a plist that runs bare `membral` imports nothing, silently.
+    const reason = `${invocation.stableInstallError}; run \`npm install -g membral\`, then \`membral setup\` again`;
+    return { success: false, scheduler: "none", reason, message: `Backstop sweep: NOT scheduled — ${reason}.` };
+  }
+  return { ...(await installLaunchdAgent({ ...opts, home, cliInvocation: invocation })), scheduler: "launchd" };
 }
 
 /** Removes whatever installSweepAgent put in place on this platform. Missing pieces are not errors. */
@@ -332,7 +346,7 @@ async function installLaunchdAgent(opts: InstallSweepAgentOptions): Promise<Conf
   const home = opts.home ?? homedir();
   const plistPath = sweepPlistPath(home);
   const logPath = join(home, ".membral", "logs", "sweep.log");
-  const invocation = opts.cliInvocation ?? resolveCliInvocation();
+  const invocation = opts.cliInvocation ?? resolveCliInvocation({ home, dryRun: opts.dryRun });
   const content = buildSweepPlist(invocation, logPath);
   const uid = opts.uid ?? process.getuid?.() ?? 0;
   const domain = `gui/${uid}`;
@@ -378,4 +392,94 @@ async function installLaunchdAgent(opts: InstallSweepAgentOptions): Promise<Conf
     const msg = err instanceof Error ? err.message : String(err);
     return { success: false, message: `Failed to install the backstop sweep: ${msg}` };
   }
+}
+
+// --- is the installed job still able to run? -----------------------------------------
+
+export interface InspectSweepOptions {
+  home?: string;
+  platform?: NodeJS.Platform;
+  uid?: number;
+  launchctl?: LaunchctlRunner;
+  run?: CommandRunner;
+  /** Injectable for tests; defaults to node:fs existsSync. */
+  exists?: (path: string) => boolean;
+}
+
+function xmlUnescape(value: string): string {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, ">")
+    .replace(/&lt;/g, "<")
+    .replace(/&amp;/g, "&");
+}
+
+/**
+ * Why a job's command cannot run, or null. Every absolute path in it must exist; a bare command (the 0.3.0 npx
+ * fallback, `membral sweep`) must be found on the job's OWN path, not the caller's shell.
+ */
+function programProblem(args: string[], jobPath: string | undefined, exists: (p: string) => boolean): string | null {
+  const first = args[0];
+  if (!first) return "the job has no command";
+  for (const a of args) if (a.startsWith("/") && !exists(a)) return `${a} does not exist`;
+  if (!first.startsWith("/")) {
+    const found = (jobPath ?? "").split(":").some((dir) => dir !== "" && exists(join(dir, first)));
+    if (!found) return `\`${first}\` is not on the job's PATH (${jobPath ?? "none set"})`;
+  }
+  return null;
+}
+
+/** Splits systemd ExecStart / sh-quoted words, undoing what buildSweepService and buildCronEntry escape. */
+function systemdWords(line: string): string[] {
+  return [...line.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((m) =>
+    m[1].replace(/\\(.)/g, "$1").replace(/%%/g, "%").replace(/\$\$/g, "$"),
+  );
+}
+function shWords(text: string): string[] {
+  return [...text.matchAll(/'((?:[^']|'\\'')*)'/g)].map((m) => m[1].replace(/'\\''/g, "'").replace(/\\%/g, "%"));
+}
+
+/**
+ * Is the backstop sweep job in place and able to start? Returns the problem, or null when it is healthy. Reads only
+ * (`launchctl print`, `systemctl is-*`, `crontab -l`); it never writes, loads or unloads anything. A job that runs
+ * fine but points somewhere else (a dev checkout, a global install) is healthy: the caller must leave it alone.
+ */
+export async function inspectSweepJob(opts: InspectSweepOptions = {}): Promise<string | null> {
+  const platform = opts.platform ?? process.platform;
+  const home = opts.home ?? homedir();
+  const exists = opts.exists ?? existsSync;
+  if (platform === "darwin") {
+    const plistPath = sweepPlistPath(home);
+    const plist = await readFile(plistPath, "utf-8").catch(() => undefined);
+    if (plist === undefined) return `${plistPath} is missing`;
+    const block = /<key>ProgramArguments<\/key>\s*<array>([\s\S]*?)<\/array>/.exec(plist)?.[1] ?? "";
+    const args = [...block.matchAll(/<string>([\s\S]*?)<\/string>/g)].map((m) => xmlUnescape(m[1]));
+    const jobPath = /<key>PATH<\/key>\s*<string>([\s\S]*?)<\/string>/.exec(plist)?.[1];
+    const bad = programProblem(args, jobPath && xmlUnescape(jobPath), exists);
+    if (bad) return bad;
+    const domain = `gui/${opts.uid ?? process.getuid?.() ?? 0}`;
+    const printed = await (opts.launchctl ?? defaultLaunchctl)(["print", `${domain}/${SWEEP_LABEL}`]);
+    return printed.ok ? null : `launchctl: ${printed.output.split("\n")[0]}`;
+  }
+  if (platform !== "linux") return null;
+  const run = opts.run ?? defaultCommandRunner;
+  const service = await readFile(join(systemdUnitDir(home), `${SYSTEMD_UNIT}.service`), "utf-8").catch(() => undefined);
+  if (service !== undefined) {
+    const exec = /^ExecStart=(.*)$/m.exec(service)?.[1] ?? "";
+    const env = systemdWords(/^Environment=(.*)$/m.exec(service)?.[1] ?? "")[0];
+    const bad = programProblem(systemdWords(exec), env?.startsWith("PATH=") ? env.slice(5) : undefined, exists);
+    if (bad) return bad;
+    for (const verb of ["is-enabled", "is-active"]) {
+      if (!(await run("systemctl", ["--user", verb, SYSTEMD_TIMER])).ok) {
+        return `${SYSTEMD_TIMER} is not ${verb === "is-enabled" ? "enabled" : "active"}`;
+      }
+    }
+    return null;
+  }
+  const lines = ((await readCrontab(run)) ?? "").split("\n");
+  const at = lines.indexOf(CRON_MARKER);
+  if (at < 0) return "no systemd timer or crontab entry for the sweep";
+  const m = /^\*\/20 \* \* \* \* PATH=('(?:[^']|'\\'')*') (.*) >> '/.exec(lines[at + 1] ?? "");
+  if (!m) return "the sweep crontab entry is malformed";
+  return programProblem(shWords(m[2]), shWords(m[1])[0], exists);
 }

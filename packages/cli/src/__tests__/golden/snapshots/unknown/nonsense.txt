@@ -1,7 +1,7 @@
 EXIT: 1
 --- STDOUT ---
 Your coding agent can answer from what your past sessions found, including what nobody wrote down.
-Start: membral setup
+Start: membral local up
 Membral remembers what your sessions did, decided and found; it is not a live view of your forge.
 Your agent checks a PR or issue's current state live.
 

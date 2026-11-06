@@ -1,6 +1,6 @@
 {
   "name": "membral",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Your coding agent can answer from what your past sessions found. The Membral command line.",
   "license": "MIT",
   "type": "module",

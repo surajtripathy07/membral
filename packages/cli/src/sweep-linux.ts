@@ -178,14 +178,15 @@ export async function userSystemdAvailable(run: CommandRunner): Promise<boolean>
 }
 
 /** `crontab -l`: the current table, "" when the user has none, undefined when cron is not usable. */
-async function readCrontab(run: CommandRunner): Promise<string | undefined> {
+export async function readCrontab(run: CommandRunner): Promise<string | undefined> {
   const r = await run("crontab", ["-l"]);
   if (r.ok) {
     const table = r.stdout.replace(/\n+$/, "");
     return table ? `${table}\n` : "";
   }
   if (r.missing) return undefined;
-  return /no crontab/i.test(r.output) ? "" : undefined;
+  // Vixie/cronie say "no crontab for x"; BusyBox says "can't open 'x': No such file or directory".
+  return /no crontab|can't open '[^']*': no such file/i.test(r.output) ? "" : undefined;
 }
 
 const NONE_MESSAGE =
@@ -263,7 +264,8 @@ export async function installLinuxSweep(opts: LinuxSweepOptions): Promise<SweepI
   try {
     const invocation = await resolveSchedulerInvocation(opts.invocation, run);
     if (!invocation) {
-      const reason = "`membral` is not on PATH; run `npm i -g membral`, then `membral setup` again";
+      const copyFailed = opts.invocation.stableInstallError;
+      const reason = `${copyFailed ? `${copyFailed}, and ` : ""}\`membral\` is not on PATH; run \`npm i -g membral\`, then \`membral setup\` again`;
       return { success: false, scheduler: "none", reason, message: `Backstop sweep: NOT scheduled — ${reason}.` };
     }
     const service = buildSweepService(invocation, logPath);

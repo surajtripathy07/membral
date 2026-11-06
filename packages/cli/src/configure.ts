@@ -1,8 +1,9 @@
 import { execFile } from "node:child_process";
-import { realpathSync as nodeRealpathSync } from "node:fs";
+import { existsSync as nodeExistsSync, realpathSync as nodeRealpathSync } from "node:fs";
 import { chmod, lstat, mkdir, readFile, realpath, rename, stat, writeFile } from "node:fs/promises";
 import { DEFAULT_API_URL } from "./code-session-upload.js";
 import { resolveApiKey as resolveCredentialApiKey, resolveApiUrl as resolveCredentialApiUrl } from "./credentials.js";
+import { installStableCopy, type StableInstall, stableEntryPath } from "./stable-install.js";
 
 export interface ConfigureResult {
   success: boolean;
@@ -95,6 +96,11 @@ export interface CliInvocation {
   argv: string[];
   /** Set when the npx-temp-cache fallback kicked in — surfaced to the user. */
   fallbackWarning?: string;
+  /**
+   * Set when this is an npx run and no stable copy could be made (the reason). argv is then the bare
+   * `membral` name, which a scheduler's minimal PATH usually cannot find: the sweep must not install a job on it.
+   */
+  stableInstallError?: string;
 }
 
 /**
@@ -106,11 +112,15 @@ export interface CliInvocation {
  *
  * npx run WITHOUT a persistent global install extracts the package into a
  * temp cache directory (path contains `_npx` on npm's npx) that npx may
- * later evict — writing that path into settings.json would eventually point
- * at nothing. Detect that shape and fall back to the bare `membral` name,
- * resolved from PATH at hook-run time instead, with a warning so setup can
- * tell the user to `npm install -g membral` (or otherwise get `membral`
- * on PATH) for hooks to keep working.
+ * later evict. Writing that path into settings.json, a launchd plist or a
+ * crontab would eventually point at nothing, and the background import
+ * would stop silently. So for an npx run we copy the CLI to a stable
+ * location (stable-install.ts, ~/.membral/bin/current) on every run and
+ * return `[execPath, <stable entry>]`; `execPath` is node's own absolute
+ * path (npx runs the bin with the node that started it), which is not inside
+ * the cache and survives npx exiting. If the copy cannot be made we fall
+ * back to the bare `membral` name (resolved from PATH at run time) and say
+ * why in `stableInstallError`.
  */
 // B3 (P6 local rehearsal): a Homebrew-installed node's `process.execPath` is
 // a VERSIONED Cellar path (/opt/homebrew/Cellar/node/26.8.1/bin/node) —
@@ -163,6 +173,14 @@ export interface ResolveCliInvocationOptions {
   entryPath?: string;
   /** Injectable for tests — defaults to node:fs's realpathSync (never called for a non-Cellar path). */
   realpathSync?: (path: string) => string;
+  /** Home that holds `.membral/bin`; defaults to os.homedir(). */
+  home?: string;
+  /** Resolve the stable path without copying anything (setup --dry-run). */
+  dryRun?: boolean;
+  /** Injectable for tests — defaults to stable-install.ts's installStableCopy. */
+  installStable?: (opts: { entryPath: string; home?: string }) => StableInstall;
+  /** Injectable for tests — defaults to node:fs's existsSync (checks that npx's node still exists). */
+  existsSync?: (path: string) => boolean;
 }
 
 export function resolveCliInvocation(opts: ResolveCliInvocationOptions = {}): CliInvocation {
@@ -171,14 +189,30 @@ export function resolveCliInvocation(opts: ResolveCliInvocationOptions = {}): Cl
   const realpathSyncFn = opts.realpathSync ?? nodeRealpathSync;
 
   if (!entryPath || entryPath.includes("_npx")) {
-    return {
-      argv: ["membral"],
-      fallbackWarning:
-        "  NOTE: running via npx from a temporary cache — the hook command was written as\n" +
-        '  "membral" (resolved from PATH each time the hook runs) instead of a path inside\n' +
-        "  the npx cache, which npx may delete. Run `npm install -g membral` (or\n" +
-        "  otherwise put `membral` on PATH) so the hook keeps working.",
-    };
+    const exists = opts.existsSync ?? nodeExistsSync;
+    let why: string | undefined;
+    if (!entryPath) {
+      why = "could not tell which file is running";
+    } else if (!execPath.startsWith("/") || execPath.includes("_npx") || !exists(execPath)) {
+      why = `node (${execPath}) is not an absolute path that still exists`;
+    } else if (opts.dryRun) {
+      entryPath = stableEntryPath(opts.home);
+    } else {
+      const copy = (opts.installStable ?? installStableCopy)({ entryPath, home: opts.home });
+      if (copy.ok) entryPath = copy.entry;
+      else why = copy.error;
+    }
+    if (why !== undefined) {
+      return {
+        argv: ["membral"],
+        stableInstallError: why,
+        fallbackWarning:
+          `  NOTE: running via npx and ${why}; the command was written as\n` +
+          '  "membral" (resolved from PATH each time it runs) instead of a path inside the npx\n' +
+          "  cache, which npx may delete. Run `npm install -g membral` (or otherwise put\n" +
+          "  `membral` on PATH) so it keeps working.",
+      };
+    }
   }
 
   let versionSwitchNote: string | undefined;
