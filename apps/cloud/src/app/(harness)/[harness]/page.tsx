@@ -7,8 +7,8 @@ import { capabilityRows, getHarness, HARNESSES, SELF_HOSTING_PLUGIN_URL } from "
 
 // Public per-harness pages (/claude-code, /opencode, /codex) in the landing's system. Copy and snippets are in
 // ./harnesses.ts (every sentence traces to README.md); the shell is the one /compare and /proof use. Listed in
-// middleware.ts publicExactPaths. Unknown slugs 404 (dynamicParams = false; the three static routes are prerendered).
-export const dynamicParams = false;
+// middleware.ts publicExactPaths. Unknown slugs 404 through notFound(); the three known routes are prerendered.
+// dynamicParams stays on: with it false, `next dev` answers every slug with NoFallbackError.
 
 export function generateStaticParams() {
   return HARNESSES.map((h) => ({ harness: h.slug }));
