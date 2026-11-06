@@ -28,6 +28,9 @@ ALLOW=(
   "plugins/membral/scripts/run.mjs"
   "plugins/membral/scripts/membral.mjs"
   "plugins/membral/README.md"
+  "plugins/membral/plugin.json"
+  "plugins/membral/hooks.json"
+  "plugins/membral/mcp_config.json"
 )
 # Present in this private repo, never published.
 IGNORED_LOCAL=("plugins/membral/scripts/.gitignore")
