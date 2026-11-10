@@ -2,13 +2,16 @@
 // static; force-static /setup honours a pinned theme) — a pre-paint <head>
 // script copies the cookie onto <html data-theme>, allowlisted.
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { themeBootScript } from "@/lib/theme";
 
 vi.mock("next/headers", () => ({
   cookies: () => {
     throw new Error("the root layout must not read cookies()");
   },
+}));
+vi.mock("@vercel/analytics/next", () => ({
+  Analytics: () => <i data-analytics="on" />,
 }));
 vi.mock("next/font/local", () => {
   const font = () => ({ variable: "font-var", className: "font-class" });
@@ -24,6 +27,20 @@ function runBoot(cookie: string): string | null {
   new Function("document", themeBootScript())(document);
   return attr;
 }
+
+afterEach(() => vi.unstubAllEnvs());
+
+describe("root layout: analytics gate", () => {
+  it("renders no Analytics by default, and only with VERCEL_ENV=production", async () => {
+    const { default: RootLayout } = await import("../layout");
+    vi.stubEnv("VERCEL_ENV", "");
+    expect(renderToStaticMarkup(RootLayout({ children: <p>x</p> }))).not.toContain("data-analytics");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    expect(renderToStaticMarkup(RootLayout({ children: <p>x</p> }))).not.toContain("data-analytics");
+    vi.stubEnv("VERCEL_ENV", "production");
+    expect(renderToStaticMarkup(RootLayout({ children: <p>x</p> }))).toContain("data-analytics");
+  });
+});
 
 describe("root layout: theme cookie → <html data-theme> before paint", () => {
   it("renders without cookies(), with the boot script in <head> and no server data-theme", async () => {

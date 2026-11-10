@@ -3,9 +3,20 @@
  *
  * Stored in the local Postgres, no Membral server, no telemetry
  * - Local stack (Postgres, app, loopback-only ports): README.md "Run it locally", packages/cli/src/local-stack.ts
- * - No analytics, tracking or error-reporting library or call: grep of the tree for posthog, segment, gtag,
- *   vercel analytics, sentry, plausible, mixpanel, amplitude (2026-10-23, no hits in code or package.json).
+ * - The app has no analytics, tracking or error-reporting library or call. The only one in the tree is
+ *   @vercel/analytics, rendered in apps/cloud/src/app/layout.tsx only when isHostedProduction()
+ *   (apps/cloud/src/lib/env.ts: VERCEL_ENV === "production", set by Vercel, never by the Docker image or local
+ *   runs). Checked by grep of the tree for posthog, segment, gtag, vercel analytics, sentry, plausible,
+ *   mixpanel, amplitude (2026-11-10): only that package and this page match.
  *   The MCP tool-call counter writes only to your own database: apps/cloud/src/lib/mcp/telemetry.ts
+ *
+ * This website
+ * - Page-view counting, no cookies, daily-reset request hash, listed fields, bots not counted, 24-hour session
+ *   lifetime: https://vercel.com/docs/analytics/privacy-policy ("Data collected", "Visitor identification and
+ *   data storage", "Data point information") and https://vercel.com/docs/analytics ("How visitors are
+ *   determined", "Bots"), read 2026-11-10
+ * - Gate and the app never loading it: apps/cloud/src/app/layout.tsx, apps/cloud/src/lib/env.ts
+ *   (isHostedProduction), apps/cloud/src/app/__tests__/root-layout-theme.test.tsx
  *
  * What is saved
  * - Uploads at session end / `membral sessions`: packages/core/src/sessions/registry.ts, packages/cli/src/help.ts
@@ -59,11 +70,15 @@ export default function PrivacyPage() {
       <article className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-16">
         <p className="section-label">Privacy</p>
         <h1 className="mt-2 text-h1 tracking-tight text-ink">Privacy</h1>
-        <p className="mt-2 text-body-sm text-muted">Last updated: 2026-10-23</p>
+        <p className="mt-2 text-body-sm text-muted">Last updated: 2026-11-10</p>
 
         <p className="mt-6 text-lead text-ink-2">
           Membral runs on your machine and keeps everything there. The Membral project runs no server that
-          receives your data and collects no telemetry. The setup is in the{" "}
+          receives your data, and the app sends no telemetry. The membral.me website counts page views; see{" "}
+          <a href="#website" className={textLink}>
+            This website
+          </a>
+          . The setup is in the{" "}
           <a href={`${REPO_URL}#run-it-locally`} className={textLink}>
             README
           </a>
@@ -135,6 +150,38 @@ export default function PrivacyPage() {
             sent. That provider&apos;s own privacy terms apply.
           </p>
           <p>The app sets only sign-in, theme and time zone cookies, on your own machine.</p>
+        </Section>
+
+        <Section id="website" title="This website">
+          <p>
+            membral.me counts page views with Vercel Web Analytics. It uses no cookies. Vercel tells visitors
+            apart by a hash made from the incoming request. The hash is valid for one day and then resets, so a
+            visitor cannot be followed across days or across websites.
+          </p>
+          <p>Each page view can record:</p>
+          <ul className="list-disc space-y-2 pl-5">
+            <li>the time, the page URL and the referrer;</li>
+            <li>filtered query parameters;</li>
+            <li>the country and region;</li>
+            <li>the device type, operating system and browser, with versions.</li>
+          </ul>
+          <p>
+            Vercel says this is used for aggregated statistics only and is not tied to a person or an IP
+            address. Traffic from bots is not counted. Details are in{" "}
+            <a
+              href="https://vercel.com/docs/analytics/privacy-policy"
+              className={textLink}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Vercel&apos;s privacy page for Web Analytics
+            </a>
+            .
+          </p>
+          <p>
+            The Membral app you run, including the self-hosted Docker image, never loads this script and
+            never sends it anything.
+          </p>
         </Section>
 
         <Section id="delete" title="Deleting your data">
