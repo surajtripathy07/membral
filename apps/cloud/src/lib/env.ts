@@ -146,6 +146,16 @@ export function isLocalRuntime(): boolean {
 }
 
 /**
+ * True only on Vercel's production deployment of the hosted site (membral.me).
+ * Vercel sets VERCEL_ENV ("production" | "preview" | "development") at build
+ * and runtime; the Docker image and local runs never set it. Gates Vercel Web
+ * Analytics in the root layout so self-hosted installs never load or call it.
+ */
+export function isHostedProduction(): boolean {
+  return process.env.VERCEL_ENV === "production";
+}
+
+/**
  * The daily cron fan-out's shared secret (issue #132, ADR 0049) — see the
  * header comment above. `undefined` (unset/blank) means GET
  * /api/internal/cron/advance refuses every request with 503; a trimmed

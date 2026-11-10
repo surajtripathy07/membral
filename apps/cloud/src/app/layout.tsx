@@ -1,6 +1,7 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { getAppUrl } from "@/lib/env";
+import { getAppUrl, isHostedProduction } from "@/lib/env";
 import { log } from "@/lib/log";
 import { themeBootScript } from "@/lib/theme";
 import "./globals.css";
@@ -101,6 +102,8 @@ export default function RootLayout({
       </head>
       <body className="bg-canvas font-sans text-ink antialiased">
         {children}
+        {/* Page-view counts on the hosted site only. Never rendered in the self-hosted image. */}
+        {isHostedProduction() ? <Analytics /> : null}
       </body>
     </html>
   );

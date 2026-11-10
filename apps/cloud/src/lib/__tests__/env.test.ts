@@ -156,3 +156,29 @@ describe("getAppUrl", () => {
     expect(getAppUrl()).toBe("https://membral.me");
   });
 });
+
+describe("isHostedProduction", () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    vi.resetModules();
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it.each([undefined, "", "preview", "development", "Production"])("is false when VERCEL_ENV is %j", async (value) => {
+    if (value === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = value;
+    const { isHostedProduction } = await import("../env.js");
+    expect(isHostedProduction()).toBe(false);
+  });
+
+  it('is true only when VERCEL_ENV is "production"', async () => {
+    process.env.VERCEL_ENV = "production";
+    const { isHostedProduction } = await import("../env.js");
+    expect(isHostedProduction()).toBe(true);
+  });
+});

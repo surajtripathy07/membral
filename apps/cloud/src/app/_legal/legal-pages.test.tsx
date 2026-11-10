@@ -22,7 +22,14 @@ describe("legal pages", () => {
     expect(t).toContain("on your machine");
     expect(t).toContain("membral local down --wipe");
     expect(html).toContain("#run-it-locally");
-    expect(html).not.toContain("membral.me");
-    expect(html).not.toMatch(/Supabase|Vercel/);
+    expect(html).not.toMatch(/Supabase/);
+    // The one hosted thing the page may name is the website's page-view counter, and only in its own section.
+    const start = html.indexOf('id="website"');
+    const end = html.indexOf('id="delete"');
+    expect(start).toBeGreaterThan(-1);
+    const rest = html.slice(0, start) + html.slice(end);
+    expect(rest).not.toMatch(/Vercel/);
+    expect(rest.replace(/membral\.me website counts/, "")).not.toContain("membral.me");
+    expect(html.slice(start, end)).toContain("never loads this script and");
   });
 });

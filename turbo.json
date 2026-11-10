@@ -82,7 +82,9 @@
       // changes bust this task's cache key — no separate `inputs` needed.
       // VERCEL switches pack.mjs to stamp the hosted origin into the CLI tarball
       // (stamp-default-url.mjs), so it must key this task's cache.
-      "env": ["VERCEL"],
+      // VERCEL_ENV gates Vercel Web Analytics in the root layout (production only), so a
+      // preview build must not share a cache entry with a production one.
+      "env": ["VERCEL", "VERCEL_ENV"],
       "dependsOn": ["^build"],
       "outputs": [
         "dist/**",
