@@ -6,9 +6,9 @@
 // that never went through middleware's logic again).
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/font/google", () => {
+vi.mock("next/font/local", () => {
   const font = () => ({ style: { fontFamily: "font-family" } });
-  return { IBM_Plex_Sans: font, Source_Serif_4: font };
+  return { default: font };
 });
 
 vi.mock("next/navigation", () => ({
