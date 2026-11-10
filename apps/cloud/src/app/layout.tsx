@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans, Source_Serif_4 } from "next/font/google";
+import localFont from "next/font/local";
 import { getAppUrl } from "@/lib/env";
 import { log } from "@/lib/log";
 import { themeBootScript } from "@/lib/theme";
@@ -8,22 +8,31 @@ import "./globals.css";
 // Paper & ink type (docs/design/tokens.md): serif heads, humanist sans body,
 // mono only for refs / commit shas / code. globals.css maps these variables
 // onto --font-serif / --font-sans / --font-mono.
-const plexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal"],
+// The files are vendored in src/fonts (latin subset, SIL OFL; see the OFL-*.txt beside them) so `next build`
+// needs no network access to Google Fonts.
+const plexSans = localFont({
+  src: [{ path: "../fonts/plex-sans-normal.woff2", weight: "400 600", style: "normal" }],
   variable: "--font-plex-sans",
+  display: "swap",
+  adjustFontFallback: "Arial",
+  fallback: ["system-ui", "arial"],
 });
-const sourceSerif = Source_Serif_4({
-  subsets: ["latin"],
-  weight: ["600"],
-  style: ["normal"],
+const sourceSerif = localFont({
+  src: [{ path: "../fonts/source-serif-4-normal.woff2", weight: "600", style: "normal" }],
   variable: "--font-source-serif",
+  display: "swap",
+  adjustFontFallback: "Times New Roman",
+  fallback: ["Georgia", "serif"],
 });
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
+const plexMono = localFont({
+  src: [
+    { path: "../fonts/plex-mono-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/plex-mono-500.woff2", weight: "500", style: "normal" },
+  ],
   variable: "--font-plex-mono",
+  display: "swap",
+  adjustFontFallback: false,
+  fallback: ["ui-monospace", "monospace"],
 });
 
 // Issue #126 verification finding 7: `new URL(getAppUrl())` runs at MODULE

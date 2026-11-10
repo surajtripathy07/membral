@@ -10,9 +10,9 @@ vi.mock("next/headers", () => ({
     throw new Error("the root layout must not read cookies()");
   },
 }));
-vi.mock("next/font/google", () => {
+vi.mock("next/font/local", () => {
   const font = () => ({ variable: "font-var", className: "font-class" });
-  return { IBM_Plex_Sans: font, IBM_Plex_Mono: font, Source_Serif_4: font };
+  return { default: font };
 });
 
 function runBoot(cookie: string): string | null {

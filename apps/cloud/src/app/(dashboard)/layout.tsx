@@ -1,4 +1,4 @@
-import { IBM_Plex_Sans, Source_Serif_4 } from "next/font/google";
+import localFont from "next/font/local";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
@@ -13,16 +13,19 @@ import { Sidebar } from "./sidebar";
 // own families with preload: false, so a file is requested the first time italic text is painted.
 // A family with only italic faces would also match upright text, so the families are applied to
 // `.italic` only (the utility the dashboard uses), ahead of the normal stack.
-const plexSansItalic = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["italic"],
+const plexSansItalic = localFont({
+  src: [{ path: "../../fonts/plex-sans-italic.woff2", weight: "400 600", style: "italic" }],
   preload: false,
+  display: "swap",
+  adjustFontFallback: "Arial",
+  fallback: ["system-ui", "arial"],
 });
-const sourceSerifItalic = Source_Serif_4({
-  subsets: ["latin"],
-  style: ["italic"],
+const sourceSerifItalic = localFont({
+  src: [{ path: "../../fonts/source-serif-4-italic.woff2", weight: "200 900", style: "italic" }],
   preload: false,
+  display: "swap",
+  adjustFontFallback: "Times New Roman",
+  fallback: ["Georgia", "serif"],
 });
 const ITALIC_CSS = `.italic,em,i{font-family:${plexSansItalic.style.fontFamily},var(--font-sans)}.font-serif.italic,h1.italic,h2.italic,h3.italic{font-family:${sourceSerifItalic.style.fontFamily},var(--font-serif)}`;
 
